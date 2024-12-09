@@ -21,10 +21,13 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from model3D import *
+from object3D import *
+from scene3D import *
+# from model3D import *
 from quad import *
 from vcamera import *
 from sphere import *
+
 
 PYTHONPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0, PYTHONPATH)
@@ -64,10 +67,10 @@ class Viewer:
         
         # Initialize shaders
         self.depth_shader = Shader("shader/depth.vert", "shader/depth.frag")
-        self.texture_shader = Shader("shader/texture.vert", "shader/texture.frag")
         self.main_shader = Shader("shader/phong.vert", "shader/phong.frag")
         self.phongex_shader = Shader("shader/phongex.vert", "shader/phongex.frag")
-        
+        self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
+
         # Initialize mouse parameters
         self.last_x = width / 2
         self.last_y = height / 2
@@ -87,9 +90,7 @@ class Viewer:
 
         # Initialize selection
         self.selected_obj = -1
-        self.selected_vcamera = -1
-        self.multi_camera_option = False
-        self.single_camera_option = False
+        self.selected_scene = -1
 
         # Initialize trackball
         self.trackball = Trackball()
@@ -97,7 +98,7 @@ class Viewer:
         
         # Initialize vcamera parameters
         self.cameraSpeed = 0.5
-        self.cameraPos = glm.vec3(0.0, 0.0, 0.0)   
+        self.cameraPos = glm.vec3(0.0, 0.0, 5.0)   
         self.cameraFront = glm.vec3(0.0, 0.0, -1.0)  
         self.cameraUp = glm.vec3(0.0, 1.0, 0.0)    
         self.lastFrame = 0.0
@@ -116,8 +117,10 @@ class Viewer:
         self.cell_height = self.right_height // self.rows
 
         # Initialize for camera 
-        self.camera1_cameraPos = glm.vec3(0.0, 0.0, 0.0)
+        self.camera1_cameraPos = glm.vec3(0.0, 0.0, 5.0)
         self.camera2_cameraPos = glm.vec3(5.0, 0.0, 0.0)
+        self.camera1_cameraFront = glm.vec3(0.0, 0.0, -1.0)
+        self.camera2_cameraFront = glm.vec3(1.0, 0.0, 0.0)
         
         # Initialize background color
         self.bg_colors = [0.0, 0.0, 0.0]
@@ -136,11 +139,6 @@ class Viewer:
         self.drawables = []
 
     def init_ui(self):
-        # # Initialize item for "Scene"
-        # self.scene_items = [
-        #     {"text": f"Clickable Text Item", "function": self.save_rgb, "hovered": False, "clicked": False}
-
-
         self.font_size = 10
         self.load_font_size()
 
@@ -216,83 +214,6 @@ class Viewer:
         # Calculate pitch (vertical angle)
         pitch = glm.degrees(np.arcsin(direction.y))
         return yaw, pitch
-    
-    def multi_cam(self):
-        # Set up some parameters
-        rows = 3
-        cols = 3
-        left_width = 1400
-        left_height = 700
-        right_width = 1400
-        right_height = 400
-        cell_width = right_width // cols
-        cell_height = right_height // rows
-
-        # Define the hemisphere of multi-camera
-        sphere = Sphere(self.main_shader).setup()
-        # sphere.radius = 4.0
-        # sphere.generate_sphere()
-
-        ######
-        # [[x,y,z],[x,y,z]]
-        ######
-        self.vcameras = []
-        for coord in sphere.vertices[1:len(sphere.vertices)//2:2]:
-            initial = coord[0]
-
-            vcamera = VCamera(self.main_shader)
-            vcamera.setup()
-            
-            P = glm.vec3(coord[0], coord[1], coord[2])
-            
-            # Set up view matrix for camera
-            yaw, pitch = self.get_yaw_pitch_from_direction(P, glm.vec3(0, 0, 0))
-            direction = glm.vec3(
-                np.cos(glm.radians(yaw)) * np.cos(glm.radians(pitch)),
-                np.sin(glm.radians(pitch)),
-                np.sin(glm.radians(yaw)) * np.cos(glm.radians(pitch))
-            )
-            right = glm.normalize(glm.cross(direction, glm.vec3(0, 1, 0)))
-            up = glm.normalize(glm.cross(right, direction))
-
-            vcamera.model = glm.mat4(1.0)
-            vcamera.view = glm.lookAt(P, P + direction, up)
-            vcamera.projection = glm.perspective(glm.radians(self.fov), cell_width / cell_height, 0.1, 1000.0)
-            
-            self.vcameras.append(vcamera)
-
-        # Normal scene
-        GL.glViewport(0, 0, left_width, left_height*2)
-        GL.glUseProgram(self.main_shader.render_idx)
-
-        for cam in self.vcameras:
-            cam.projection = self.trackball.projection_matrix((left_width, left_height*2))
-            cam.draw()
-        for drawable in self.drawables:
-            win_size = (left_width, left_height*2)
-
-            drawable.update_uma(UManager(self.main_shader))
-            drawable.update_shader(self.main_shader)
-            drawable.setup()
-
-            drawable.view = self.trackball.view_matrix2(self.cameraPos)
-            drawable.projection = self.trackball.projection_matrix(win_size)
-            drawable.draw()
-
-        # Depth map
-        GL.glViewport(left_width, right_height*2, right_width, right_height)
-        GL.glUseProgram(self.depth_shader.render_idx)
-        for drawable in self.drawables:
-            drawable.update_uma(UManager(self.depth_shader))
-            drawable.update_shader(self.depth_shader)
-            drawable.setup()
-            
-            drawable.view = self.vcameras[self.selected_vcamera].view 
-            drawable.projection = self.vcameras[self.selected_vcamera].projection
-
-            drawable.shader.set_uniform('near', 0.1)
-            drawable.shader.set_uniform('far', 1000.0)
-            drawable.draw()
 
     # def texture_mapping(self):
 
@@ -352,26 +273,25 @@ class Viewer:
         while not glfw.window_should_close(self.win):
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
             # GL.glClearColor(*self.bg_colors, 1.0)
-            # print(self.bg_colors)
-            # print('----------')
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             
             # Viewport for RGB Scene
             win_pos_width = self.scene_width + self.operation_width
             win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
-            GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height) # Please remove *2 if not using MacOS
-            # GL.glViewport(0, 0, self.win_width//2, self.win_height)
-            GL.glClearColor(1.0, 1.0, 1.0, 1.0)
-            GL.glUseProgram(self.main_shader.render_idx)
+            GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height) 
+            # GL.glClearColor(1.0, 1.0, 1.0, 1.0)
+            GL.glClearColor(*self.bg_colors, 1.0)
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+            GL.glUseProgram(self.texture_shader.render_idx)
 
             for drawable in self.drawables:
-                drawable.update_uma(UManager(self.main_shader))
-                drawable.update_shader(self.main_shader)
-                drawable.setup()
+                drawable.update_uma(UManager(self.texture_shader))
+                drawable.update_shader(self.texture_shader)
+                # drawable.setup()
 
                 drawable.model = glm.mat4(1.0)
-                # drawable.view = self.trackball.view_matrix2(self.cameraPos)
-                drawable.view = self.trackball.view_matrix()
+                drawable.view = self.trackball.view_matrix2(self.cameraPos)
+                # drawable.view = self.trackball.view_matrix()
                 drawable.projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 1000.0)
                 
                 # Normal rendering
@@ -386,7 +306,7 @@ class Viewer:
             for drawable in self.drawables:
                 drawable.update_uma(UManager(self.depth_shader))
                 drawable.update_shader(self.depth_shader)
-                drawable.setup()
+                # drawable.setup()
                 
                 drawable.model = glm.mat4(1.0)
                 drawable.view = self.trackball.view_matrix2(self.cameraPos)
@@ -448,29 +368,36 @@ class Viewer:
 
         imgui.begin("Scene")
 
+        # set item size
         imgui.set_window_font_scale(1)  
-        
         item_width = imgui.get_window_width() - 10 # padding
-        imgui.set_next_item_width(item_width)
-        _, self.selected_obj = imgui.combo(
-            "", 
-            int(self.selected_obj),
-            ["Wuson", "Porsche", "Bathroom", "Building",
-             "Castelia City", "House Interior"]
+
+        _, self.selected_scene = imgui.combo(
+            "Scene", 
+            int(self.selected_scene),
+            ["House Interior", "Parking lot", "Bathroom", "Building"]
         )
 
-        imgui.set_next_item_width(imgui.get_window_width())
+        _, self.selected_obj = imgui.combo(
+            "Object", 
+            int(self.selected_obj),
+            ["Wuson", "Porsche", "Bowl"]
+        )
+
+        # imgui.set_next_item_width(imgui.get_window_width())
         camera1 = self.button_with_icon('icons/camera.png', 'Camera A')
         camera2 = self.button_with_icon('icons/camera.png', 'Camera B')
 
         if camera1:
             self.cameraPos = self.camera1_cameraPos
+            self.cameraFront = self.camera1_cameraFront
 
         if camera2:
             self.cameraPos = self.camera2_cameraPos
+            self.cameraFront = self.camera2_cameraFront
         
         # Adjust RGB 
-        self.bg_changed, self.bg_colors = imgui.input_int3('Background Color', self.bg_colors[0], self.bg_colors[1], self.bg_colors[2])
+        self.bg_changed, self.bg_colors = imgui.input_float3('Color', self.bg_colors[0], self.bg_colors[1], self.bg_colors[2], format='%.2f')
 
         font_size = imgui.get_font_size()
         vertical_padding = 8
@@ -619,17 +546,23 @@ class Viewer:
         model = []
         self.drawables.clear()
         
-        obj_files = {
-            0: 'obj/WusonOBJ.obj',
-            1: 'obj/Porsche_911_GT2.obj',
-            2: 'obj/bathroom/bathroom.obj',
-            3: 'obj/building/Residential Buildings 002.obj',
-            4: 'obj/Castelia_City/Castelia_City.obj',
-            5: 'obj/house_interior/house_interior.obj'
+        scene_files = {
+            0: {'obj/house_interior/house_interior.obj', ''},
+            1: {'obj/parking_lot/park.obj'},
+            2: {'obj/bathroom/bathroom.obj'},
+            3: {'obj/building/Residential Buildings 002.obj'},
         }
+        chosen_scene = scene_files[self.selected_scene]
+        model.append(Scene(self.texture_shader, chosen_scene))
 
+        obj_files = {
+            0: {'obj/WusonOBJ.obj'},
+            1: {'obj/Porsche_911_GT2.obj'},
+            2: {'obj/bowl/model.obj'},
+        }
         chosen_obj = obj_files[self.selected_obj]
-        model.append(Obj(chosen_obj))
+        model.append(Obj(self.texture_shader, chosen_obj))
+
 
         self.add(model)
 
