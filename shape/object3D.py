@@ -1,88 +1,160 @@
+import pywavefront.material
+import pywavefront.wavefront
 from libs.shader import *
 from libs.buffer import *
 from libs import transform as T
 import glm
 import numpy as np
 import trimesh
+import pywavefront
+from mesh import *
 
 class Obj:
-    def __init__(self, vert_shader, frag_shader, file_path):
+    def __init__(self, shader, file_path):
         self.vao = VAO()
-        self.vertices, self.normals, self.indices = self.load_obj(file_path)
-        self.shader = Shader(vert_shader, frag_shader)
+        self.shader = shader
         self.uma = UManager(self.shader)
-    
-    def load_obj(self, file_path):
-        scene = trimesh.load(file_path)
-        if isinstance(scene,trimesh.Scene):
-            scene = scene.to_mesh()
-        vertices = scene.vertices.astype(np.float32)
-        normals = scene.vertex_normals.astype(np.float32)
-        indices = scene.faces.astype(np.uint32)
-        if len(normals) == 0:
-            return vertices, indices
-        return vertices, normals, indices
+        self.materials = {}
+        self.meshes = {}
+        self.load_materials(file_path)
+        self.parse_obj_file(file_path)
 
-    def load_texture(self, texture_path):
-        self.uma.setup_texture(texture_path)
+    def parse_obj_file(self, file_path):
+        current_mesh = None
+        vertices = []
+        normals = []
+        texcoords = []
+        faces = []
+        material = None
 
-    def setup(self):
-        self.vao.add_vbo(0, self.vertices, ncomponents=3, stride=0, offset=None)
-        self.vao.add_vbo(2, self.normals, ncomponents=3, stride=0, offset=None)
-        self.vao.add_ebo(self.indices)
+        with open(file_path, 'r') as file:
+            for line in file:
+                line = line.strip()
+                parts = line.split()
 
-        GL.glUseProgram(self.shader.render_idx)
+                if not line or (line.startswith('#') and len(parts)==1):  # Ignore comments and empty lines
+                    continue
 
-        # Initial transformations
-        self.model = glm.mat4(1.0)
-        
-        camera_pos = glm.vec3(0.0, 0.0, 5.0)
-        camera_target = glm.vec3(0.0, 0.0, 0.0)
-        up_vector = glm.vec3(0.0, 1.0, 0.0)
-        
-        self.view = glm.lookAt(camera_pos, camera_target, up_vector)
-        self.projection = glm.perspective(glm.radians(45.0), 800.0 / 600.0, 0.1, 100.0)
+                if line.startswith('#') and len(parts)>1:
+                    if parts[1] == 'object' and current_mesh:  # Store the previous mesh
+                        self.meshes[current_mesh] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(faces), self.materials[material]).setup()
+                        vertices = []
+                        normals = []
+                        texcoords = []
+                        faces = []
+                        material = None
+                    else: continue
 
-        model_view_matrix = self.view * self.model
-        
-        self.uma.upload_uniform_matrix4fv(np.array(model_view_matrix), 'modelview', True)
-        self.uma.upload_uniform_matrix4fv(np.array(self.projection), 'projection', True)
+                prefix = parts[0]
 
-        # Light setup (you can modify these values)
-        I_light = np.array([
-            [0.9, 0.4, 0.6],  # diffuse
-            [0.9, 0.4, 0.6],  # specular
-            [0.9, 0.4, 0.6],  # ambient
-        ], dtype=np.float32)
-        light_pos = np.array([0, 0.5, 0.9], dtype=np.float32)
+                if prefix == 'o':  # New object/group
+                    current_mesh = parts[1]
 
-        self.uma.upload_uniform_matrix3fv(I_light, 'I_light', False)
-        self.uma.upload_uniform_vector3fv(light_pos, 'light_pos')
+                elif prefix == 'v':  # Vertex
+                    vertices.append(list(map(float, parts[1:])))
 
-        # Materials setup (you can modify these values)
-        K_materials = np.array([
-            [0.6, 0.4, 0.7],  # diffuse
-            [0.6, 0.4, 0.7],  # specular
-            [0.6, 0.4, 0.7],  # ambient
-        ], dtype=np.float32)
 
-        self.uma.upload_uniform_matrix3fv(K_materials, 'K_materials', False)
+                elif prefix == 'vn':  # Vertex normal
+                    normals.append(list(map(float, parts[1:])))
 
-        shininess = 100.0
-        mode = 1
+                elif prefix == 'vt':  # Texture coordinate
+                    texcoords.append(list(map(float, parts[1:])))
 
-        self.uma.upload_uniform_scalar1f(shininess, 'shininess')
-        self.uma.upload_uniform_scalar1i(mode, 'mode')
 
-        return self
+                elif prefix == 'usemtl':  # Material
+                    material = parts[1]
+
+                elif prefix == 'f':  # Face
+                    face = []
+                    for vertex in parts[1:]:
+                        # Take only the vertex index (before first slash)
+                        index = int(vertex.split('/')[0])
+                        face.append(index)
+
+
+                    # If it's a triangle, add directly
+                    if len(face) == 3:
+                        faces.extend(face)
+
+                    # If it's a quad, triangulate it into two triangles
+                    elif len(face) == 4:
+                        # First triangle: vertices 0,1,2
+                        faces.extend([face[0], face[1], face[2]])
+                        # Second triangle: vertices 0,2,3
+                        faces.extend([face[0], face[2], face[3]])
+
+        # Store the last mesh
+        if current_mesh:
+            self.meshes[current_mesh] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(faces), self.materials[material]).setup()
+
+        with open('obj.txt', 'w') as file:
+            for mesh_name, mesh_data in self.meshes.items():
+                file.write(f"# object {mesh_name}\n")
+
+                # Save vertices
+                file.write("# vertices\n")
+                for vertex in mesh_data.vertices:
+                    file.write(f"v {' '.join(map(str, vertex))}\n")
+
+                # Save normals
+                file.write("# vertex normals\n")
+                for normal in mesh_data.normals:
+                    file.write(f"vn {' '.join(map(str, normal))}\n")
+
+                # Save texture coordinates
+                file.write("# texture coordinates\n")
+                for texcoord in mesh_data.texcoords:
+                    file.write(f"vt {' '.join(map(str, texcoord))}\n")
+
+                for i in range(0, len(mesh_data.indices), 3):
+                    # Get 3 indices for this triangle
+                    v1 = mesh_data.indices[i]
+                    v2 = mesh_data.indices[i + 1]
+                    v3 = mesh_data.indices[i + 2]
+                    # Add 1 to convert from 0-based to 1-based indexing for OBJ format
+                    file.write(f"f {v1+1} {v2+1} {v3+1}\n")
+
+                # Save material
+                file.write(f"usemtl {mesh_data.material}\n")
+                file.write("\n")
+
+    def load_materials(self, file_path):
+        obj_file = pywavefront.Wavefront(file_path, create_materials=True)
+
+        # Access materials
+        self.materials = {}
+        for name, material in obj_file.materials.items():
+            def trim_list(lst):
+                return lst[:-1] if isinstance(lst, list) and len(lst) == 4 else lst
+
+            self.materials[name] = {
+                'Ns': getattr(material, 'shininess', None),                                 # Specular exponent
+                'Ni': getattr(material, 'optical_density', None),                           # Optical density
+                'd': getattr(material, 'transparency', None),                               # Dissolve
+                'Tr': 1 - getattr(material, 'transparency', 1.0),                           # Transparency (inverse dissolve)
+                'Tf': getattr(material, 'transmission_filter', [1, 1, 1]),                  # Transmission filter
+                'illum': getattr(material, 'illumination_model', None),                     # Illumination model
+                'Ka': trim_list(getattr(material, 'ambient', [0, 0, 0])),                   # Ambient color
+                'Kd': trim_list(getattr(material, 'diffuse', [0, 0, 0])),                   # Diffuse color
+                'Ks': trim_list(getattr(material, 'specular', [0, 0, 0])),                  # Specular color
+                'Ke': trim_list(getattr(material, 'emissive', [0, 0, 0])),                  # Emissive color
+                'map_Ka': getattr(material, 'texture_ambient', None),                       # Ambient texture
+                'map_Kd': getattr(material, 'texture', None),                               # Diffuse texture
+                'map_bump': getattr(material, 'texture_bump', None)                         # Bump map
+            }
+
+        output_file = 'materials.txt'
+        with open(output_file, 'w') as f:
+            for material_name, properties in self.materials.items():
+                f.write(f"Material: {material_name}\n")
+                for key, value in properties.items():
+                    f.write(f"  {key}: {value}\n")
+                f.write("\n")
+
+    def update_shader(self, shader):
+        self.shader = shader
+        self.uma = UManager(self.shader)
 
     def draw(self):
-        GL.glUseProgram(self.shader.render_idx)
-
-        model_view_matrix = self.view * self.model
-        self.uma.upload_uniform_matrix4fv(np.array(model_view_matrix, dtype=np.float32), 'modelview', True)
-        self.uma.upload_uniform_matrix4fv(np.array(self.projection, dtype=np.float32), 'projection', True)
-
-        self.vao.activate()
-
-        GL.glDrawElements(GL.GL_TRIANGLES, len(self.indices)*3, GL.GL_UNSIGNED_INT, None)
+        for mesh_name, mesh in self.meshes.items():
+            mesh.draw()
