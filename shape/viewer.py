@@ -2,35 +2,24 @@ import OpenGL.GL as GL
 import glfw
 import numpy as np
 import time
-import random
-import re
 import glm
-import trimesh
 from itertools import cycle
+from PyQt6.QtWidgets import QApplication, QFileDialog
+import sys
 import imgui
-from imgui import Vec2
 from imgui.integrations.glfw import GlfwRenderer
-# from imgui.integrations.opengl import texture
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
-import io
 
 from libs.buffer import *
 from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from object3D import *
-# from scene3D import *
-# from model3D import *
+# from object3D import *
+from model3D import *
 from quad import *
 from vcamera import *
 from sphere import *
 
-
-PYTHONPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.insert(0, PYTHONPATH)
 
 class Viewer:
     def __init__(self, width=1400, height=700):
@@ -67,7 +56,7 @@ class Viewer:
 
         # Initialize shaders
         self.depth_shader = Shader("shader/depth.vert", "shader/depth.frag")
-        self.main_shader = Shader("shader/phong.vert", "shader/phong.frag")
+        self.phong_shader = Shader("shader/phong.vert", "shader/phong.frag")
         self.phongex_shader = Shader("shader/phongex.vert", "shader/phongex.frag")
         self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
 
@@ -89,30 +78,34 @@ class Viewer:
         self.specular = 0.0
 
         # Initialize selection
-        self.selected_obj = -1
-        self.selected_scene = -1
+        self.selected_obj = "No file selected"
+        self.selected_scene = "No file selected"
 
         # Initialize trackball
         self.trackball = Trackball()
         self.mouse = (0, 0)
 
         # Initialize vcamera parameters
-        self.cameraSpeed = 0.5
+        self.cameraSpeed = 1
         self.cameraPos = glm.vec3(0.0, 0.0, 5.0)
         self.cameraFront = glm.vec3(0.0, 0.0, -1.0)
         self.cameraUp = glm.vec3(0.0, 1.0, 0.0)
         self.lastFrame = 0.0
 
         # Initialize for near & far planes
-        self.near = 0
-        self.far = 0
+        self.near = 0.1
+        self.far = 100
         self.near_colors = [0.0, 0.0, 0.0]
         self.far_colors = [1.0, 1.0, 1.0]
 
+        # Initialize cmap
+        self.selected_colormap = 0
+
         # Initialize for camera
-        self.camera1_cameraPos = glm.vec3(0.0, 0.0, 5.0)
-        self.camera2_cameraPos = glm.vec3(5.0, 0.0, 0.0)
+        self.camera1_cameraPos = glm.vec3(0.0, 0.0, 10.0)
         self.camera1_cameraFront = glm.vec3(0.0, 0.0, -1.0)
+
+        self.camera2_cameraPos = glm.vec3(10.0, 0.0, 0.0)
         self.camera2_cameraFront = glm.vec3(1.0, 0.0, 0.0)
 
         # Initialize background color
@@ -135,34 +128,42 @@ class Viewer:
         self.font_size = 10
         self.load_font_size()
 
-        self.scene_width = self.win_width // 7
+        self.scene_width = self.win_width // 6
         self.scene_height = self.win_height // 3
 
-        self.material_config_width = self.scene_width
-        self.material_config_height = self.scene_height
-
-        self.depth_config_width = self.scene_width
-        self.depth_config_height = self.scene_height
-
-        self.operation_width = self.win_width // 7
+        self.operation_width = self.win_width // 6 
         self.operation_height = self.win_height // 3
 
-        self.command_width = self.win_width // 7
-        self.command_height = self.win_height // 3
+        self.material_config_width = self.win_width // 6 
+        self.material_config_height = self.win_height // 3
 
-        self.rgb_view_width = (self.win_width - self.scene_width - self.operation_width - self.command_width) // 2
+        self.depth_config_width = self.win_width // 6 
+        self.depth_config_height = self.win_height // 3
+
+        # self.command_width = self.win_width // 6
+        # self.command_height = self.win_height // 3
+        self.command_width = 0
+        self.command_height = 0
+
+        self.rgb_view_width = (self.win_width - self.scene_width - self.material_config_width) // 2
         self.rgb_view_height = self.win_height
 
         self.depth_view_width = self.rgb_view_width
         self.depth_view_height = self.rgb_view_height
 
+    def select_file(self):
+        app = QApplication(sys.argv)
+        file_path = QFileDialog.getOpenFileName()[0]
+        return file_path
+
     def save_rgb(self):
 
         # Create a numpy array to hold the pixel data
-        pixels = GL.glReadPixels(0, 0, self.win_width, self.win_height*2, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
+        win_pos_width = self.scene_width
+        pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
 
         # Convert the pixels into a numpy array
-        rgb_image = np.frombuffer(pixels, dtype=np.uint8).reshape((int(self.win_height*2), int(self.win_width), 3))
+        rgb_image = np.frombuffer(pixels, dtype=np.uint8).reshape((int(self.rgb_view_height), int(self.rgb_view_width), 3))
 
         # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
         rgb_image = np.flipud(rgb_image)
@@ -181,11 +182,14 @@ class Viewer:
     def save_depth(self):
 
         # Create a numpy array to hold the pixel data
-        pixels = GL.glReadPixels(self.win_width, 0, self.win_width, self.win_height*2, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
+        win_pos_width = self.scene_width + self.rgb_view_width
+        pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
 
         # Convert the pixels into a numpy array
-        depth_image = np.frombuffer(pixels, dtype=np.uint8).reshape((self.win_height*2, self.win_width, 3))
-
+        depth_image = np.frombuffer(pixels, dtype=np.uint16).reshape((self.depth_view_height, self.depth_view_width, 3))
+        
+        print(depth_image)
+        exit()
         # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
         depth_image = np.flipud(depth_image)
 
@@ -199,16 +203,6 @@ class Viewer:
         # Save the image to the local directory
         depth_image.save(f"./depth_images/{file_name}")
         print(f"Saved depth image as {file_name}")
-
-    def get_yaw_pitch_from_direction(self, a, b):
-        direction = glm.normalize(b - a)
-        # Calculate yaw (angle in the XZ plane)
-        yaw = glm.degrees(np.arctan2(direction.z, direction.x))
-        # Calculate pitch (vertical angle)
-        pitch = glm.degrees(np.arcsin(direction.y))
-        return yaw, pitch
-
-    # def texture_mapping(self):
 
     def load_texture(self, image_path):
         """Load an image file into a texture for ImGui"""
@@ -261,15 +255,50 @@ class Viewer:
         draw_list.add_text(text_pos_x, text_pos_y, imgui.get_color_u32_rgba(1, 1, 1, 1), button_text)
 
         return pressed
+    
+    def load_cubemap(faces):
+        """
+        Loads a cubemap texture from a list of file paths.
+
+        Parameters:
+            faces (list of str): List of 6 file paths, one for each face of the cubemap.
+
+        Returns:
+            int: The OpenGL texture ID of the cubemap.
+        """
+        texture_id = GL.glGenTextures(1)
+        GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, texture_id)
+
+        for i, face in enumerate(faces):
+            try:
+                # Open the image and ensure it is in RGB format
+                with Image.open(face) as img:
+                    img = img.convert("RGB")
+                    img_data = img.tobytes()
+                    width, height = img.size
+
+                    # Upload the image data to the cubemap
+                    GL.glTexImage2D(GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                                0, GL.GL_RGB, width, height, 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, img_data)
+            except Exception as e:
+                print(f"Cubemap texture failed to load at path: {face}\nError: {e}")
+
+        # Set cubemap texture parameters
+        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE)
+
+        return texture_id
 
     def run(self):
         while not glfw.window_should_close(self.win):
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
-
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             # Viewport for RGB Scene
-            win_pos_width = self.scene_width + self.operation_width
+            win_pos_width = self.scene_width
             win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
 
             GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
@@ -278,11 +307,12 @@ class Viewer:
             GL.glClearColor(*self.bg_colors, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-            GL.glUseProgram(self.texture_shader.render_idx)
+            GL.glUseProgram(self.phong_shader.render_idx)
 
             for drawable in self.drawables:
-                drawable.update_shader(self.texture_shader)
-                # drawable.setup()
+                # update shader
+                drawable.update_shader(self.phong_shader)
+                drawable.setup()
 
                 drawable.model = glm.mat4(1.0)
                 drawable.view = self.trackball.view_matrix2(self.cameraPos)
@@ -292,32 +322,33 @@ class Viewer:
                 # Normal rendering
                 drawable.draw()
 
-            # # Viewport for Depth Scene
-            # win_pos_width = self.scene_width + self.operation_width + self.rgb_view_width
-            # win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
-            # GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-            # GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-            # GL.glClearColor(*self.bg_colors, 1.0)
-            # GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+            # Viewport for Depth Scene
+            win_pos_width = self.scene_width + self.rgb_view_width
+            win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
+            GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+            GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+            GL.glClearColor(*self.bg_colors, 1.0)
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-            # GL.glUseProgram(self.depth_shader.render_idx)
-            # for drawable in self.drawables:
-            #     drawable.update_shader(self.depth_shader)
-            #     # drawable.setup()
+            GL.glUseProgram(self.depth_shader.render_idx)
+            for drawable in self.drawables:
 
-            #     # update color of depth map
-            #     drawable.uma.upload_uniform_vector3fv(self.near_colors, 'nearColor')
-            #     drawable.uma.upload_uniform_vector3fv(self.far_colors, 'farColor')
+                # update shader
+                drawable.update_shader(self.depth_shader)
+                drawable.setup()
 
-            #     drawable.model = glm.mat4(1.0)
-            #     drawable.view = self.trackball.view_matrix2(self.cameraPos)
-            #     # drawable.view = self.trackball.view_matrix()
-            #     drawable.projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, 0.1, 1000.0)
+                # update depth map color
+                drawable.uma.upload_uniform_scalar1i(self.selected_colormap, 'colormap_selection')
 
-            #     # Depth map rendering
-            #     drawable.shader.set_uniform('near', 0.1)
-            #     drawable.shader.set_uniform('far', 1000.0)
-            #     drawable.draw()
+                drawable.model = glm.mat4(1.0)
+                drawable.view = self.trackball.view_matrix2(self.cameraPos)
+                # drawable.view = self.trackball.view_matrix()
+                drawable.projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, 0.1, 1000.0)
+
+                # Depth map rendering
+                drawable.uma.upload_uniform_scalar1f(self.near, 'near')
+                drawable.uma.upload_uniform_scalar1f(self.far, 'far')
+                drawable.draw()
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
@@ -375,19 +406,12 @@ class Viewer:
         imgui.set_window_font_scale(1)
         item_width = imgui.get_window_width() - 10 # padding
 
-        _, self.selected_scene = imgui.combo(
-            "Scene",
-            int(self.selected_scene),
-            ["House Interior", "Parking lot", "Bathroom"]
-        )
+        if imgui.button("Select Scene"):
+            self.selected_scene = self.select_file()
+        imgui.text(f"Selected File: {self.selected_scene}")
+        print(self.selected_scene)
 
-        _, self.selected_obj = imgui.combo(
-            "Object",
-            int(self.selected_obj),
-            ["Wuson", "Porsche", "Bowl"]
-        )
-
-        # imgui.set_next_item_width(imgui.get_window_width())
+        imgui.set_next_item_width(imgui.get_window_width())
         camera1 = self.button_with_icon('icons/camera.png', 'Camera A')
         camera2 = self.button_with_icon('icons/camera.png', 'Camera B')
 
@@ -415,8 +439,8 @@ class Viewer:
         ########################################################################
         #                              Operation                              #
         ########################################################################
-        win_pos_width = self.scene_width
-        win_pos_height = 0
+        win_pos_width = 0
+        win_pos_height = self.scene_height
         imgui.set_next_window_position(win_pos_width, win_pos_height)
         imgui.set_next_window_size(self.operation_width, self.operation_height)
         imgui.begin("Operation")
@@ -442,7 +466,7 @@ class Viewer:
 
         imgui.same_line()
         imgui.set_next_item_width(100)
-        if imgui.button("Save Depth Map"):
+        if imgui.button("Save Depth"):
             self.save_depth()
 
         imgui.end()
@@ -450,8 +474,8 @@ class Viewer:
         ########################################################################
         #                          Material Config                             #
         ########################################################################
-        win_pos_width = 0
-        win_pos_height = self.scene_height
+        win_pos_width = self.win_width - self.material_config_width
+        win_pos_height = 0
         imgui.set_next_window_position(win_pos_width, win_pos_height)
         imgui.set_next_window_size(self.material_config_width, self.material_config_height)
         imgui.begin("Material Config")
@@ -494,25 +518,47 @@ class Viewer:
         ########################################################################
         #                              Depth Config                            #
         ########################################################################
-        win_pos_width = 0
-        win_pos_height = self.scene_height + self.material_config_height
+        win_pos_width = self.win_width - self.depth_config_width
+        win_pos_height = self.material_config_height
         imgui.set_next_window_position(win_pos_width, win_pos_height)
         imgui.set_next_window_size(self.depth_config_width, self.depth_config_height)
         imgui.begin("Depth Config")
 
-        # Add near plane slider
+        # Center the text "Colormaps for Depth Map"
+        window_width = imgui.get_window_width()
+        text_width = imgui.calc_text_size("Colormaps for Depth Map").x
+        text_pos = (window_width - text_width) / 2 
+        imgui.set_cursor_pos_x(text_pos)  
+        imgui.text('Colormaps for Depth Map')
+
+        # Define colormap options
+        colormap_buttons = ["Greys", "Plasma", "Cividis", "Magma", "Inferno", "Viridis"]
+
+        # Create a 2-column layout
+        imgui.columns(2, "colormap_buttons")  
+        for i, colormap in enumerate(colormap_buttons):
+            if imgui.button(colormap, width=-1):  
+                self.selected_colormap = i  
+
+            if (i + 1) % 3 == 0:  # After every 3rd button, move to the next column (3 rows)
+                imgui.next_column()
+
+        imgui.columns(1)  # Reset to single column layout
+        imgui.spacing()
+
         # imgui.set_next_item_width(100)
-        self.near_changed, near_value = imgui.slider_int("near",
-                                          int(self.near),
-                                          min_value=1,
-                                          max_value=1000
+        self.near_changed, near_value = imgui.slider_float("Near",
+                                          self.near,
+                                          min_value=0.1,
+                                          max_value=10,
+                                          format="%.1f"
                                           )
         if self.near_changed:
             self.near = near_value
 
         # Add far plane slider
         # imgui.set_next_item_width(100)
-        self.far_changed, far_value = imgui.slider_int("far",
+        self.far_changed, far_value = imgui.slider_int("Far",
                                           int(self.far),
                                           min_value=1,
                                           max_value=1000
@@ -520,22 +566,18 @@ class Viewer:
         if self.far_changed:
             self.far = far_value
 
-        # Adjust RGB
-        self.near_color_changed, self.near_colors = imgui.input_float3('Near Color', self.near_colors[0], self.near_colors[1], self.near_colors[2], format='%.2f')
-        self.far_color_changed, self.far_colors = imgui.input_float3('Far Color', self.far_colors[0], self.far_colors[1], self.far_colors[2], format='%.2f')
-
         imgui.end()
 
         ########################################################################
         #                               Command                                #
         ########################################################################
-        win_pos_width = self.scene_width + self.operation_width + self.rgb_view_width + self.depth_view_width
-        win_pos_height = 0
-        imgui.set_next_window_position(win_pos_width, win_pos_height)
-        imgui.set_next_window_size(self.command_width, self.command_width)
-        imgui.begin("Command")
+        # win_pos_width = self.scene_width + self.operation_width + self.rgb_view_width + self.depth_view_width
+        # win_pos_height = 0
+        # imgui.set_next_window_position(win_pos_width, win_pos_height)
+        # imgui.set_next_window_size(self.command_width, self.command_width)
+        # imgui.begin("Command")
 
-        imgui.end()
+        # imgui.end()
 
         imgui.render()
         self.imgui_impl.render(imgui.get_draw_data())
@@ -584,27 +626,11 @@ class Viewer:
         model = []
         self.drawables.clear()
 
-        # Create Scene model
-        scene_files = {
-            0: 'obj/house_interior/house_interior.obj',
-            1: 'obj/parking_lot/park.obj',
-            2: 'obj/bathroom/bathroom.obj'
-        }
+        if self.selected_scene != "No file selected":
+            model.append(Obj(self.phong_shader, self.selected_scene))
 
-        if self.selected_scene != -1:
-            scene_path = scene_files[self.selected_scene]
-            model.append(Obj(self.texture_shader, scene_path))
-
-        # Create Object model
-        obj_files = {
-            0: 'obj/WusonOBJ.obj',
-            1: 'obj/Porsche_911_GT2.obj',
-            2: 'obj/bowl/model.obj'
-        }
-
-        if self.selected_obj != -1:
-            obj_path = obj_files[self.selected_obj]
-            model.append(Obj(self.phongex_shader, obj_path))
+        if self.selected_obj != "No file selected":
+            model.append(Obj(self.phong_shader, self.selected_obj))
 
         self.add(model)
 
