@@ -6,6 +6,7 @@ import glm
 from itertools import cycle
 from PyQt6.QtWidgets import QApplication, QFileDialog
 import sys
+import time
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
 
@@ -101,6 +102,13 @@ class Viewer:
         # Initialize cmap
         self.selected_colormap = 0
 
+        # Initialize autosave
+        self.time_save = 0.0
+        self.time_count = 0.0
+        self.rgb_save_path = ""
+        self.depth_save_path = ""
+        self.show_time_selection = False
+
         # Initialize for camera
         self.camera1_cameraPos = glm.vec3(0.0, 0.0, 10.0)
         self.camera1_cameraFront = glm.vec3(0.0, 0.0, -1.0)
@@ -156,7 +164,12 @@ class Viewer:
         file_path = QFileDialog.getOpenFileName()[0]
         return file_path
 
-    def save_rgb(self):
+    def select_folder(self):
+        app = QApplication(sys.argv)
+        folder_path = QFileDialog.getExistingDirectory()
+        return folder_path
+    
+    def save_rgb(self, save_path):
 
         # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width
@@ -176,20 +189,20 @@ class Viewer:
         file_name = f"rgb_image_{timestamp}.png"
 
         # Save the image to the local directory
-        rgb_image.save(f"./rgb_images/{file_name}")
+        rgb_image.save(save_path + '/' + file_name)
         print(f"Saved rgb image as {file_name}")
 
-    def save_depth(self):
+    def save_depth(self, save_path):
 
         # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width + self.rgb_view_width
         pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
 
         # Convert the pixels into a numpy array
-        depth_image = np.frombuffer(pixels, dtype=np.uint16).reshape((self.depth_view_height, self.depth_view_width, 3))
+        depth_image = np.frombuffer(pixels, dtype=np.uint8).reshape((self.depth_view_height, self.depth_view_width, 3))
         
-        print(depth_image)
-        exit()
+        # print(depth_image)
+        # exit()
         # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
         depth_image = np.flipud(depth_image)
 
@@ -200,8 +213,8 @@ class Viewer:
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         file_name = f"depth_image_{timestamp}.png"
 
-        # Save the image to the local directory
-        depth_image.save(f"./depth_images/{file_name}")
+        # Save the image to the selected directory
+        depth_image.save(save_path + '/' + file_name)
         print(f"Saved depth image as {file_name}")
 
     def load_texture(self, image_path):
@@ -402,14 +415,13 @@ class Viewer:
 
         imgui.begin("Scene")
 
-        # set item size
-        imgui.set_window_font_scale(1)
-        item_width = imgui.get_window_width() - 10 # padding
-
         if imgui.button("Select Scene"):
             self.selected_scene = self.select_file()
         imgui.text(f"Selected File: {self.selected_scene}")
-        print(self.selected_scene)
+
+        if imgui.button("Select Object"):
+            self.selected_scene = self.select_file()
+        imgui.text(f"Selected File: {self.selected_scene}")
 
         imgui.set_next_item_width(imgui.get_window_width())
         camera1 = self.button_with_icon('icons/camera.png', 'Camera A')
@@ -453,21 +465,41 @@ class Viewer:
         if imgui.button("Move Camera"):
             self.move_camera_around()
 
-        imgui.get_style().colors[imgui.COLOR_BUTTON_HOVERED] = imgui.Vec4(0.6, 1.0, 0.6, 1.0)  # Green hover color
+        imgui.get_style().colors[imgui.COLOR_BUTTON_HOVERED] = imgui.Vec4(0.6, 0.8, 0.6, 1.0)  # Green hover color
         imgui.set_next_item_width(100)
-        if imgui.button("Save all"):
-            self.save_rgb()
-            self.save_depth()
+        if imgui.button("AutoSave"):
+            self.show_time_selection = True
 
         imgui.same_line()
         imgui.set_next_item_width(100)
         if imgui.button("Save RGB"):
-            self.save_rgb()
+            self.rgb_save_path = self.select_folder()
+            self.save_rgb(self.rgb_save_path)
 
         imgui.same_line()
         imgui.set_next_item_width(100)
         if imgui.button("Save Depth"):
-            self.save_depth()
+            self.depth_save_path = self.select_folder()
+            self.save_depth(self.depth_save_path)
+
+        if self.show_time_selection:
+            imgui.push_item_width(50)
+            
+            if imgui.button("RGB Save Path"):
+                self.rgb_save_path = self.select_folder()
+
+            imgui.same_line()
+            if imgui.button("Depth Save Path"):
+                self.depth_save_path = self.select_folder()
+
+            time_changed, self.time_save = imgui.input_float("Time Selection (s)", self.time_save)
+            if time_changed:
+                self.time_count = time.time() # reset time count if time selection is changed
+
+        if ((time.time() - self.time_count >= self.time_save) and (self.time_save != 0)): # make a loop of autosave
+            self.save_rgb(self.rgb_save_path)
+            self.save_depth(self.depth_save_path)
+            self.time_count = time.time()
 
         imgui.end()
 
