@@ -16,7 +16,7 @@ from libs.shader import *
 from libs.transform import *
 
 from object3D import *
-# from model3D import *
+from model3D import *
 from quad import *
 from vcamera import *
 from sphere import *
@@ -60,6 +60,7 @@ class Viewer:
         self.phong_shader = Shader("shader/phong.vert", "shader/phong.frag")
         self.phongex_shader = Shader("shader/phongex.vert", "shader/phongex.frag")
         self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
+        self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
 
         # Initialize mouse parameters
         self.last_x = width / 2
@@ -191,42 +192,71 @@ class Viewer:
         rgb_image.save(save_path + '/' + file_name)
         print(f"Saved rgb image as {file_name}")
 
-    def save_depth(self, save_path):
+    def visualize_colormap(self):
         # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width + self.rgb_view_width
-        pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE) # return linear depth, not raw depth value
-        # depth_data = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT) # depth value in [0,1]
-        # normalized_depth = depth_data / 65535.0
-        
 
-        # print(depth_data.shape)
-        # Convert the pixels into a numpy array
-        depth_image = np.frombuffer(pixels, dtype=np.uint8).reshape((self.depth_view_height, self.depth_view_width, 3))
-        # import matplotlib.pyplot as plt
-        # plt.imshow(depth_image, cmap='magma')
-        # plt.show()
-
-        # print(depth_image)
-        # print('----------')
-        # print(np.max(depth_image))
-        # print(np.min(depth_image))
-        # print('Depth image: ')
-        # np.savetxt('depth.txt', depth_image[:,:,0])
-        # exit()
+        # Read Pixel using GL_RGB
+        pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
+        depth_image = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_view_height, self.depth_view_width, 3))
         
         # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
         depth_image = np.flipud(depth_image)
 
-        # Convert numpy array (or your image data format) to PIL Image
-        depth_image = Image.fromarray(depth_image)
+        # Get metric depth value for image
+        depth_image = depth_image[:,:,0] # get only 1 channel (gray image)
 
-        # depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
+        # To visualize depth map, normalize it
+        depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
 
-        # magma_map = plt.cm.magma(depth_image) # RGBA color, shape (H,W,4)
+        match self.selected_colormap:
+            case 0:
+                colormap = plt.cm.gray(depth_image)
+            case 1:
+                colormap = plt.cm.plasma(depth_image)
+            case 2:
+                colormap = plt.cm.cividis(depth_image)
+            case 3:
+                colormap = plt.cm.magma(depth_image)
+            case 4:
+                colormap = plt.cm.inferno(depth_image)
+            case 5:
+                colormap = plt.cm.viridis(depth_image)
+        
+        # Extract RGB values (ignore alpha channel)
+        depth_map = (colormap[:, :, :3] * 255).astype(np.uint8)
+        
+        # Create a quad and add texture to it
+        quad = Quad(self.colormap_shader).setup()
+        quad.uma.setup_texture('DepthTexture', depth_map)
 
-        # plt.imshow(magma_map)
-        # plt.show()
 
+    def save_depth(self, save_path):
+        # Create a numpy array to hold the pixel data
+        win_pos_width = self.scene_width + self.rgb_view_width
+
+        # Read Pixel using GL_RGB
+        pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
+        depth_image = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_view_height, self.depth_view_width, 3))
+        
+        # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
+        depth_image = np.flipud(depth_image)
+
+        # Get metric depth value for image
+        depth_image = depth_image[:,:,0] # get only 1 channel (gray image)
+        np.savetxt('depth.txt',depth_image)
+
+        # To visualize depth map, normalize it
+        depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
+        
+        magma_map = plt.cm.magma(depth_image) # RGBA color, shape (H,W,4)
+
+        plt.imshow(magma_map)
+        plt.show()
+
+        # # Convert numpy array (or your image data format) to PIL Image
+        # depth_image = Image.fromarray(depth_image)
+        
         # Create a unique file name using timestamp
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         file_name = f"depth_image_{timestamp}.png"
@@ -234,7 +264,7 @@ class Viewer:
         # Save the image to the selected directory
         depth_image.save(save_path + '/' + file_name)
         print(f"Saved depth image as {file_name}")
-
+    
     def load_texture(self, image_path):
         """Load an image file into a texture for ImGui"""
         image = Image.open(image_path)
@@ -380,6 +410,9 @@ class Viewer:
                 drawable.uma.upload_uniform_scalar1f(self.near, 'near')
                 drawable.uma.upload_uniform_scalar1f(self.far, 'far')
                 drawable.draw()
+
+                # Visualize with chosen colormap
+                self.visualize_colormap()
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
