@@ -2,7 +2,6 @@ from libs.shader import *
 from libs.buffer import *
 from libs import transform as T
 from shape.texture import *
-from shape.mesh import *
 
 import glm
 import numpy as np
@@ -52,19 +51,18 @@ class Mesh:
         # Setup texture
         try:
             if self.material['map_Kd']:
-                texture_path = self.material['map_Kd'].find()
+                texture_path = self.material['map_Kd']
                 if os.path.exists(texture_path):
                     self.diffuse_texture = Texture(self.shader, 'texture_diffuse', 0, texture_path)
                     self.diffuse_texture.load()
-
             if self.material['map_Ka']:
-                texture_path = self.material['map_Ka'].find()
+                texture_path = self.material['map_Ka']
                 if os.path.exists(texture_path):
                     self.ambient_texture = Texture(self.shader, 'texture_ambient', 1, texture_path)
                     self.ambient_texture.load()
 
             if self.material['map_bump']:
-                texture_path = self.material['map_bump'].find()
+                texture_path = self.material['map_bump']
                 if os.path.exists(texture_path):
                     self.bump_texture = Texture(self.shader, 'texture_bump', 2, texture_path)
                     self.bump_texture.load()

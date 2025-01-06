@@ -53,13 +53,14 @@ class Obj:
                 elif prefix == 'v':  # Vertex
                     vertices.append(list(map(float, parts[1:])))
 
-
                 elif prefix == 'vn':  # Vertex normal
                     normals.append(list(map(float, parts[1:])))
 
                 elif prefix == 'vt':  # Texture coordinate
-                    texcoords.append(list(map(float, parts[1:])))
-
+                    if (len(parts) == 3):
+                        texcoords.append(list(map(float, parts[1:])))
+                    elif (len(parts) == 4):
+                        texcoords.append(list(map(float, parts[1:-1])))
 
                 elif prefix == 'usemtl':  # Material
                     material = parts[1]
@@ -70,7 +71,6 @@ class Obj:
                         # Take only the vertex index (before first slash)
                         index = int(vertex.split('/')[0])
                         face.append(index)
-
 
                     # If it's a triangle, add directly
                     if len(face) == 3:
@@ -119,29 +119,88 @@ class Obj:
                 file.write("\n")
 
     def load_materials(self, file_path):
-        obj_file = pywavefront.Wavefront(file_path, create_materials=True)
-
-        # Access materials
         self.materials = {}
-        for name, material in obj_file.materials.items():
-            def trim_list(lst):
-                return lst[:-1] if isinstance(lst, list) and len(lst) == 4 else lst
+        current_material = None
+        
+        # Change from .obj to .mtl
+        file_path = file_path[:-3] + 'mtl'
 
-            self.materials[name] = {
-                'Ns': getattr(material, 'shininess', None),                                 # Specular exponent
-                'Ni': getattr(material, 'optical_density', None),                           # Optical density
-                'd': getattr(material, 'transparency', None),                               # Dissolve
-                'Tr': 1 - getattr(material, 'transparency', 1.0),                           # Transparency (inverse dissolve)
-                'Tf': getattr(material, 'transmission_filter', [1, 1, 1]),                  # Transmission filter
-                'illum': getattr(material, 'illumination_model', None),                     # Illumination model
-                'Ka': trim_list(getattr(material, 'ambient', [0, 0, 0])),                   # Ambient color
-                'Kd': trim_list(getattr(material, 'diffuse', [0, 0, 0])),                   # Diffuse color
-                'Ks': trim_list(getattr(material, 'specular', [0, 0, 0])),                  # Specular color
-                'Ke': trim_list(getattr(material, 'emissive', [0, 0, 0])),                  # Emissive color
-                'map_Ka': getattr(material, 'texture_ambient', None),                       # Ambient texture
-                'map_Kd': getattr(material, 'texture', None),                               # Diffuse texture
-                'map_bump': getattr(material, 'texture_bump', None)                         # Bump map
-            }
+        def parse_vector(values):
+            # Convert space-separated string of numbers into list of floats
+            return [float(x) for x in values.strip().split()]
+        
+        with open(file_path, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                    
+                parts = line.strip().split(maxsplit=1)
+                if len(parts) < 2:
+                    continue
+                    
+                keyword, value = parts
+                
+                if keyword == 'newmtl':
+                    current_material = value
+                    self.materials[current_material] = {
+                        'Ns': None,      # Specular exponent
+                        'Ni': None,      # Optical density
+                        'd': None,       # Dissolve
+                        'Tr': None,      # Transparency
+                        'Tf': None,      # Transmission filter
+                        'illum': None,   # Illumination model
+                        'Ka': None,      # Ambient color
+                        'Kd': None,      # Diffuse color
+                        'Ks': None,      # Specular color
+                        'Ke': None,      # Emissive color
+                        'map_Ka': None,  # Ambient texture
+                        'map_Kd': None,  # Diffuse texture
+                        'map_bump': None # Bump map
+                    }
+                
+                elif current_material is not None:
+                    mat = self.materials[current_material]
+                    
+                    if keyword == 'Ns':
+                        mat['Ns'] = float(value)
+                    elif keyword == 'Ni':
+                        mat['Ni'] = float(value)
+                    elif keyword == 'd':
+                        mat['d'] = float(value)
+                    elif keyword == 'Tr':
+                        mat['Tr'] = float(value)
+                    elif keyword == 'Tf':
+                        mat['Tf'] = parse_vector(value)
+                    elif keyword == 'illum':
+                        mat['illum'] = int(value)
+                    elif keyword == 'Ka':
+                        mat['Ka'] = parse_vector(value)
+                    elif keyword == 'Kd':
+                        mat['Kd'] = parse_vector(value)
+                    elif keyword == 'Ks':
+                        mat['Ks'] = parse_vector(value)
+                    elif keyword == 'Ke':
+                        mat['Ke'] = parse_vector(value)
+                    elif keyword == 'map_Ka':
+                        # Handle potential bump map parameters
+                        parts = value.split()
+                        mat['map_Ka'] = parts[-1]  
+                    elif keyword == 'map_Kd':
+                        parts = value.split()
+                        mat['map_Kd'] = parts[-1]  
+                    elif keyword == 'map_bump':
+                        # Handle bump map with potential -bm parameter
+                        parts = value.split()
+                        if '-bm' in parts:
+                            bm_index = parts.index('-bm')
+                            # Store both the bump multiplier and filename
+                            mat['map_bump'] = {
+                                'multiplier': float(parts[bm_index + 1]),
+                                'filename': parts[-1]
+                            }
+                        else:
+                            mat['map_bump'] = {'filename': parts[-1], 'multiplier': 1.0}
 
         output_file = 'materials.txt'
         with open(output_file, 'w') as f:
@@ -150,6 +209,39 @@ class Obj:
                 for key, value in properties.items():
                     f.write(f"  {key}: {value}\n")
                 f.write("\n")
+
+    # def load_materials(self, file_path):
+    #     obj_file = pywavefront.Wavefront(file_path, create_materials=True)
+
+    #     # Access materials
+    #     self.materials = {}
+    #     for name, material in obj_file.materials.items():
+    #         def trim_list(lst):
+    #             return lst[:-1] if isinstance(lst, list) and len(lst) == 4 else lst
+
+    #         self.materials[name] = {
+    #             'Ns': getattr(material, 'shininess', None),                                 # Specular exponent
+    #             'Ni': getattr(material, 'optical_density', None),                           # Optical density
+    #             'd': getattr(material, 'transparency', None),                               # Dissolve
+    #             'Tr': 1 - getattr(material, 'transparency', 1.0),                           # Transparency (inverse dissolve)
+    #             'Tf': getattr(material, 'transmission_filter', [1, 1, 1]),                  # Transmission filter
+    #             'illum': getattr(material, 'illumination_model', None),                     # Illumination model
+    #             'Ka': trim_list(getattr(material, 'ambient', [0, 0, 0])),                   # Ambient color
+    #             'Kd': trim_list(getattr(material, 'diffuse', [0, 0, 0])),                   # Diffuse color
+    #             'Ks': trim_list(getattr(material, 'specular', [0, 0, 0])),                  # Specular color
+    #             'Ke': trim_list(getattr(material, 'emissive', [0, 0, 0])),                  # Emissive color
+    #             'map_Ka': getattr(material, 'texture_ambient', None),                       # Ambient texture
+    #             'map_Kd': getattr(material, 'texture', None),                               # Diffuse texture
+    #             'map_bump': getattr(material, 'texture_bump', None)                         # Bump map
+    #         }
+
+    #     output_file = 'materials.txt'
+    #     with open(output_file, 'w') as f:
+    #         for material_name, properties in self.materials.items():
+    #             f.write(f"Material: {material_name}\n")
+    #             for key, value in properties.items():
+    #                 f.write(f"  {key}: {value}\n")
+    #             f.write("\n")
 
     def update_shader(self, shader):
         self.shader = shader

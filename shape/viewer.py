@@ -15,8 +15,8 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-# from object3D import *
-from model3D import *
+from object3D import *
+# from model3D import *
 from quad import *
 from vcamera import *
 from sphere import *
@@ -170,7 +170,6 @@ class Viewer:
         return folder_path
     
     def save_rgb(self, save_path):
-
         # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width
         pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
@@ -193,21 +192,40 @@ class Viewer:
         print(f"Saved rgb image as {file_name}")
 
     def save_depth(self, save_path):
-
         # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width + self.rgb_view_width
-        pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
+        pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE) # return linear depth, not raw depth value
+        # depth_data = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT) # depth value in [0,1]
+        # normalized_depth = depth_data / 65535.0
+        
 
+        # print(depth_data.shape)
         # Convert the pixels into a numpy array
         depth_image = np.frombuffer(pixels, dtype=np.uint8).reshape((self.depth_view_height, self.depth_view_width, 3))
-        
+        # import matplotlib.pyplot as plt
+        # plt.imshow(depth_image, cmap='magma')
+        # plt.show()
+
         # print(depth_image)
+        # print('----------')
+        # print(np.max(depth_image))
+        # print(np.min(depth_image))
+        # print('Depth image: ')
+        # np.savetxt('depth.txt', depth_image[:,:,0])
         # exit()
+        
         # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
         depth_image = np.flipud(depth_image)
 
         # Convert numpy array (or your image data format) to PIL Image
         depth_image = Image.fromarray(depth_image)
+
+        # depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
+
+        # magma_map = plt.cm.magma(depth_image) # RGBA color, shape (H,W,4)
+
+        # plt.imshow(magma_map)
+        # plt.show()
 
         # Create a unique file name using timestamp
         timestamp = time.strftime("%Y%m%d-%H%M%S")

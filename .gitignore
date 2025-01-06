@@ -1,0 +1,10 @@
+obj/
+depth_images/
+patch/
+rgb_images/
+*/__pycache__/
+depth.txt
+log.txt
+materials.txt
+obj.txt
+test.txt

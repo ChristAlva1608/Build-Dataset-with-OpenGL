@@ -24,8 +24,6 @@ from quad import *
 from vcamera import *
 from sphere import *
 
-PYTHONPATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.insert(0, PYTHONPATH)
 
 class Viewer:
     def __init__(self, width=1300, height=700):
@@ -58,9 +56,9 @@ class Viewer:
         
         # Initialize shaders
         self.depth_shader = Shader("shader/depth.vert", "shader/depth.frag")
-        self.texture_shader = Shader("shader/texture.vert", "shader/texture.frag")
-        self.main_shader = Shader("shader/phong.vert", "shader/phong.frag")
+        self.phong_shader = Shader("shader/phong.vert", "shader/phong.frag")
         self.phongex_shader = Shader("shader/phongex.vert", "shader/phongex.frag")
+        self.texture_shader = Shader("shader/texture.vert", "shader/texture.frag")
         
         # Initialize mouse parameters
         self.last_x = width / 2
@@ -195,7 +193,7 @@ class Viewer:
         cell_height = right_height // rows
 
         # Define the hemisphere of multi-camera
-        sphere = Sphere(self.main_shader).setup()
+        sphere = Sphere(self.phong_shader).setup()
         # sphere.radius = 4.0
         # sphere.generate_sphere()
 
@@ -265,17 +263,17 @@ class Viewer:
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-            if self.diffuse_changed:
-                for drawable in self.drawables:
-                    drawable.K_materials[0] = self.diffuse
+            # if self.diffuse_changed:
+            #     for drawable in self.drawables:
+            #         drawable.K_materials[0] = self.diffuse
 
-            if self.specular_changed:
-                for drawable in self.drawables:
-                    drawable.K_materials[1] = self.specular
+            # if self.specular_changed:
+            #     for drawable in self.drawables:
+            #         drawable.K_materials[1] = self.specular
 
-            if self.ambient_changed:
-                for drawable in self.drawables:
-                    drawable.K_materials[2] = self.ambient
+            # if self.ambient_changed:
+            #     for drawable in self.drawables:
+            #         drawable.K_materials[2] = self.ambient
 
 
             # if self.multi_camera_option:
@@ -285,11 +283,10 @@ class Viewer:
             if self.single_camera_option:
                 # Normal scene
                 GL.glViewport(0, 0, self.left_width, self.left_height)
-                GL.glUseProgram(self.main_shader.render_idx)
+                GL.glUseProgram(self.phong_shader.render_idx)
 
                 for drawable in self.drawables:
-                    drawable.update_uma(UManager(self.main_shader))
-                    drawable.update_shader(self.main_shader)
+                    drawable.update_shader(self.phong_shader)
                     drawable.setup()
 
                     drawable.model = glm.mat4(1.0)
@@ -304,7 +301,6 @@ class Viewer:
                 GL.glViewport(self.left_width, 0, self.right_width, self.right_height)
                 GL.glUseProgram(self.depth_shader.render_idx)
                 for drawable in self.drawables:
-                    drawable.update_uma(UManager(self.depth_shader))
                     drawable.update_shader(self.depth_shader)
                     drawable.setup()
                     
@@ -467,7 +463,7 @@ class Viewer:
         }
 
         chosen_obj = obj_files[self.selected_obj]
-        model.append(Obj(chosen_obj))
+        model.append(Obj(self.phongex_shader, chosen_obj))
 
         self.add(model)
 

@@ -224,7 +224,7 @@ class Trackball:
         # Create a translation matrix with cameraPos affecting x, y, and z.
         translation_matrix = glm.translate(
             glm.mat4(1.0), 
-            glm.vec3(self.pos2d[0] - cameraPos.x, self.pos2d[1] + cameraPos.y, -self.distance - cameraPos.z)
+            glm.vec3(self.pos2d[0] + cameraPos.x, self.pos2d[1] + cameraPos.y, -self.distance + cameraPos.z)
         )
 
         # Apply rotation and translation together for the final view matrix.

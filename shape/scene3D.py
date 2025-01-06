@@ -9,29 +9,29 @@ import trimesh
 import os
 
 class Scene:
-    def __init__(self, shader, file_path):
+    def __init__(self, shader, scene_path, mtl_path):
         self.vao = VAO()
         self.shader = shader
-        self.uma = None
+        self.uma = UManager(self.shader)
         self.meshes = []
         self.materials = {}
         self.textures_loaded = []
-        self.load_obj(file_path)
-        # self.vertices, self.normals, self.texcoords, self.indices, self.materials = self.load_obj(file_path)
+        self.load_obj(scene_path)
+        # self.vertices, self.normals, self.texcoords, self.indices, self.materials = self.load_obj(scene_path)
 
-    def load_obj(self, file_path):
+    def load_obj(self, scene_path):
         # Load the OBJ file
-        scene = trimesh.load(file_path, force='scene')
+        scene = trimesh.load(scene_path, force='scene')
         
         # Check if it's a Scene with multiple meshes
         if isinstance(scene, trimesh.Scene):
             for name, mesh in scene.geometry.items():
                 print("name: ", name)
-                self.meshes.append(self.process_mesh(mesh, scene))
+                self.meshes.append(self.process_mesh(mesh))
         print("length of meshes: ", len(self.meshes))
         # exit()
 
-    def process_mesh(self, mesh, scene):
+    def process_mesh(self, mesh):
         vertices = mesh.vertices
         normals = mesh.vertex_normals
         indices = mesh.faces
@@ -46,13 +46,15 @@ class Scene:
         texture.load(material.image)
 
         print("type of shader", type(self.shader))
-        return Mesh(self.shader, vertices, normals, indices, texcoords, texture)
+        return Mesh(self.shader, vertices, normals, indices, texcoords, texture).setup()
 
     def update_shader(self, shader):
         self.shader = shader
-
-    def update_uma(self, uma):
-        self.uma = uma
+        self.uma = UManager(self.shader)
+        
+        for mesh in self.meshes:
+            mesh.update_shader(self.shader)
+            mesh.setup()
 
     def draw(self):
         for i in range(len(self.meshes)):

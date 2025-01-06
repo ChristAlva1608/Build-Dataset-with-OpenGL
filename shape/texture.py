@@ -17,12 +17,12 @@ class Texture:
             image = Image.open(self.path)
             img_data = np.array(image)
 
-            print(f"Texture data shape: {img_data.shape}, dtype: {img_data.dtype}")
+            # print(f"Texture data shape: {img_data.shape}, dtype: {img_data.dtype}")
 
             # Convert to float32 and normalize if needed
             if img_data.dtype != np.float32:
                 img_data = img_data.astype(np.float32) / 255.0
-                print(img_data)
+                # print(img_data)
 
             # Determine format based on image channels
             if len(img_data.shape) == 2:  # Grayscale
