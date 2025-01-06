@@ -72,7 +72,10 @@ class UManager(object):
     
     """
     def setup_texture(self, sampler_name, image_file):
-        rgb_image = UManager.load_texture(image_file)
+        if not isinstance(image_file, np.ndarray):
+            rgb_image = UManager.load_texture(image_file)
+        else:
+            rgb_image = image_file # pass an ndarray image
 
         GL.glUseProgram(self.shader.render_idx) # must call before calling to GL.glUniform1i
         texture_idx = GL.glGenTextures(1)
@@ -91,6 +94,8 @@ class UManager(object):
                         0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, rgb_image)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+
+        return texture_idx
 
     def upload_uniform_matrix4fv(self, matrix, name, transpose=True):
         GL.glUseProgram(self.shader.render_idx)

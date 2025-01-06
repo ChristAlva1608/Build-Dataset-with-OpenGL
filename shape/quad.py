@@ -23,6 +23,7 @@ class Quad:
         self.shader = shader
         self.uma = UManager(self.shader)
         self.vao = VAO()
+        self.texture_id = None  # Placeholder for the depth or texture ID
 
     def setup(self):
         """
@@ -49,8 +50,9 @@ class Quad:
         GL.glUseProgram(self.shader.render_idx)
 
         # Bind the texture
-        GL.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture_id)
+        if self.texture_id:
+            GL.glActiveTexture(GL.GL_TEXTURE0)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture_id)
 
         # Upload matrices to shader
         modelview = self.view * self.model 

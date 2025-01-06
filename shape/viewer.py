@@ -228,7 +228,11 @@ class Viewer:
         
         # Create a quad and add texture to it
         quad = Quad(self.colormap_shader).setup()
-        quad.uma.setup_texture('DepthTexture', depth_map)
+        quad.texture_id = quad.uma.setup_texture('DepthTexture', depth_map)
+
+        # Set projection matrix to cover the whole viewport
+        quad.projection = glm.ortho(0.0, self.depth_view_width, 0.0, self.depth_view_height)
+        quad.draw()
 
 
     def save_depth(self, save_path):
