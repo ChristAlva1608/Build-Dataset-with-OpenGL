@@ -8,10 +8,10 @@ import os
 import pywavefront
 
 class Obj:
-    def __init__(self, file_path):
+    def __init__(self, shader, file_path):
         self.vao = VAO()
-        self.shader = None
-        self.uma = None
+        self.shader = shader
+        self.uma = UManager(self.shader)
         self.K_materials = np.zeros(shape=(3,))
         self.shininess = 0.0
         self.materials = {}
@@ -136,9 +136,7 @@ class Obj:
 
     def update_shader(self, shader):
         self.shader = shader
-
-    def update_uma(self, uma):
-        self.uma = uma
+        self.uma = UManager(self.shader)
 
     def setup(self):
         self.vao.add_vbo(0, self.vertices, ncomponents=3, stride=0, offset=None)
@@ -150,7 +148,6 @@ class Obj:
 
         GL.glUseProgram(self.shader.render_idx)
 
-        
         camera_pos = glm.vec3(0.0, 0.0, 0.0)
         camera_target = glm.vec3(0.0, 0.0, 0.0)
         up_vector = glm.vec3(0.0, 1.0, 0.0)
