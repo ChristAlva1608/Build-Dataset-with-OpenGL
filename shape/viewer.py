@@ -16,10 +16,11 @@ from libs.shader import *
 from libs.transform import *
 
 from object3D import *
-from model3D import *
+# from model3D import *
 from quad import *
 from vcamera import *
 from sphere import *
+from colormap import *
 
 
 class Viewer:
@@ -192,48 +193,15 @@ class Viewer:
         rgb_image.save(save_path + '/' + file_name)
         print(f"Saved rgb image as {file_name}")
 
-    def visualize_colormap(self):
-        # Create a numpy array to hold the pixel data
-        win_pos_width = self.scene_width + self.rgb_view_width
+    def pass_magma_data(self, shader):
+        # Flatten the array into 1D
+        array_1d = magma_data.flatten()
 
-        # Read Pixel using GL_RGB
-        pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
-        depth_image = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_view_height, self.depth_view_width, 3))
-        
-        # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
-        depth_image = np.flipud(depth_image)
+        GL.glUseProgram(shader.render_idx)
+        location = GL.glGetUniformLocation(shader.render_idx, "magma_data")
 
-        # Get metric depth value for image
-        depth_image = depth_image[:,:,0] # get only 1 channel (gray image)
-
-        # To visualize depth map, normalize it
-        depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
-
-        match self.selected_colormap:
-            case 0:
-                colormap = plt.cm.gray(depth_image)
-            case 1:
-                colormap = plt.cm.plasma(depth_image)
-            case 2:
-                colormap = plt.cm.cividis(depth_image)
-            case 3:
-                colormap = plt.cm.magma(depth_image)
-            case 4:
-                colormap = plt.cm.inferno(depth_image)
-            case 5:
-                colormap = plt.cm.viridis(depth_image)
-        
-        # Extract RGB values (ignore alpha channel)
-        depth_map = (colormap[:, :, :3] * 255).astype(np.uint8)
-        
-        # Create a quad and add texture to it
-        quad = Quad(self.colormap_shader).setup()
-        quad.texture_id = quad.uma.setup_texture('DepthTexture', depth_map)
-
-        # Set projection matrix to cover the whole viewport
-        quad.projection = glm.ortho(0.0, self.depth_view_width, 0.0, self.depth_view_height)
-        quad.draw()
-
+        # Pass the 1D array to the shader
+        GL.glUniform1fv(location, len(array_1d), array_1d)
 
     def save_depth(self, save_path):
         # Create a numpy array to hold the pixel data
@@ -242,7 +210,7 @@ class Viewer:
         # Read Pixel using GL_RGB
         pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
         depth_image = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_view_height, self.depth_view_width, 3))
-        
+
         # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
         depth_image = np.flipud(depth_image)
 
@@ -252,11 +220,6 @@ class Viewer:
 
         # To visualize depth map, normalize it
         depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
-        
-        magma_map = plt.cm.magma(depth_image) # RGBA color, shape (H,W,4)
-
-        plt.imshow(magma_map)
-        plt.show()
 
         # # Convert numpy array (or your image data format) to PIL Image
         # depth_image = Image.fromarray(depth_image)
@@ -416,7 +379,8 @@ class Viewer:
                 drawable.draw()
 
                 # Visualize with chosen colormap
-                self.visualize_colormap()
+                if self.selected_colormap == 1:
+                    self.pass_magma_data(self.depth_shader)
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
@@ -618,20 +582,20 @@ class Viewer:
         imgui.set_cursor_pos_x(text_pos)  
         imgui.text('Colormaps for Depth Map')
 
+        # Get the item spacing from the current style
+        style = imgui.get_style()
+        spacing = style.item_spacing.x
+
+        # Define button widths to split the window into two halves
+        button_width = window_width / 2 - spacing / 2
+
         # Define colormap options
-        colormap_buttons = ["Greys", "Plasma", "Cividis", "Magma", "Inferno", "Viridis"]
-
-        # Create a 2-column layout
-        imgui.columns(2, "colormap_buttons")  
-        for i, colormap in enumerate(colormap_buttons):
-            if imgui.button(colormap, width=-1):  
-                self.selected_colormap = i  
-
-            if (i + 1) % 3 == 0:  # After every 3rd button, move to the next column (3 rows)
-                imgui.next_column()
-
-        imgui.columns(1)  # Reset to single column layout
-        imgui.spacing()
+        if imgui.button('Gray', width=button_width):
+            self.selected_colormap = 0
+        
+        imgui.same_line()
+        if imgui.button('Magma', width=button_width):
+            self.selected_colormap = 1
 
         # imgui.set_next_item_width(100)
         self.near_changed, near_value = imgui.slider_float("Near",

@@ -31,8 +31,8 @@ class Quad:
         Optionally bind a depth texture.
         """
         # Add VBO for vertex positions and texture coordinates
-        self.vao.add_vbo(0, self.vertices, ncomponents=2, stride=4 * self.vertices.itemsize, offset=0)
-        self.vao.add_vbo(1, self.vertices, ncomponents=2, stride=4 * self.vertices.itemsize, offset=2 * self.vertices.itemsize)
+        self.vao.add_vbo(0, self.vertices, ncomponents=3, stride=5 * self.vertices.itemsize, offset=0)
+        self.vao.add_vbo(1, self.vertices, ncomponents=2, stride=5 * self.vertices.itemsize, offset=3 * self.vertices.itemsize)
 
         # Add EBO for indices
         self.vao.add_ebo(self.indices)

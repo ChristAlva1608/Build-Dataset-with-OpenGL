@@ -2,6 +2,7 @@ obj/
 depth_images/
 patch/
 rgb_images/
+__pycache__/
 */__pycache__/
 depth.txt
 log.txt
