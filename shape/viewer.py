@@ -17,8 +17,8 @@ from libs.transform import *
 
 # from object3D import *
 from model3D import *
-from object3D_v1 import *
-from object3D_v2 import *
+from object3D_v3 import *
+# from object3D_v2 import *
 from quad import *
 from vcamera import *
 from sphere import *
@@ -328,6 +328,17 @@ class Viewer:
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
+            # win_size = glfw.get_window_size(self.win)
+            # self.model=glm.mat4(1.0)
+            # self.view = self.trackball.view_matrix()
+            # self.projection = self.trackball.projection_matrix(win_size)
+
+            # # draw our scene objects
+            # for drawable in self.drawables:
+            #     drawable.setup()
+            #     drawable.draw(self.model, self.view, self.projection)
+
+
             # Viewport for RGB Scene
             win_pos_width = self.scene_width
             win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
@@ -345,13 +356,13 @@ class Viewer:
                 drawable.update_shader(self.simple_texture_shader)
                 drawable.setup()
 
-                drawable.model = glm.mat4(1.0)
-                drawable.view = self.trackball.view_matrix2(self.cameraPos)
+                model = glm.mat4(1.0)
+                view = self.trackball.view_matrix2(self.cameraPos)
                 # drawable.view = self.trackball.view_matrix()
-                drawable.projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 1000.0)
+                projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 1000.0)
 
                 # Normal rendering
-                drawable.draw()
+                drawable.draw(model, view, projection)
 
             # Viewport for Depth Scene
             win_pos_width = self.scene_width + self.rgb_view_width
@@ -371,15 +382,15 @@ class Viewer:
                 # update depth map color
                 drawable.uma.upload_uniform_scalar1i(self.selected_colormap, 'colormap_selection')
 
-                drawable.model = glm.mat4(1.0)
-                drawable.view = self.trackball.view_matrix2(self.cameraPos)
+                model = glm.mat4(1.0)
+                view = self.trackball.view_matrix2(self.cameraPos)
                 # drawable.view = self.trackball.view_matrix()
-                drawable.projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, 0.1, 1000.0)
+                projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, 0.1, 1000.0)
 
                 # Depth map rendering
                 drawable.uma.upload_uniform_scalar1f(self.near, 'near')
                 drawable.uma.upload_uniform_scalar1f(self.far, 'far')
-                drawable.draw()
+                drawable.draw(model, view, projection)
 
                 # Visualize with chosen colormap
                 if self.selected_colormap == 1:
@@ -681,10 +692,10 @@ class Viewer:
         self.drawables.clear()
 
         if self.selected_scene != "No file selected":
-            model.append(Obj(self.texture_shader, self.selected_scene))
+            model.append(Obj(self.simple_texture_shader, self.selected_scene))
 
         if self.selected_obj != "No file selected":
-            model.append(Obj(self.texture_shader, self.selected_obj))
+            model.append(Obj(self.simple_texture_shader, self.selected_obj))
 
         self.add(model)
 
