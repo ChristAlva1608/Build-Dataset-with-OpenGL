@@ -1,24 +1,51 @@
-import pywavefront.material
-import pywavefront.wavefront
 from libs.shader import *
 from libs.buffer import *
 from libs import transform as T
 import glm
 import numpy as np
-import trimesh
-import pywavefront
 from mesh import *
 
 class Obj:
     def __init__(self, shader, file_path):
-        self.vao = VAO()
         self.shader = shader
-        self.uma = UManager(self.shader)
+        self.uma = UManager(shader)
         self.materials = {}
         self.meshes = {}
+        self.file_path = file_path
         self.load_materials(file_path)
         self.parse_obj_file(file_path)
-
+        self.model = None
+        self.view = None
+        self.projection = None
+    
+    def process_mesh_data(self, vertices, normals, texcoords, faces):
+        """Process mesh data to create indexed arrays"""
+        final_vertices = []
+        final_normals = []
+        final_texcoords = []
+        final_indices = []
+        
+        # Create a vertex data dictionary to handle unique combinations
+        vertex_dict = {}
+        current_index = 0
+        
+        for face in faces:
+            v_idx, vt_idx, vn_idx = face
+                
+            # Create a unique key for this vertex combination
+            key = (v_idx, vt_idx, vn_idx)
+            
+            if key not in vertex_dict:
+                vertex_dict[key] = current_index
+                final_vertices.append(vertices[v_idx])
+                final_texcoords.append(texcoords[vt_idx])
+                final_normals.append(normals[vn_idx])
+                current_index += 1
+            
+            final_indices.append(vertex_dict[key])
+        
+        return (final_vertices, final_normals, final_texcoords, final_indices)
+    
     def parse_obj_file(self, file_path):
         current_mesh = None
         vertices = []
@@ -26,7 +53,7 @@ class Obj:
         texcoords = []
         faces = []
         material = None
-
+        count = 0
         with open(file_path, 'r') as file:
             for line in file:
                 line = line.strip()
@@ -37,7 +64,20 @@ class Obj:
 
                 if line.startswith('#') and len(parts)>1:
                     if parts[1] == 'object' and current_mesh:  # Store the previous mesh
-                        self.meshes[current_mesh] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(faces), self.materials[material]).setup()
+                        
+                        count += 1
+                        if count != 1:
+                            break
+
+                        # print('vertices:', vertices)
+                        # print('normals:', normals)
+                        # print('texcoords:', texcoords)
+                        # print('faces:', faces)
+                        # print('material:', self.materials[material])
+
+                        # faces = list(map(lambda x: x - 1, faces)) # substract for starting index 0
+                        vertices, normals, texcoords, indices = self.process_mesh_data(vertices, normals, texcoords, faces) # create a single index for each vertex
+                        self.meshes[current_mesh] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(indices), self.materials[material]).setup()
                         vertices = []
                         normals = []
                         texcoords = []
@@ -69,8 +109,7 @@ class Obj:
                     face = []
                     for vertex in parts[1:]:
                         # Take only the vertex index (before first slash)
-                        index = int(vertex.split('/')[0])
-                        face.append(index)
+                        face.append(list(map(lambda x: int(x)-1, vertex.split('/'))))  # [[1,1,1],[2,2,2],[3,3,3]]
 
                     # If it's a triangle, add directly
                     if len(face) == 3:
@@ -78,14 +117,15 @@ class Obj:
 
                     # If it's a quad, triangulate it into two triangles
                     elif len(face) == 4:
-                        # First triangle: vertices 0,1,2
+                        # First triangle: vertices 0,1,2 
                         faces.extend([face[0], face[1], face[2]])
                         # Second triangle: vertices 0,2,3
                         faces.extend([face[0], face[2], face[3]])
 
         # Store the last mesh
-        if current_mesh:
-            self.meshes[current_mesh] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(faces), self.materials[material]).setup()
+        # if current_mesh:
+        #     print(f'Current mesh: {current_mesh}')
+        #     self.meshes[current_mesh] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(faces), self.materials[material]).setup()
 
         with open('obj.txt', 'w') as file:
             for mesh_name, mesh_data in self.meshes.items():
@@ -154,8 +194,9 @@ class Obj:
                         'Kd': None,      # Diffuse color
                         'Ks': None,      # Specular color
                         'Ke': None,      # Emissive color
-                        'map_Ka': None,  # Ambient texture
                         'map_Kd': None,  # Diffuse texture
+                        'map_Ks': None,  # Specular texture
+                        'map_Ka': None,  # Ambient texture
                         'map_bump': None # Bump map
                     }
                 
@@ -174,21 +215,23 @@ class Obj:
                         mat['Tf'] = parse_vector(value)
                     elif keyword == 'illum':
                         mat['illum'] = int(value)
-                    elif keyword == 'Ka':
-                        mat['Ka'] = parse_vector(value)
                     elif keyword == 'Kd':
                         mat['Kd'] = parse_vector(value)
                     elif keyword == 'Ks':
                         mat['Ks'] = parse_vector(value)
+                    elif keyword == 'Ka':
+                        mat['Ka'] = parse_vector(value)
                     elif keyword == 'Ke':
                         mat['Ke'] = parse_vector(value)
-                    elif keyword == 'map_Ka':
-                        # Handle potential bump map parameters
-                        parts = value.split()
-                        mat['map_Ka'] = parts[-1]  
                     elif keyword == 'map_Kd':
                         parts = value.split()
-                        mat['map_Kd'] = parts[-1]  
+                        mat['map_Kd'] = parts[-1]
+                    elif keyword == 'map_Ks':
+                        parts = value.split()
+                        mat['map_Ks'] = parts[-1]
+                    elif keyword == 'map_Ka':
+                        parts = value.split()
+                        mat['map_Ka'] = parts[-1]  
                     elif keyword == 'map_bump':
                         # Handle bump map with potential -bm parameter
                         parts = value.split()
@@ -243,10 +286,13 @@ class Obj:
     #                 f.write(f"  {key}: {value}\n")
     #             f.write("\n")
 
+    def setup(self):
+        return self
+    
     def update_shader(self, shader):
-        self.shader = shader
-        self.uma = UManager(self.shader)
+        for mesh_name, mesh in self.meshes.items():
+            mesh.update_shader(shader)
 
     def draw(self):
         for mesh_name, mesh in self.meshes.items():
-            mesh.draw()
+            mesh.draw(self.model, self.view, self.projection)
