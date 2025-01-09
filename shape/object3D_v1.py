@@ -4,6 +4,7 @@ from libs import transform as T
 import glm
 import numpy as np
 from shape.mesh3d import *
+import trimesh
 
 class Obj:
     def __init__(self, shader, file_path):
@@ -13,11 +14,59 @@ class Obj:
         self.meshes = {}
         self.file_path = file_path
         self.load_materials(file_path)
-        self.parse_obj_file(file_path)
+        self.load_obj(file_path)
         self.model = None
         self.view = None
         self.projection = None
     
+    def load_obj(self, file_path):
+        # Load the .obj file
+        scene = trimesh.load(file_path, force="scene")
+
+        # Check if it's a scene (multiple meshes)
+        if isinstance(scene, trimesh.Scene):
+            print(f"Found {len(scene.geometry)} meshes in the OBJ file.")
+            
+            # Iterate through each mesh
+            for name, mesh in scene.geometry.items():
+                if mesh.visual is not None:
+                    print(type(mesh.visual))
+                print(f"Mesh name: {name}")
+                # Extract vertex data
+                vertices = mesh.vertices
+                # print(f"Vertices:\n{vertices}")
+                
+                # Extract face data
+                faces = mesh.faces
+                # print(f"Faces:\n{faces}")
+                
+                # Extract normals
+                if mesh.vertex_normals is not None:
+                    normals = mesh.vertex_normals
+                    # print(f"Normals:\n{normals}")
+                
+                # Extract texture coordinates (if available)
+
+                # if isinstance(mesh.visual, trimesh.visual.TextureVisuals):
+                #     texcoords = mesh.visual.uv
+
+                texcoords = None
+                if mesh.visual.uv is not None:
+                    texcoords = mesh.visual.uv
+                    print(f"Texture Coordinates:\n{texcoords}")
+                else:
+                    print('texcoords is None')
+                    print('---------')
+                if texcoords is not None:
+                    self.meshes[name] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(faces), self.materials[name]).setup()
+        else:
+            # Single mesh case
+            print("The OBJ file contains a single mesh.")
+            vertices = scene.vertices
+            faces = scene.faces
+            print(f"Vertices:\n{vertices}")
+            print(f"Faces:\n{faces}")
+
     def process_mesh_data(self, vertices, normals, texcoords, faces):
         """Process mesh data to create indexed arrays"""
         final_vertices = []

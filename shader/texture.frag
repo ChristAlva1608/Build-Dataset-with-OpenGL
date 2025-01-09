@@ -2,7 +2,6 @@
 
 precision mediump float;
 in vec3 vert_pos;       // Vertex position
-in vec3 color_interp;
 in vec3 normal_interp;  // Surface normal
 in vec2 texcoord_interp;
 
@@ -14,10 +13,10 @@ uniform float shininess; // Shininess
 uniform vec3 light_pos; // Light position
 out vec4 fragColor;
 
-uniform sampler2D texture_diffuse;
 uniform sampler2D texture_ambient;
+uniform sampler2D texture_diffuse;
+uniform sampler2D texture_specular;
 uniform sampler2D texture_bump;
-uniform int selected_texture;
 
 void main() {
     vec3 N = normalize(normal_interp);
@@ -33,16 +32,16 @@ void main() {
     vec3 rgb = matrixCompMult(K_materials, I_light) * g; // +  colorInterp;
 
     fragColor = vec4(rgb, 1.0);
-    vec4 color_interp4 = vec4(color_interp, 1.0);
-    float color_factor = 0.0;
-    float texture_factor = 1.0 - (color_factor + phong_factor);
+    // float phong_factor = 0.0;
+    float texture_factor = 1.0 - phong_factor;
 
-    vec4 diffuseColor = texture(texture_diffuse, texcoord_interp);
     vec4 ambientColor = texture(texture_ambient, texcoord_interp);
+    vec4 diffuseColor = texture(texture_diffuse, texcoord_interp);
+    vec4 specularColor = texture(texture_specular, texcoord_interp);
     vec4 bumpColor = texture(texture_bump, texcoord_interp);
 
     // Combine the textures
-    vec4 texture_color = diffuseColor * 0.8 + ambientColor * 0.2; // Example blend
+    vec4 texture_color = diffuseColor * 0.8 + ambientColor * 0.1 + specularColor * 0.1; // Example blend
 
-    fragColor = color_factor*color_interp4 + phong_factor*fragColor + texture_factor*texture_color;
+    fragColor = phong_factor*fragColor + texture_factor*diffuseColor;
 }

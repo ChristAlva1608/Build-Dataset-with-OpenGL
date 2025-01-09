@@ -12,16 +12,14 @@ class Obj:
         self.vao = VAO()
         self.shader = shader
         self.uma = UManager(self.shader)
-        self.K_materials = np.zeros(shape=(3,))
-        self.shininess = 0.0
-        self.materials = {}
+        self.materials = self.load_materials(file_path)
         self.vertices, self.normals, self.texcoords, self.indices = self.load_obj(file_path)
 
-    def process_mesh_data(self, vertices, texcoords, normals, faces):
+    def process_mesh_data(self, vertices, normals, texcoords, faces):
         """Process mesh data to create indexed arrays"""
         final_vertices = []
-        final_texcoords = []
         final_normals = []
+        final_texcoords = []
         final_indices = []
         
         # Create a vertex data dictionary to handle unique combinations
@@ -61,10 +59,105 @@ class Obj:
                 np.array(final_texcoords, dtype=np.float32) if final_texcoords else None,
                 np.array(final_indices, dtype=np.uint32))
     
+    def load_materials(self, file_path):
+        self.materials = {}
+        current_material = None
+        
+        # Change from .obj to .mtl
+        file_path = file_path[:-3] + 'mtl'
+
+        def parse_vector(values):
+            # Convert space-separated string of numbers into list of floats
+            return [float(x) for x in values.strip().split()]
+        
+        with open(file_path, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                    
+                parts = line.strip().split(maxsplit=1)
+                if len(parts) < 2:
+                    continue
+                    
+                keyword, value = parts
+                
+                if keyword == 'newmtl':
+                    current_material = value
+                    self.materials[current_material] = {
+                        'Ns': None,      # Specular exponent
+                        'Ni': None,      # Optical density
+                        'd': None,       # Dissolve
+                        'Tr': None,      # Transparency
+                        'Tf': None,      # Transmission filter
+                        'illum': None,   # Illumination model
+                        'Ka': None,      # Ambient color
+                        'Kd': None,      # Diffuse color
+                        'Ks': None,      # Specular color
+                        'Ke': None,      # Emissive color
+                        'map_Kd': None,  # Diffuse texture
+                        'map_Ks': None,  # Specular texture
+                        'map_Ka': None,  # Ambient texture
+                        'map_bump': None # Bump map
+                    }
+                
+                elif current_material is not None:
+                    mat = self.materials[current_material]
+                    
+                    if keyword == 'Ns':
+                        mat['Ns'] = float(value)
+                    elif keyword == 'Ni':
+                        mat['Ni'] = float(value)
+                    elif keyword == 'd':
+                        mat['d'] = float(value)
+                    elif keyword == 'Tr':
+                        mat['Tr'] = float(value)
+                    elif keyword == 'Tf':
+                        mat['Tf'] = parse_vector(value)
+                    elif keyword == 'illum':
+                        mat['illum'] = int(value)
+                    elif keyword == 'Kd':
+                        mat['Kd'] = parse_vector(value)
+                    elif keyword == 'Ks':
+                        mat['Ks'] = parse_vector(value)
+                    elif keyword == 'Ka':
+                        mat['Ka'] = parse_vector(value)
+                    elif keyword == 'Ke':
+                        mat['Ke'] = parse_vector(value)
+                    elif keyword == 'map_Kd':
+                        parts = value.split()
+                        mat['map_Kd'] = parts[-1]
+                    elif keyword == 'map_Ks':
+                        parts = value.split()
+                        mat['map_Ks'] = parts[-1]
+                    elif keyword == 'map_Ka':
+                        parts = value.split()
+                        mat['map_Ka'] = parts[-1]  
+                    elif keyword == 'map_bump':
+                        # Handle bump map with potential -bm parameter
+                        parts = value.split()
+                        if '-bm' in parts:
+                            bm_index = parts.index('-bm')
+                            # Store both the bump multiplier and filename
+                            mat['map_bump'] = {
+                                'multiplier': float(parts[bm_index + 1]),
+                                'filename': parts[-1]
+                            }
+                        else:
+                            mat['map_bump'] = {'filename': parts[-1], 'multiplier': 1.0}
+
+        output_file = 'materials.txt'
+        with open(output_file, 'w') as f:
+            for material_name, properties in self.materials.items():
+                f.write(f"Material: {material_name}\n")
+                for key, value in properties.items():
+                    f.write(f"  {key}: {value}\n")
+                f.write("\n")
+
     def parse_obj_file(self, file_path):
         vertices = []
-        texcoords = []
         normals = []
+        texcoords = []
         faces = []
         
         with open(file_path, 'r') as f:
@@ -98,7 +191,7 @@ class Obj:
                             
                     faces.append((face_vertices, face_texcoords, face_normals))
         
-        return np.array(vertices), np.array(texcoords), np.array(normals), faces
+        return np.array(vertices), np.array(normals), np.array(texcoords), faces
 
     def load_obj(self, file_path):
         try:
@@ -110,27 +203,30 @@ class Obj:
             vertices = scene.vertices.astype(np.float32)
             normals = scene.vertex_normals.astype(np.float32)
             indices = scene.faces.astype(np.uint32)
-            
+
             # Try to get texture coordinates from visual
             texcoords = None
             if hasattr(scene.visual, 'uv') and scene.visual.uv is not None:
+                print('texcoord found')
                 texcoords = scene.visual.uv.astype(np.float32)
+                print(type(scene.visual))
             
             # If no texture coordinates found in visual, try parsing the OBJ file directly
             if texcoords is None:
-                raw_vertices, raw_texcoords, raw_normals, faces = self.parse_obj_file(file_path)
+                print('texcoord not found')
+                raw_vertices, raw_normals, raw_texcoords, faces = self.parse_obj_file(file_path)
                 if len(raw_texcoords) > 0:  # If we found texture coordinates
-                    vertices, texcoords, normals, indices = self.process_mesh_data(
-                        raw_vertices, raw_texcoords, raw_normals, faces)
+                    vertices, normals, texcoords, indices = self.process_mesh_data(
+                        raw_vertices, raw_normals, raw_texcoords, faces)
             
             return vertices, normals, texcoords, indices
             
         except Exception as e:
             print(f"Error loading OBJ file: {e}")
             # Fallback to direct OBJ parsing if trimesh fails
-            raw_vertices, raw_texcoords, raw_normals, faces = self.parse_obj_file(file_path)
-            vertices, texcoords, normals, indices = self.process_mesh_data(
-                raw_vertices, raw_texcoords, raw_normals, faces)
+            raw_vertices, raw_normals, raw_texcoords, faces = self.parse_obj_file(file_path)
+            vertices, normals, texcoords, indices = self.process_mesh_data(
+                raw_vertices, raw_normals, raw_texcoords, faces)
             
             return vertices, normals, texcoords, indices
 
@@ -139,23 +235,30 @@ class Obj:
         self.uma = UManager(self.shader)
 
     def setup(self):
+        # print('vertices: ', self.vertices[0])
+        # print('normals: ', self.normals[0])
+        # print('texcoords: ', self.texcoords[0])
+        # exit()
         self.vao.add_vbo(0, self.vertices, ncomponents=3, stride=0, offset=None)
         if self.normals is not None:
             self.vao.add_vbo(2, self.normals, ncomponents=3, stride=0, offset=None)
-        if self.texcoords is not None:
-            self.vao.add_vbo(1, self.texcoords, ncomponents=2, stride=0, offset=None)
+        # if self.texcoords is not None:
+        #     self.vao.add_vbo(2, self.texcoords, ncomponents=2, stride=0, offset=None)
         self.vao.add_ebo(self.indices)
 
         GL.glUseProgram(self.shader.render_idx)
+
+        self.uma.setup_texture('texture_diffuse', 'patch/textured/image/ledinh.jpeg')
+        
+        self.model = glm.mat4(1.0)
 
         camera_pos = glm.vec3(0.0, 0.0, 0.0)
         camera_target = glm.vec3(0.0, 0.0, 0.0)
         up_vector = glm.vec3(0.0, 1.0, 0.0)
         
-        self.model = glm.mat4(1.0)
-        glm.lookAt(glm.vec3(0, 0, 50), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
+        # glm.lookAt(glm.vec3(0, 0, 50), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
         self.view = glm.lookAt(camera_pos, camera_target, up_vector)
-        self.projection = glm.perspective(glm.radians(45.0), 1200.0 / 800.0, 0.1, 100.0)
+        self.projection = glm.perspective(glm.radians(45.0), 1400.0 / 700.0, 0.1, 100.0)
 
         I_light = np.array([
             [0.9, 0.4, 0.6],
@@ -167,27 +270,27 @@ class Obj:
         self.uma.upload_uniform_matrix3fv(I_light, 'I_light', False)
         self.uma.upload_uniform_vector3fv(light_pos, 'light_pos')
 
-        if self.materials:
-            first_material = next(iter(self.materials.values()))
-            self.K_materials = np.array([
-                first_material['Kd'],
-                first_material['Ks'],
-                first_material['Ka'],
-            ], dtype=np.float32)
+        # if self.materials:
+        #     first_material = next(iter(self.materials.values()))
+        #     self.K_materials = np.array([
+        #         first_material['Kd'],
+        #         first_material['Ks'],
+        #         first_material['Ka'],
+        #     ], dtype=np.float32)
             
-            self.shininess = first_material['Ns']
+        #     self.shininess = first_material['Ns']
             
-            # Upload texture flag if material has a texture
-            has_texture = 1 if first_material.get('map_Kd') else 0
-            self.uma.upload_uniform_scalar1i(has_texture, 'has_texture')
-        else:
-            self.K_materials = np.array([
-                [0.6, 0.4, 0.7],
-                [0.6, 0.4, 0.7],
-                [0.6, 0.4, 0.7],
-            ], dtype=np.float32)
-            self.shininess = 100.0
-            self.uma.upload_uniform_scalar1i(0, 'has_texture')
+        #     # Upload texture flag if material has a texture
+        #     has_texture = 1 if first_material.get('map_Kd') else 0
+        #     self.uma.upload_uniform_scalar1i(has_texture, 'has_texture')
+        # else:
+        self.K_materials = np.array([
+            [0.6, 0.4, 0.7],
+            [0.6, 0.4, 0.7],
+            [0.6, 0.4, 0.7],
+        ], dtype=np.float32)
+        self.shininess = 100.0
+        # self.uma.upload_uniform_scalar1i(0, 'has_texture')
 
         self.uma.upload_uniform_matrix3fv(self.K_materials, 'K_materials', False)
         self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')

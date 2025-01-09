@@ -15,8 +15,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from object3D import *
-# from model3D import *
+# from object3D import *
+from model3D import *
+from object3D_v1 import *
+from object3D_v2 import *
 from quad import *
 from vcamera import *
 from sphere import *
@@ -62,6 +64,7 @@ class Viewer:
         self.phongex_shader = Shader("shader/phongex.vert", "shader/phongex.frag")
         self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
         self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
+        self.simple_texture_shader = Shader('shader/simple_texture.vert', 'shader/simple_texture.frag')
 
         # Initialize mouse parameters
         self.last_x = width / 2
@@ -335,11 +338,11 @@ class Viewer:
             GL.glClearColor(*self.bg_colors, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-            GL.glUseProgram(self.phong_shader.render_idx)
+            GL.glUseProgram(self.simple_texture_shader.render_idx)
 
             for drawable in self.drawables:
                 # update shader
-                drawable.update_shader(self.phong_shader)
+                drawable.update_shader(self.simple_texture_shader)
                 drawable.setup()
 
                 drawable.model = glm.mat4(1.0)
@@ -678,10 +681,10 @@ class Viewer:
         self.drawables.clear()
 
         if self.selected_scene != "No file selected":
-            model.append(Obj(self.phong_shader, self.selected_scene))
+            model.append(Obj(self.texture_shader, self.selected_scene))
 
         if self.selected_obj != "No file selected":
-            model.append(Obj(self.phong_shader, self.selected_obj))
+            model.append(Obj(self.texture_shader, self.selected_obj))
 
         self.add(model)
 
