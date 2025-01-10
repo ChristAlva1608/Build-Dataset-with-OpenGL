@@ -263,3 +263,8 @@ class Trackball:
         old, new = (normalized(self._project3d(pos)) for pos in (old, new))
         phi = 2 * math.acos(np.clip(np.dot(old, new), -1, 1))
         return quaternion_from_axis_angle(np.cross(old, new), radians=phi)
+
+    def skybox_view_matrix(self):
+        import glm
+        rotation_only = glm.mat3(self.matrix())  # Extract rotation only
+        return glm.mat4(rotation_only)

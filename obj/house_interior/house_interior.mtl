@@ -120,8 +120,8 @@ newmtl 20___Default
 	Kd 0.5882 0.5882 0.5882
 	Ks 0.1890 0.1890 0.1890
 	Ke 0.0000 0.0000 0.0000
-	map_Ka obj/house_interior/double_sopha_wood_base_bace_uv .jpg
-	map_Kd obj/house_interior/double_sopha_wood_base_bace_uv .jpg
+	map_Ka obj/house_interior/double_sopha_wood_base_bace_uv.jpg
+	map_Kd obj/house_interior/double_sopha_wood_base_bace_uv.jpg
 
 newmtl double_sopha_wood_right_texture
 	Ns 68.0000
