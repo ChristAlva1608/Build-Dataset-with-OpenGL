@@ -207,38 +207,23 @@ class Obj:
         print('length of subobjs: ', len(self.subobjs))
         return self
 
-    def setup(self):
-        return self 
-    
     def update_shader(self, shader):
         for subobj in self.subobjs:
             subobj.update_shader(shader)
+    
+    def update_colormap(self, selected_colormap):
+        for subobj in self.subobjs:
+            subobj.uma.upload_uniform_scalar1i(selected_colormap, 'colormap_selection')
+    
+    def update_near_far(self, near, far):
+        for subobj in self.subobjs:
+            subobj.uma.upload_uniform_scalar1f(near, 'near')
+            subobj.uma.upload_uniform_scalar1f(far, 'far')
+
+    def setup(self):
+        for subobj in self.subobjs:
+            subobj.setup()
 
     def draw(self, model, view, projection):
-        self.vao.activate()
-        glUseProgram(self.shader.render_idx)
-        
         for subobj in self.subobjs:
             subobj.draw(model, view, projection)
-
-        # Clear the object for new loop
-        # print('length of subobjs before clear', len(self.subobjs))
-        # self.subobjs.clear()
-        # print('length of subobjs after clear', len(self.subobjs))
-
-    # def draw(self, model, view, projection):
-    #     self.vao.activate()
-    #     glUseProgram(self.shader.render_idx)
-
-    #     glActiveTexture(GL_TEXTURE0)
-    #     glBindTexture(GL_TEXTURE_2D, self.texture_id)
-    #     glUniform1i(glGetUniformLocation(self.shader.render_idx, "texture_diffuse"), 0)
-
-    #     self.uma.upload_uniform_matrix4fv(np.array(model), 'model', True)
-    #     self.uma.upload_uniform_matrix4fv(np.array(view), 'view', True)
-    #     self.uma.upload_uniform_matrix4fv(np.array(projection), 'projection', True)
-
-    #     glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices)*3)
-    #     self.vao.deactivate()
-
-

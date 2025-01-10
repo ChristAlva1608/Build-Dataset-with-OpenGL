@@ -18,28 +18,28 @@ class SubObj:
         image_path = img_path
 
         if material['map_Ka'] is not None:
-            print(material['map_Ka'])
             image_path = material['map_Ka']
 
         image = Image.open(image_path)
         image = image.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image for OpenGL
         img_data = np.array(image, dtype=np.uint8)
 
-        # Generate texture ID and bind it
-        self.texture_id = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.texture_id)
-        # Set texture parameters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        # Load the texture into OpenGL
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
+        self.texture_id = self.uma.setup_texture('texture_diffuse', img_data)
+        # # Generate texture ID and bind it
+        # self.texture_id = glGenTextures(1)
+        # glBindTexture(GL_TEXTURE_2D, self.texture_id)
+        # # Set texture parameters
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        # # Load the texture into OpenGL
+        # glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
 
     def update_shader(self, shader):
         self.shader = shader
         self.uma = UManager(self.shader)
-        
+
     def setup(self):
         self.vao.add_vbo(0, self.vertices, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
         self.vao.add_vbo(2, self.textcoords, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)

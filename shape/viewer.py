@@ -343,6 +343,7 @@ class Viewer:
 
             for drawable in self.drawables:
                 # update shader
+                print('UPDATE TEXTURE SHADER')
                 drawable.update_shader(self.simple_texture_shader)
                 drawable.setup()
 
@@ -366,11 +367,12 @@ class Viewer:
             for drawable in self.drawables:
 
                 # update shader
+                print('UPDATE DEPTH SHADER')
                 drawable.update_shader(self.depth_shader)
                 drawable.setup()
 
                 # update depth map color
-                drawable.uma.upload_uniform_scalar1i(self.selected_colormap, 'colormap_selection')
+                drawable.update_colormap(self.selected_colormap)
 
                 model = glm.mat4(1.0)
                 view = self.trackball.view_matrix2(self.cameraPos)
@@ -378,8 +380,9 @@ class Viewer:
                 projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, 0.1, 1000.0)
 
                 # Depth map rendering
-                drawable.uma.upload_uniform_scalar1f(self.near, 'near')
-                drawable.uma.upload_uniform_scalar1f(self.far, 'far')
+                drawable.update_near_far(self.near, self.far)
+                
+                # Draw the full object
                 drawable.draw(model, view, projection)
 
                 # Visualize with chosen colormap
@@ -387,8 +390,6 @@ class Viewer:
                     self.pass_magma_data(self.depth_shader)
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
-            print('finish depth scene')
-            print('------')
 
             self.imgui_menu()
 

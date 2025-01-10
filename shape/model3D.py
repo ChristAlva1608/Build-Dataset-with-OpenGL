@@ -207,13 +207,10 @@ class Obj:
             # Try to get texture coordinates from visual
             texcoords = None
             if hasattr(scene.visual, 'uv') and scene.visual.uv is not None:
-                print('texcoord found')
                 texcoords = scene.visual.uv.astype(np.float32)
-                print(type(scene.visual))
             
             # If no texture coordinates found in visual, try parsing the OBJ file directly
             if texcoords is None:
-                print('texcoord not found')
                 raw_vertices, raw_normals, raw_texcoords, faces = self.parse_obj_file(file_path)
                 if len(raw_texcoords) > 0:  # If we found texture coordinates
                     vertices, normals, texcoords, indices = self.process_mesh_data(
@@ -298,14 +295,14 @@ class Obj:
 
         return self
 
-    def draw(self):
+    def draw(self, model, view, projection):
         
         self.uma.upload_uniform_matrix3fv(self.K_materials, 'K_materials', False)
         self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
 
-        self.uma.upload_uniform_matrix4fv(np.array(self.model, dtype=np.float32), 'model', True)
-        self.uma.upload_uniform_matrix4fv(np.array(self.view, dtype=np.float32), 'view', True)
-        self.uma.upload_uniform_matrix4fv(np.array(self.projection, dtype=np.float32), 'projection', True)
+        self.uma.upload_uniform_matrix4fv(np.array(model, dtype=np.float32), 'model', True)
+        self.uma.upload_uniform_matrix4fv(np.array(view, dtype=np.float32), 'view', True)
+        self.uma.upload_uniform_matrix4fv(np.array(projection, dtype=np.float32), 'projection', True)
 
         self.vao.activate()
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
