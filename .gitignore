@@ -1,0 +1,10 @@
+obj/
+venv/
+.idea/
+*.iml
+*.pyc
+duck/
+shader/
+image/
+*.txt
+*.ini
