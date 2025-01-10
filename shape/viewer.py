@@ -328,16 +328,6 @@ class Viewer:
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-            # win_size = glfw.get_window_size(self.win)
-            # self.model=glm.mat4(1.0)
-            # self.view = self.trackball.view_matrix()
-            # self.projection = self.trackball.projection_matrix(win_size)
-
-            # # draw our scene objects
-            # for drawable in self.drawables:
-            #     drawable.setup()
-            #     drawable.draw(self.model, self.view, self.projection)
-
 
             # Viewport for RGB Scene
             win_pos_width = self.scene_width
@@ -397,6 +387,8 @@ class Viewer:
                     self.pass_magma_data(self.depth_shader)
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
+            print('finish depth scene')
+            print('------')
 
             self.imgui_menu()
 

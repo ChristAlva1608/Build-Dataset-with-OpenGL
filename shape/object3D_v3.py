@@ -20,6 +20,7 @@ class Obj:
         self.subobjs = []
         self.vertices, self.texcoords, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
+        self.split_obj()
 
     def parse_obj_file(self,file_path):
         vertices_all = []
@@ -180,7 +181,7 @@ class Obj:
 
         return materials
 
-    def setup(self):
+    def split_obj(self):
         img_path = 'patch/textured/image/ledinh.jpeg'
         for obj in self.objects:
             vertices = []
@@ -194,6 +195,8 @@ class Obj:
                 for teco_id in sublist:
                     tecos.append(self.texcoords[int(teco_id)])
 
+            if (len(self.subobjs)>=94):
+                continue
             model = SubObj( self.shader,
                             vertices,
                             tecos,
@@ -201,9 +204,12 @@ class Obj:
                             img_path
                             ).setup()
             self.subobjs.append(model)
-        
+        print('length of subobjs: ', len(self.subobjs))
         return self
 
+    def setup(self):
+        return self 
+    
     def update_shader(self, shader):
         for subobj in self.subobjs:
             subobj.update_shader(shader)
@@ -211,9 +217,14 @@ class Obj:
     def draw(self, model, view, projection):
         self.vao.activate()
         glUseProgram(self.shader.render_idx)
-
+        
         for subobj in self.subobjs:
             subobj.draw(model, view, projection)
+
+        # Clear the object for new loop
+        # print('length of subobjs before clear', len(self.subobjs))
+        # self.subobjs.clear()
+        # print('length of subobjs after clear', len(self.subobjs))
 
     # def draw(self, model, view, projection):
     #     self.vao.activate()
