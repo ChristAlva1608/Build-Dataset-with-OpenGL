@@ -8,3 +8,4 @@ shader/
 image/
 *.txt
 *.ini
+__pycache__/
