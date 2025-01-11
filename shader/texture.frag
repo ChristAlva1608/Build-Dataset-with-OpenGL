@@ -8,7 +8,6 @@ in vec2 texcoord_interp;
 uniform mat3 K_materials;
 uniform mat3 I_light;
 
-uniform float phong_factor; //
 uniform float shininess; // Shininess
 uniform vec3 light_pos; // Light position
 out vec4 fragColor;
@@ -16,6 +15,7 @@ out vec4 fragColor;
 uniform sampler2D texture_ambient;
 uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
+uniform sampler2D texture_refl;
 uniform sampler2D texture_bump;
 
 void main() {
@@ -32,7 +32,7 @@ void main() {
     vec3 rgb = matrixCompMult(K_materials, I_light) * g; // +  colorInterp;
 
     fragColor = vec4(rgb, 1.0);
-    // float phong_factor = 0.0;
+    float phong_factor = 0.3;
     float texture_factor = 1.0 - phong_factor;
 
     vec4 ambientColor = texture(texture_ambient, texcoord_interp);
@@ -43,5 +43,5 @@ void main() {
     // Combine the textures
     vec4 texture_color = diffuseColor * 0.8 + ambientColor * 0.1 + specularColor * 0.1; // Example blend
 
-    fragColor = phong_factor*fragColor + texture_factor*diffuseColor;
+    fragColor = phong_factor*fragColor + texture_factor*texture_color;
 }

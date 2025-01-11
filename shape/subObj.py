@@ -2,10 +2,18 @@ from libs.shader import *
 from libs.buffer import *
 from libs import transform as T
 from shape.texture import *
+from enum import Enum
 
 import glm
 import numpy as np
 from OpenGL.GL import *
+
+class TextureMap(Enum):
+    KA = ("map_Ka", "texture_ambient")
+    KD = ("map_Kd", "texture_diffuse")
+    KS = ("map_Ks", "texture_specular")
+    REFL = ("map_refl", "texture_refl")
+    BUMP = ("map_bump", "texture_bump")
 
 class SubObj:
     def __init__(self, shader, vert, teco , material, img_path):
@@ -15,26 +23,29 @@ class SubObj:
 
         self.vertices = np.array(vert, dtype=np.float32)
         self.textcoords = np.array(teco, dtype=np.float32)
-        image_path = img_path
 
-        if material['map_Ka'] is not None:
-            image_path = material['map_Ka']
+        self.materials = material
+        self.map_Kd_flag = False
+        self.map_Ka_flag = False
+        self.map_Ks_flag = False
+        self.map_refl_flag = False
+        self.map_bump_flag = False
+        self.texture_id = {}
+        self.texture_flags = {}
 
-        image = Image.open(image_path)
-        image = image.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image for OpenGL
-        img_data = np.array(image, dtype=np.uint8)
+        # Iterate through all possible texture maps defined in the enum
+        for texture in TextureMap:
+            map_key, uniform_name = texture.value
+            self.texture_flags[map_key] = False  # Initialize texture flag as False
+            if map_key in material and material[map_key]:
+                if map_key == 'map_bump':
+                    texture_path = material[map_key]['filename']
+                else:
+                    texture_path = material[map_key]
 
-        self.texture_id = self.uma.setup_texture('texture_diffuse', img_data)
-        # # Generate texture ID and bind it
-        # self.texture_id = glGenTextures(1)
-        # glBindTexture(GL_TEXTURE_2D, self.texture_id)
-        # # Set texture parameters
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        # # Load the texture into OpenGL
-        # glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
+                if os.path.exists(texture_path):
+                    self.texture_flags[map_key] = True
+                    self.texture_id[map_key] = self.uma.setup_texture(uniform_name, texture_path)
 
     def update_shader(self, shader):
         self.shader = shader
@@ -56,33 +67,51 @@ class SubObj:
         self.uma.upload_uniform_vector3fv(light_pos, 'light_pos')
 
         # Materials setup (you can modify these values)
-        K_materials = np.array([
-            [0.6, 0.4, 0.7],  # diffuse
-            [0.6, 0.4, 0.7],  # specular
-            [0.6, 0.4, 0.7],  # ambient
+        self.K_materials = np.array([
+            self.materials['Kd'],
+            self.materials['Ks'],
+            self.materials['Ka'],
         ], dtype=np.float32)
 
-        self.uma.upload_uniform_matrix3fv(K_materials, 'K_materials', False)
+        self.shininess = self.materials['Ns']
 
-        shininess = 100.0
+        # self.K_materials = np.array([
+        #     [0.6, 0.4, 0.7],  # diffuse
+        #     [0.6, 0.4, 0.7],  # specular
+        #     [0.6, 0.4, 0.7],  # ambient
+        # ], dtype=np.float32)
+        
+        # self.shininess = 100.0
+
+        self.uma.upload_uniform_matrix3fv(self.K_materials, 'K_materials', False)
+
         mode = 1
 
-        self.uma.upload_uniform_scalar1f(shininess, 'shininess')
+        self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
         self.uma.upload_uniform_scalar1i(mode, 'mode')
-
         return self
 
     def draw(self, model, view, projection):
         self.vao.activate()
         glUseProgram(self.shader.render_idx)
 
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, self.texture_id)
-        glUniform1i(glGetUniformLocation(self.shader.render_idx, "texture_diffuse"), 0)
+        # Bind and upload textures dynamically
+        for idx, texture in enumerate(TextureMap):
+            map_key, uniform_name = texture.value
+            if self.texture_flags[map_key]:
+                glActiveTexture(GL_TEXTURE0 + idx)
+                glBindTexture(GL_TEXTURE_2D, self.texture_id[map_key])
+                glUniform1i(glGetUniformLocation(self.shader.render_idx, uniform_name), idx)
 
         self.uma.upload_uniform_matrix4fv(np.array(model), 'model', True)
         self.uma.upload_uniform_matrix4fv(np.array(view), 'view', True)
         self.uma.upload_uniform_matrix4fv(np.array(projection), 'projection', True)
 
         glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices)*3)
+
+        # Unbind all textures
+        for idx, texture in enumerate(TextureMap):
+            glActiveTexture(GL_TEXTURE0 + idx)
+            glBindTexture(GL_TEXTURE_2D, 0)
+
         self.vao.deactivate()

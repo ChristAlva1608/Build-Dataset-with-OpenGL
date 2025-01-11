@@ -166,6 +166,12 @@ class Obj:
                     elif keyword == 'map_Kd':
                         parts = value.split()
                         mat['map_Kd'] = parts[-1]
+                    elif keyword == 'map_Ks':
+                        parts = value.split()
+                        mat['map_Ks'] = parts[-1]
+                    elif keyword == 'map_refl':
+                        parts = value.split()
+                        mat['map_refl'] = parts[-1]
                     elif keyword == 'map_bump':
                         # Handle bump map with potential -bm parameter
                         parts = value.split()
@@ -195,8 +201,6 @@ class Obj:
                 for teco_id in sublist:
                     tecos.append(self.texcoords[int(teco_id)])
 
-            if (len(self.subobjs)>=94):
-                continue
             model = SubObj( self.shader,
                             vertices,
                             tecos,
@@ -204,7 +208,6 @@ class Obj:
                             img_path
                             ).setup()
             self.subobjs.append(model)
-        print('length of subobjs: ', len(self.subobjs))
         return self
 
     def update_shader(self, shader):

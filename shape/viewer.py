@@ -339,12 +339,11 @@ class Viewer:
             GL.glClearColor(*self.bg_colors, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-            GL.glUseProgram(self.simple_texture_shader.render_idx)
+            GL.glUseProgram(self.texture_shader.render_idx)
 
             for drawable in self.drawables:
                 # update shader
-                print('UPDATE TEXTURE SHADER')
-                drawable.update_shader(self.simple_texture_shader)
+                drawable.update_shader(self.texture_shader)
                 drawable.setup()
 
                 model = glm.mat4(1.0)
@@ -365,9 +364,7 @@ class Viewer:
 
             GL.glUseProgram(self.depth_shader.render_idx)
             for drawable in self.drawables:
-
                 # update shader
-                print('UPDATE DEPTH SHADER')
                 drawable.update_shader(self.depth_shader)
                 drawable.setup()
 
@@ -685,10 +682,10 @@ class Viewer:
         self.drawables.clear()
 
         if self.selected_scene != "No file selected":
-            model.append(Obj(self.simple_texture_shader, self.selected_scene))
+            model.append(Obj(self.texture_shader, self.selected_scene))
 
         if self.selected_obj != "No file selected":
-            model.append(Obj(self.simple_texture_shader, self.selected_obj))
+            model.append(Obj(self.texture_shader, self.selected_obj))
 
         self.add(model)
 
