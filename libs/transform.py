@@ -268,3 +268,8 @@ class Trackball:
         import glm
         rotation_only = glm.mat3(self.matrix())  # Extract rotation only
         return glm.mat4(rotation_only)
+
+    def depth_projection_matrix(self, winsize):
+        z_range = vec(0.1, 700.0)  # proportion to dist
+        # print(self.distance)
+        return perspective(45, winsize[0] / winsize[1], *z_range)
