@@ -29,7 +29,7 @@ void main() {
     float specAngle = max(dot(R, V), 0.0);
     float specular = pow(specAngle, shininess);
     vec3 g = vec3(lvd*max(dot(L, N), 0.0), specular, 1.0);
-    vec3 rgb = matrixCompMult(K_materials, I_light) * g; // +  colorInterp;
+    vec3 rgb = matrixCompMult(K_materials, I_light) * g; 
 
     fragColor = vec4(rgb, 1.0);
     float phong_factor = 0.3;
@@ -38,10 +38,12 @@ void main() {
     vec4 ambientColor = texture(texture_ambient, texcoord_interp);
     vec4 diffuseColor = texture(texture_diffuse, texcoord_interp);
     vec4 specularColor = texture(texture_specular, texcoord_interp);
+    vec4 reflColor = texture(texture_refl, texcoord_interp);
     vec4 bumpColor = texture(texture_bump, texcoord_interp);
 
     // Combine the textures
-    vec4 texture_color = diffuseColor * 0.8 + ambientColor * 0.1 + specularColor * 0.1; // Example blend
+    vec4 texture_color = diffuseColor * 0.8 + ambientColor * 0.05 + specularColor * 0.05 + reflColor * 0.05 + specularColor * 0.05; // Example blend
 
+    fragColor = vec4(0.7, 0.7, 0.7, 1.0);
     fragColor = phong_factor*fragColor + texture_factor*texture_color;
 }

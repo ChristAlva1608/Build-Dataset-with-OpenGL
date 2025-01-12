@@ -16,7 +16,7 @@ class TextureMap(Enum):
     BUMP = ("map_bump", "texture_bump")
 
 class SubObj:
-    def __init__(self, shader, vert, teco , material, img_path):
+    def __init__(self, shader, vert, teco , material):
         self.shader = shader
         self.vao = VAO()
         self.uma = UManager(self.shader)
@@ -50,6 +50,13 @@ class SubObj:
     def update_shader(self, shader):
         self.shader = shader
         self.uma = UManager(self.shader)
+
+    def update_Kmat(self, diffuse, specular, ambient):
+        self.K_materials = np.array([
+            diffuse,
+            specular,
+            ambient,
+        ], dtype=np.float32)
 
     def setup(self):
         self.vao.add_vbo(0, self.vertices, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
@@ -102,6 +109,9 @@ class SubObj:
                 glActiveTexture(GL_TEXTURE0 + idx)
                 glBindTexture(GL_TEXTURE_2D, self.texture_id[map_key])
                 glUniform1i(glGetUniformLocation(self.shader.render_idx, uniform_name), idx)
+
+        # Pass updated K_materials
+        self.uma.upload_uniform_matrix3fv(self.K_materials, 'K_materials', False)
 
         self.uma.upload_uniform_matrix4fv(np.array(model), 'model', True)
         self.uma.upload_uniform_matrix4fv(np.array(view), 'view', True)

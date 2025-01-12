@@ -100,7 +100,7 @@ class Viewer:
 
         # Initialize for near & far planes
         self.near = 0.1
-        self.far = 100
+        self.far = 1000
         self.near_colors = [0.0, 0.0, 0.0]
         self.far_colors = [1.0, 1.0, 1.0]
 
@@ -368,13 +368,16 @@ class Viewer:
                 drawable.update_shader(self.depth_shader)
                 drawable.setup()
 
+                # update reflection coefficient
+                drawable.update_Kmat(self.diffuse, self.specular, self.ambient)
+
                 # update depth map color
                 drawable.update_colormap(self.selected_colormap)
 
                 model = glm.mat4(1.0)
                 view = self.trackball.view_matrix2(self.cameraPos)
                 # drawable.view = self.trackball.view_matrix()
-                projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, 0.1, 1000.0)
+                projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
 
                 # Depth map rendering
                 drawable.update_near_far(self.near, self.far)
@@ -411,18 +414,6 @@ class Viewer:
             drawable.model = glm.mat4(1.0)
             drawable.view = self.trackball.view_matrix2(self.cameraPos)
             drawable.projection = glm.perspective(glm.radians(self.fov), 800.0 / 600.0, 0.1, 100.0)
-
-    def update_diffuse(self):
-        for drawable in self.drawables:
-            drawable.K_materials[0] = self.diffuse
-
-    def update_specular(self):
-        for drawable in self.drawables:
-            drawable.K_materials[0] = self.specular
-
-    def update_ambient(self):
-        for drawable in self.drawables:
-            drawable.K_materials[0] = self.ambient
 
     def imgui_menu(self):
         # Create a new frame
@@ -544,7 +535,6 @@ class Viewer:
                                           format="%.2f")
         if self.diffuse_changed:
             self.diffuse = diffuse_value
-            self.update_diffuse()
 
         # Add Specular slider
         imgui.set_next_item_width(imgui.get_window_width()//2)
@@ -555,7 +545,6 @@ class Viewer:
                                           format="%.2f")
         if self.specular_changed:
             self.specular = specular_value
-            self.update_specular()
 
         # Add Ambient slider
         imgui.set_next_item_width(imgui.get_window_width()//2)
@@ -566,7 +555,6 @@ class Viewer:
                                           format="%.2f")
         if self.ambient_changed:
             self.ambient = ambient_value
-            self.update_ambient()
 
         imgui.end()
 
@@ -616,7 +604,7 @@ class Viewer:
         self.far_changed, far_value = imgui.slider_int("Far",
                                           int(self.far),
                                           min_value=1,
-                                          max_value=1000
+                                          max_value=5000
                                           )
         if self.far_changed:
             self.far = far_value

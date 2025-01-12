@@ -188,7 +188,6 @@ class Obj:
         return materials
 
     def split_obj(self):
-        img_path = 'patch/textured/image/ledinh.jpeg'
         for obj in self.objects:
             vertices = []
             tecos = []
@@ -200,12 +199,10 @@ class Obj:
             for sublist in obj['textcoords_obj_id']:
                 for teco_id in sublist:
                     tecos.append(self.texcoords[int(teco_id)])
-
             model = SubObj( self.shader,
                             vertices,
                             tecos,
-                            self.materials[obj['texture_name']],
-                            img_path
+                            self.materials[obj['texture_name']]
                             ).setup()
             self.subobjs.append(model)
         return self
@@ -222,6 +219,10 @@ class Obj:
         for subobj in self.subobjs:
             subobj.uma.upload_uniform_scalar1f(near, 'near')
             subobj.uma.upload_uniform_scalar1f(far, 'far')
+    
+    def update_Kmat(self, diffuse, specular, ambient):
+        for subobj in self.subobjs:
+            subobj.update_Kmat(diffuse, specular, ambient)
 
     def setup(self):
         for subobj in self.subobjs:
