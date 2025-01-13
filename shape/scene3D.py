@@ -10,9 +10,9 @@ from libs.buffer import *
 from libs.camera import *
 import glm
 from itertools import cycle
-from subObj import *
+from shape.subScene import *
 
-class Obj:
+class Scene:
     def __init__(self, shader, file_path):
         self.shader = shader
         self.vao = VAO()
@@ -44,6 +44,15 @@ class Obj:
                     v = float(parts[2])
                     w = float(parts[3]) if len(parts) > 3 else 0.0  # Default w to 0.0 if not provided
                     texcoords_all.append([u, v, w])
+
+        x_list = [x[2] for x in vertices_all]
+        self.min_x = min(x_list) # Smallest x value in vertices
+        self.max_x = max(x_list) # Largest x value in vertices
+
+        z_list = [z[2] for z in vertices_all]
+        self.min_z = min(z_list) # Smallest z value in vertices
+        self.max_z = max(z_list) # Largest z value in vertices
+
 
         objects = []  # List to hold all the objects
 
@@ -199,7 +208,9 @@ class Obj:
             for sublist in obj['textcoords_obj_id']:
                 for teco_id in sublist:
                     tecos.append(self.texcoords[int(teco_id)])
-            model = SubObj( self.shader,
+
+            # if obj['texture_name'] == 'wire_115115115':
+            model = SubScene( self.shader,
                             vertices,
                             tecos,
                             self.materials[obj['texture_name']]
@@ -210,16 +221,16 @@ class Obj:
     def update_shader(self, shader):
         for subobj in self.subobjs:
             subobj.update_shader(shader)
-    
+
     def update_colormap(self, selected_colormap):
         for subobj in self.subobjs:
             subobj.uma.upload_uniform_scalar1i(selected_colormap, 'colormap_selection')
-    
+
     def update_near_far(self, near, far):
         for subobj in self.subobjs:
             subobj.uma.upload_uniform_scalar1f(near, 'near')
             subobj.uma.upload_uniform_scalar1f(far, 'far')
-    
+
     def update_Kmat(self, diffuse, specular, ambient):
         for subobj in self.subobjs:
             subobj.update_Kmat(diffuse, specular, ambient)

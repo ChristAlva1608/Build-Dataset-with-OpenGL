@@ -32,7 +32,7 @@ void main() {
     vec3 rgb = matrixCompMult(K_materials, I_light) * g; 
 
     fragColor = vec4(rgb, 1.0);
-    float phong_factor = 0.3;
+    float phong_factor = 0.0;
     float texture_factor = 1.0 - phong_factor;
 
     vec4 ambientColor = texture(texture_ambient, texcoord_interp);
@@ -44,6 +44,5 @@ void main() {
     // Combine the textures
     vec4 texture_color = diffuseColor * 0.8 + ambientColor * 0.05 + specularColor * 0.05 + reflColor * 0.05 + specularColor * 0.05; // Example blend
 
-    fragColor = vec4(0.7, 0.7, 0.7, 1.0);
     fragColor = phong_factor*fragColor + texture_factor*texture_color;
 }

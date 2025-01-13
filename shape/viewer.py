@@ -15,10 +15,8 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-# from object3D import *
-from model3D import *
-from object3D_v3 import *
-# from object3D_v2 import *
+from object3D import *
+from scene3D import *
 from quad import *
 from vcamera import *
 from sphere import *
@@ -93,8 +91,8 @@ class Viewer:
 
         # Initialize vcamera parameters
         self.cameraSpeed = 1
-        self.cameraPos = glm.vec3(0.0, 0.0, 5.0)
-        self.cameraFront = glm.vec3(0.0, 0.0, -1.0)
+        self.cameraPos = glm.vec3(0.0, 0.0, 10.0)
+        self.cameraFront = glm.vec3(0.0, 0.0, 1.0)
         self.cameraUp = glm.vec3(0.0, 1.0, 0.0)
         self.lastFrame = 0.0
 
@@ -107,19 +105,15 @@ class Viewer:
         # Initialize cmap
         self.selected_colormap = 0
 
+        # Initialize camera pos flag
+        self.initial_pos = False
+
         # Initialize autosave
         self.time_save = 0.0
         self.time_count = 0.0
         self.rgb_save_path = ""
         self.depth_save_path = ""
         self.show_time_selection = False
-
-        # Initialize for camera
-        self.camera1_cameraPos = glm.vec3(0.0, 0.0, 10.0)
-        self.camera1_cameraFront = glm.vec3(0.0, 0.0, -1.0)
-
-        self.camera2_cameraPos = glm.vec3(10.0, 0.0, 0.0)
-        self.camera2_cameraFront = glm.vec3(1.0, 0.0, 0.0)
 
         # Initialize background color
         self.bg_colors = [0.2, 0.2, 0.2]
@@ -164,9 +158,13 @@ class Viewer:
         self.depth_view_width = self.rgb_view_width
         self.depth_view_height = self.rgb_view_height
 
-    def select_file(self):
+    def select_file(self, starting_folder):
         app = QApplication(sys.argv)
-        file_path = QFileDialog.getOpenFileName()[0]
+        file_path = QFileDialog.getOpenFileName(
+            None,  # Parent widget (None for no parent)
+            "Select File",  # Dialog title
+            starting_folder  # Starting folder
+        )[0]
         return file_path
 
     def select_folder(self):
@@ -323,6 +321,20 @@ class Viewer:
 
         return texture_id
 
+    def setup_camA(self):
+        for drawable in self.drawables:
+            if isinstance(drawable, Scene):
+                z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
+                self.cameraPos = glm.vec3(0.0, 0.0, z)
+                self.cameraFront = glm.vec3(0.0, 0.0, -1.0)
+
+    def setup_camB(self):
+        for drawable in self.drawables:
+            if isinstance(drawable, Scene):
+                x = drawable.max_x + 1/3 * (drawable.max_x - drawable.min_x)
+                self.cameraPos = glm.vec3(x, 0.0, 0.0)
+                self.cameraFront = glm.vec3(1.0, 0.0, 0.0)
+
     def run(self):
         while not glfw.window_should_close(self.win):
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
@@ -346,9 +358,15 @@ class Viewer:
                 drawable.update_shader(self.texture_shader)
                 drawable.setup()
 
+                # Initially set ideal camera pos for any scene
+                if self.initial_pos:
+                    z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
+                    self.cameraPos = glm.vec3(0.0, 0.0, z)
+
                 model = glm.mat4(1.0)
-                view = self.trackball.view_matrix2(self.cameraPos)
-                # drawable.view = self.trackball.view_matrix()
+                # view = glm.lookAt(self.cameraPos, self.cameraPos + self.cameraFront, self.cameraUp)
+                view = self.trackball.view_matrix2(-self.cameraPos)
+                # view = lookat * self.trackball.view_matrix()
                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 1000.0)
 
                 # Normal rendering
@@ -374,9 +392,15 @@ class Viewer:
                 # update depth map color
                 drawable.update_colormap(self.selected_colormap)
 
+                # Initially set ideal camera pos for any scene
+                if self.initial_pos:
+                    z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
+                    self.cameraPos = glm.vec3(0.0, 0.0, z)
+
                 model = glm.mat4(1.0)
-                view = self.trackball.view_matrix2(self.cameraPos)
-                # drawable.view = self.trackball.view_matrix()
+                # view = glm.lookAt(self.cameraPos, self.cameraPos + self.cameraFront, self.cameraUp)
+                view = self.trackball.view_matrix2(-self.cameraPos)
+                # view = lookat * self.trackball.view_matrix()
                 projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
 
                 # Depth map rendering
@@ -390,6 +414,8 @@ class Viewer:
                     self.pass_magma_data(self.depth_shader)
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
+
+            self.initial_pos = False
 
             self.imgui_menu()
 
@@ -430,24 +456,22 @@ class Viewer:
         imgui.begin("Scene")
 
         if imgui.button("Select Scene"):
-            self.selected_scene = self.select_file()
+            self.selected_scene = self.select_file('./scene')
         imgui.text(f"Selected File: {self.selected_scene}")
 
         if imgui.button("Select Object"):
-            self.selected_scene = self.select_file()
-        imgui.text(f"Selected File: {self.selected_scene}")
+            self.selected_obj = self.select_file('./object')
+        imgui.text(f"Selected File: {self.selected_obj}")
 
         imgui.set_next_item_width(imgui.get_window_width())
         camera1 = self.button_with_icon('icons/camera.png', 'Camera A')
         camera2 = self.button_with_icon('icons/camera.png', 'Camera B')
 
         if camera1:
-            self.cameraPos = self.camera1_cameraPos
-            self.cameraFront = self.camera1_cameraFront
+            self.setup_camA()
 
         if camera2:
-            self.cameraPos = self.camera2_cameraPos
-            self.cameraFront = self.camera2_cameraFront
+            self.setup_camB()
 
         # Adjust RGB
         self.bg_changed, self.bg_colors = imgui.input_float3('Color', self.bg_colors[0], self.bg_colors[1], self.bg_colors[2], format='%.2f')
@@ -669,11 +693,14 @@ class Viewer:
         model = []
         self.drawables.clear()
 
+        # Add chosen object or scene
         if self.selected_scene != "No file selected":
-            model.append(Obj(self.texture_shader, self.selected_scene))
+            self.initial_pos = True # Initially set up camera pos for the scene
+            model.append(Scene(self.texture_shader, self.selected_scene))
 
         if self.selected_obj != "No file selected":
-            model.append(Obj(self.texture_shader, self.selected_obj))
+            self.initial_pos = True # Initially set up camera pos for the scene
+            model.append(Object(self.texture_shader, self.selected_obj))
 
         self.add(model)
 

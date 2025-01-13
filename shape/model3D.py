@@ -7,12 +7,12 @@ import trimesh
 import os
 import pywavefront
 
-class Obj:
+class Object:
     def __init__(self, shader, file_path):
         self.vao = VAO()
         self.shader = shader
         self.uma = UManager(self.shader)
-        self.materials = self.load_materials(file_path)
+        # self.materials = self.load_materials(file_path)
         self.vertices, self.normals, self.texcoords, self.indices = self.load_obj(file_path)
 
     def process_mesh_data(self, vertices, normals, texcoords, faces):
@@ -244,8 +244,6 @@ class Obj:
         self.vao.add_ebo(self.indices)
 
         GL.glUseProgram(self.shader.render_idx)
-
-        self.uma.setup_texture('texture_diffuse', 'patch/textured/image/ledinh.jpeg')
         
         self.model = glm.mat4(1.0)
 
@@ -267,33 +265,32 @@ class Obj:
         self.uma.upload_uniform_matrix3fv(I_light, 'I_light', False)
         self.uma.upload_uniform_vector3fv(light_pos, 'light_pos')
 
-        # if self.materials:
-        #     first_material = next(iter(self.materials.values()))
-        #     self.K_materials = np.array([
-        #         first_material['Kd'],
-        #         first_material['Ks'],
-        #         first_material['Ka'],
-        #     ], dtype=np.float32)
-            
-        #     self.shininess = first_material['Ns']
-            
-        #     # Upload texture flag if material has a texture
-        #     has_texture = 1 if first_material.get('map_Kd') else 0
-        #     self.uma.upload_uniform_scalar1i(has_texture, 'has_texture')
-        # else:
         self.K_materials = np.array([
             [0.6, 0.4, 0.7],
             [0.6, 0.4, 0.7],
             [0.6, 0.4, 0.7],
         ], dtype=np.float32)
         self.shininess = 100.0
-        # self.uma.upload_uniform_scalar1i(0, 'has_texture')
 
         self.uma.upload_uniform_matrix3fv(self.K_materials, 'K_materials', False)
         self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
         self.uma.upload_uniform_scalar1i(1, 'mode')
 
         return self
+
+    def update_Kmat(self, diffuse, specular, ambient):
+        self.K_materials = np.array([
+            diffuse,
+            specular,
+            ambient,
+        ], dtype=np.float32)
+
+    def update_colormap(self, selected_colormap):
+        self.uma.upload_uniform_scalar1i(selected_colormap, 'colormap_selection')
+
+    def update_near_far(self, near, far):
+        self.uma.upload_uniform_scalar1f(near, 'near')
+        self.uma.upload_uniform_scalar1f(far, 'far')
 
     def draw(self, model, view, projection):
         
