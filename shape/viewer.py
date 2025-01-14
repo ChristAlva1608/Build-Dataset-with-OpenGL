@@ -361,12 +361,17 @@ class Viewer:
                 # Initially set ideal camera pos for any scene
                 if self.initial_pos:
                     z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
+                    self.old_cameraPos = self.cameraPos
                     self.cameraPos = glm.vec3(0.0, 0.0, z)
 
+                # eye = glm.vec3(0.0, 0.0, 500.0)
+                # at = glm.vec3(0.0, 0.0, 0.0)
+                # up = glm.vec3(0.0, 1.0, 0.0)
                 model = glm.mat4(1.0)
-                # view = glm.lookAt(self.cameraPos, self.cameraPos + self.cameraFront, self.cameraUp)
-                view = self.trackball.view_matrix2(-self.cameraPos)
-                # view = lookat * self.trackball.view_matrix()
+
+                # view = self.trackball.view_mateerix2(-self.cameraPos)
+                # view = self.trackball.view_matrix3(self.old_cameraPos, self.cameraPos, self.cameraFront, self.cameraUp)
+                view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 1000.0)
 
                 # Normal rendering
@@ -397,10 +402,14 @@ class Viewer:
                     z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
                     self.cameraPos = glm.vec3(0.0, 0.0, z)
 
+                # eye = glm.vec3(0.0, 0.0, 500.0)
+                # at = glm.vec3(0.0, 0.0, 0.0)
+                # up = glm.vec3(0.0, 1.0, 0.0)
                 model = glm.mat4(1.0)
-                # view = glm.lookAt(self.cameraPos, self.cameraPos + self.cameraFront, self.cameraUp)
-                view = self.trackball.view_matrix2(-self.cameraPos)
-                # view = lookat * self.trackball.view_matrix()
+                
+                # view = self.trackball.view_matrix2(-self.cameraPos)
+                # view = self.trackball.view_matrix3(self.old_cameraPos, self.cameraPos, self.cameraFront, self.cameraUp)
+                view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
                 projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
 
                 # Depth map rendering
@@ -432,7 +441,7 @@ class Viewer:
     def use_trackball(self):
         for drawable in self.drawables:
             win_size = glfw.get_window_size(self.win)
-            drawable.view = self.trackball.view_matrix3()
+            drawable.view = self.trackball.view_matrix()
             drawable.projection = self.trackball.projection_matrix(win_size)
 
     def move_camera_around(self):
