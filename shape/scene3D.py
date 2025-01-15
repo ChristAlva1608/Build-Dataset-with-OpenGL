@@ -49,6 +49,10 @@ class Scene:
         self.min_x = min(x_list) # Smallest x value in vertices
         self.max_x = max(x_list) # Largest x value in vertices
 
+        y_list = [y[2] for y in vertices_all]
+        self.min_y = min(y_list) # Smallest y value in vertices
+        self.max_y = max(y_list) # Largest y value in vertices
+
         z_list = [z[2] for z in vertices_all]
         self.min_z = min(z_list) # Smallest z value in vertices
         self.max_z = max(z_list) # Largest z value in vertices

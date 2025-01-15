@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QApplication, QFileDialog
 import sys
 import time
 import imgui
+import random
 from imgui.integrations.glfw import GlfwRenderer
 
 from libs.buffer import *
@@ -74,12 +75,17 @@ class Viewer:
         self.fov = 45.0
 
         # Initialize control flag
+        self.move_camera_flag = False
         self.diffuse_changed = False
         self.ambient_changed = False
         self.specular_changed = False
         self.diffuse = 0.0
         self.ambient = 0.0
         self.specular = 0.0
+
+        # Initialize control time
+        self.current_time = 0.0
+        self.last_update_time = 0.0
 
         # Initialize selection
         self.selected_obj = "No file selected"
@@ -91,9 +97,12 @@ class Viewer:
 
         # Initialize vcamera parameters
         self.cameraSpeed = 1
+        self.old_cameraPos = glm.vec3(0.0, 0.0, 10.0)
         self.cameraPos = glm.vec3(0.0, 0.0, 10.0)
         self.cameraFront = glm.vec3(0.0, 0.0, 1.0)
         self.cameraUp = glm.vec3(0.0, 1.0, 0.0)
+        self.cameraPos_A = glm.vec3(0.0, 0.0, 0.0)
+        self.cameraPos_B = glm.vec3(0.0, 0.0, 0.0)
         self.lastFrame = 0.0
 
         # Initialize for near & far planes
@@ -322,18 +331,12 @@ class Viewer:
         return texture_id
 
     def setup_camA(self):
-        for drawable in self.drawables:
-            if isinstance(drawable, Scene):
-                z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
-                self.cameraPos = glm.vec3(0.0, 0.0, z)
-                self.cameraFront = glm.vec3(0.0, 0.0, -1.0)
+        self.cameraPos = self.cameraPos_A
+        self.cameraFront = glm.vec3(0.0, 0.0, -1.0)
 
     def setup_camB(self):
-        for drawable in self.drawables:
-            if isinstance(drawable, Scene):
-                x = drawable.max_x + 1/3 * (drawable.max_x - drawable.min_x)
-                self.cameraPos = glm.vec3(x, 0.0, 0.0)
-                self.cameraFront = glm.vec3(1.0, 0.0, 0.0)
+        self.cameraPos = self.cameraPos_B
+        self.cameraFront = glm.vec3(1.0, 0.0, 0.0)
 
     def run(self):
         while not glfw.window_should_close(self.win):
@@ -360,17 +363,26 @@ class Viewer:
 
                 # Initially set ideal camera pos for any scene
                 if self.initial_pos:
+                    x = drawable.max_x + 1/3 * (drawable.max_x - drawable.min_x)
                     z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
-                    self.old_cameraPos = self.cameraPos
-                    self.cameraPos = glm.vec3(0.0, 0.0, z)
+                    
+                    # Set up static camera view A and B in initial position
+                    self.cameraPos_A = glm.vec3(0.0, 0.0, z)
+                    self.cameraPos_B = glm.vec3(x, 0.0, 0.0)
 
-                # eye = glm.vec3(0.0, 0.0, 500.0)
-                # at = glm.vec3(0.0, 0.0, 0.0)
-                # up = glm.vec3(0.0, 1.0, 0.0)
+                    # Set up current camera pos
+                    self.old_cameraPos = self.cameraPos
+                    self.cameraPos = self.cameraPos_A
+
+                if self.move_camera_flag:
+                    self.current_time = glfw.get_time()
+                    if self.current_time - self.last_update_time >= 1.0:  # Check if 1 second has passed
+                        self.cameraPos = self.move_camera_around()  # Update camera position
+                        self.last_update_time = self.current_time    
+                # self.move_camera_around()
                 model = glm.mat4(1.0)
 
-                # view = self.trackball.view_mateerix2(-self.cameraPos)
-                # view = self.trackball.view_matrix3(self.old_cameraPos, self.cameraPos, self.cameraFront, self.cameraUp)
+                # view = self.trackball.view_matrix2(-self.cameraPos)
                 view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 1000.0)
 
@@ -401,14 +413,16 @@ class Viewer:
                 if self.initial_pos:
                     z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
                     self.cameraPos = glm.vec3(0.0, 0.0, z)
-
-                # eye = glm.vec3(0.0, 0.0, 500.0)
-                # at = glm.vec3(0.0, 0.0, 0.0)
-                # up = glm.vec3(0.0, 1.0, 0.0)
+                
+                if self.move_camera_flag:
+                    current_time = glfw.get_time()
+                    if current_time - self.last_update_time >= 1.0:  # Check if 1 second has passed
+                        self.cameraPos = self.move_camera_around()  # Update camera position
+                        self.last_update_time = current_time    
+                # self.move_camera_around()
                 model = glm.mat4(1.0)
                 
                 # view = self.trackball.view_matrix2(-self.cameraPos)
-                # view = self.trackball.view_matrix3(self.old_cameraPos, self.cameraPos, self.cameraFront, self.cameraUp)
                 view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
                 projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
 
@@ -445,10 +459,26 @@ class Viewer:
             drawable.projection = self.trackball.projection_matrix(win_size)
 
     def move_camera_around(self):
+        ''' 
+        Set the master camera on the sphere cover the scene. The radius of the sphere is detemined by max of x / z values + offset
+        '''
+        sphere = Sphere(self.phong_shader).setup()
+
         for drawable in self.drawables:
-            drawable.model = glm.mat4(1.0)
-            drawable.view = self.trackball.view_matrix2(self.cameraPos)
-            drawable.projection = glm.perspective(glm.radians(self.fov), 800.0 / 600.0, 0.1, 100.0)
+            if isinstance(drawable, Scene):
+                if drawable.max_z > drawable.max_x:
+                    sphere.radius = drawable.max_z + (1 / 3) * (drawable.max_z - drawable.min_z)
+                else:
+                    sphere.radius = drawable.max_x + (1 / 3) * (drawable.max_x - drawable.min_x)
+            break
+        
+        sphere.generate_sphere() # update vertices with new radius
+        # return self.cameraPos_A
+
+        return random.choice(sphere.vertices)
+            
+    def reset(self):
+        pass
 
     def imgui_menu(self):
         # Create a new frame
@@ -483,7 +513,7 @@ class Viewer:
             self.setup_camB()
 
         # Adjust RGB
-        self.bg_changed, self.bg_colors = imgui.input_float3('Color', self.bg_colors[0], self.bg_colors[1], self.bg_colors[2], format='%.2f')
+        self.bg_changed, self.bg_colors = imgui.input_float3('BG Color', self.bg_colors[0], self.bg_colors[1], self.bg_colors[2], format='%.2f')
 
         font_size = imgui.get_font_size()
         vertical_padding = 8
@@ -510,7 +540,7 @@ class Viewer:
 
         imgui.set_next_item_width(imgui.get_window_width())
         if imgui.button("Move Camera"):
-            self.move_camera_around()
+            self.move_camera_flag = True
 
         imgui.get_style().colors[imgui.COLOR_BUTTON_HOVERED] = imgui.Vec4(0.6, 0.8, 0.6, 1.0)  # Green hover color
         imgui.set_next_item_width(100)
