@@ -7,7 +7,7 @@ import trimesh
 import os
 import pywavefront
 
-class Object:
+class Scene:
     def __init__(self, shader, file_path):
         self.vao = VAO()
         self.shader = shader
@@ -204,6 +204,17 @@ class Object:
             normals = scene.vertex_normals.astype(np.float32)
             indices = scene.faces.astype(np.uint32)
 
+            x_list = [x[2] for x in vertices]
+            self.min_x = min(x_list) # Smallest x value in vertices
+            self.max_x = max(x_list) # Largest x value in vertices
+
+            y_list = [y[2] for y in vertices]
+            self.min_y = min(y_list) # Smallest y value in vertices
+            self.max_y = max(y_list) # Largest y value in vertices
+
+            z_list = [z[2] for z in vertices]
+            self.min_z = min(z_list) # Smallest z value in vertices
+            self.max_z = max(z_list) # Largest z value in vertices
             # Try to get texture coordinates from visual
             texcoords = None
             if hasattr(scene.visual, 'uv') and scene.visual.uv is not None:
@@ -238,9 +249,9 @@ class Object:
         # exit()
         self.vao.add_vbo(0, self.vertices, ncomponents=3, stride=0, offset=None)
         if self.normals is not None:
-            self.vao.add_vbo(2, self.normals, ncomponents=3, stride=0, offset=None)
-        # if self.texcoords is not None:
-        #     self.vao.add_vbo(2, self.texcoords, ncomponents=2, stride=0, offset=None)
+            self.vao.add_vbo(1, self.normals, ncomponents=3, stride=0, offset=None)
+        if self.texcoords is not None:
+            self.vao.add_vbo(2, self.texcoords, ncomponents=2, stride=0, offset=None)
         self.vao.add_ebo(self.indices)
 
         GL.glUseProgram(self.shader.render_idx)
@@ -254,7 +265,6 @@ class Object:
         # glm.lookAt(glm.vec3(0, 0, 50), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
         self.view = glm.lookAt(camera_pos, camera_target, up_vector)
         self.projection = glm.perspective(glm.radians(45.0), 1400.0 / 700.0, 0.1, 100.0)
-
         I_light = np.array([
             [0.9, 0.4, 0.6],
             [0.9, 0.4, 0.6],

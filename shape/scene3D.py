@@ -18,12 +18,13 @@ class Scene:
         self.vao = VAO()
         self.uma = UManager(self.shader)
         self.subobjs = []
-        self.vertices, self.texcoords, self.objects = self.parse_obj_file(file_path)
+        self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
         self.split_obj()
 
     def parse_obj_file(self,file_path):
         vertices_all = []
+        normals_all = []
         texcoords_all = []
 
         # read the first time for vertices and texcoords only
@@ -37,6 +38,10 @@ class Scene:
                 if parts[0] == 'v':  # Vertex definition
                     # Parse the vertex coordinates (x, y, z)
                     vertices_all.append([float(parts[1]), float(parts[2]), float(parts[3])])
+
+                if parts[0] == 'vn':  # Normal definition
+                    # Parse the normal coordinates (x, y, z)
+                    normals_all.append([float(parts[1]), float(parts[2]), float(parts[3])])
 
                 elif parts[0] == 'vt':  # Texture coordinate definition
                     # Parse the texture coordinates (u, v, [w])
@@ -80,6 +85,7 @@ class Scene:
                         'obj_name': parts[1],  # Object name from 'o'
                         'vert_obj_id': [],  # List to store the vertices for the object
                         'textcoords_obj_id': [],  # List to store texture coordinates
+                        'normal_obj_id': [],  # List to store the normals for the object
                         'texture_name': None,  # Texture name (if any)
                     }
 
@@ -92,9 +98,11 @@ class Scene:
                     # Parse face indices (converting from 1-based to 0-based)
                     vert_id = [int(part.split('/')[0]) - 1 for part in parts[1:]]
                     text_id = [int(part.split('/')[1]) - 1 for part in parts[1:]]
+                    normal_id = [int(part.split('/')[2]) - 1 for part in parts[1:]]
 
                     if len(vert_id) == 3:
                         current_obj['vert_obj_id'].append(vert_id)
+                        current_obj['normal_obj_id'].append(normal_id)
                         current_obj['textcoords_obj_id'].append(text_id)
                     elif len(vert_id) == 4:  # Quad face
                         current_obj['vert_obj_id'].append([vert_id[0], vert_id[1], vert_id[2]])  # First triangle
@@ -103,11 +111,14 @@ class Scene:
                         current_obj['textcoords_obj_id'].append([text_id[0], text_id[1], text_id[2]])
                         current_obj['textcoords_obj_id'].append([text_id[0], text_id[2], text_id[3]])
 
+                        current_obj['normal_obj_id'].append([normal_id[0], normal_id[1], normal_id[2]])
+                        current_obj['normal_obj_id'].append([normal_id[0], normal_id[2], normal_id[3]])
+
             # Append the last object after finishing the file
             if current_obj:
                 objects.append(current_obj) # [[[1,1,1],[1,1,2]], [[2,2,2],[3,3,3]]]
 
-        return vertices_all, texcoords_all, objects
+        return vertices_all, texcoords_all, normals_all, objects
 
     def load_materials(self, file_path):
         materials = {}
@@ -204,6 +215,7 @@ class Scene:
         for obj in self.objects:
             vertices = []
             tecos = []
+            normals = []
 
             for sublist in obj['vert_obj_id']: # [[1 2 3][2 3 4 ]]
                 for vert_id in sublist:
@@ -213,10 +225,15 @@ class Scene:
                 for teco_id in sublist:
                     tecos.append(self.texcoords[int(teco_id)])
 
+            for sublist in obj['normal_obj_id']:
+                for normal_id in sublist:
+                    normals.append(self.normals[int(normal_id)])
+
             # if obj['texture_name'] == 'wire_115115115':
             model = SubScene( self.shader,
                             vertices,
                             tecos,
+                            normals,
                             self.materials[obj['texture_name']]
                             ).setup()
             self.subobjs.append(model)

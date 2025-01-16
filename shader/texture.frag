@@ -17,6 +17,7 @@ uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_refl;
 uniform sampler2D texture_bump;
+uniform int use_texture;
 
 void main() {
     vec3 N = normalize(normal_interp);
@@ -30,10 +31,7 @@ void main() {
     float specular = pow(specAngle, shininess);
     vec3 g = vec3(lvd*max(dot(L, N), 0.0), specular, 1.0);
     vec3 rgb = matrixCompMult(K_materials, I_light) * g; 
-
     fragColor = vec4(rgb, 1.0);
-    float phong_factor = 0.0;
-    float texture_factor = 1.0 - phong_factor;
 
     vec4 ambientColor = texture(texture_ambient, texcoord_interp);
     vec4 diffuseColor = texture(texture_diffuse, texcoord_interp);
@@ -44,5 +42,11 @@ void main() {
     // Combine the textures
     vec4 texture_color = diffuseColor * 0.8 + ambientColor * 0.05 + specularColor * 0.05 + reflColor * 0.05 + specularColor * 0.05; // Example blend
 
-    fragColor = phong_factor*fragColor + texture_factor*texture_color;
+    if (use_texture == 1) {
+        // Use texture
+        fragColor = texture_color;
+    } else {
+        // Use object color
+        fragColor = fragColor;
+    }
 }

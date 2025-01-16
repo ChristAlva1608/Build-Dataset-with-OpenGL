@@ -18,6 +18,7 @@ from libs.transform import *
 
 from object3D import *
 from scene3D import *
+# from model3D import *
 from quad import *
 from vcamera import *
 from sphere import *
@@ -64,7 +65,7 @@ class Viewer:
         self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
         self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
         self.simple_texture_shader = Shader('shader/simple_texture.vert', 'shader/simple_texture.frag')
-
+        self.good_shader = Shader('shader/good_shader.vert','shader/good_shader.frag')
         # Initialize mouse parameters
         self.last_x = width / 2
         self.last_y = height / 2
