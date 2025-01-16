@@ -388,7 +388,7 @@ class Viewer:
                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 1000.0)
 
                 # Normal rendering
-                drawable.draw(model, view, projection)
+                drawable.draw(model, view, projection, self.cameraPos)
 
             # Viewport for Depth Scene
             win_pos_width = self.scene_width + self.rgb_view_width
@@ -431,7 +431,7 @@ class Viewer:
                 drawable.update_near_far(self.near, self.far)
                 
                 # Draw the full object
-                drawable.draw(model, view, projection)
+                drawable.draw(model, view, projection, self.cameraPos)
 
                 # Visualize with chosen colormap
                 if self.selected_colormap == 1:

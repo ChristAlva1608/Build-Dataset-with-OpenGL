@@ -236,7 +236,7 @@ class Scene:
                             normals,
                             self.materials[obj['texture_name']]
                             ).setup()
-            self.subobjs.append(model)
+            self.subobjs.append(model)  
         return self
 
     def update_shader(self, shader):
@@ -260,6 +260,6 @@ class Scene:
         for subobj in self.subobjs:
             subobj.setup()
 
-    def draw(self, model, view, projection):
+    def draw(self, model, view, projection, cameraPos):
         for subobj in self.subobjs:
-            subobj.draw(model, view, projection)
+            subobj.draw(model, view, projection, cameraPos)
