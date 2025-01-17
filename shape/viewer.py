@@ -16,12 +16,12 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from object3D import *
-from scene3D import *
-# from model3D import *
-from quad import *
-from vcamera import *
-from sphere import *
+from .object3D import *
+from .scene3D import *
+# from scene3D_v2 import *
+from .quad import *
+from .vcamera import *
+from .sphere import *
 from colormap import *
 
 
@@ -64,8 +64,9 @@ class Viewer:
         self.phongex_shader = Shader("shader/phongex.vert", "shader/phongex.frag")
         self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
         self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
-        self.simple_texture_shader = Shader('shader/simple_texture.vert', 'shader/simple_texture.frag')
+        self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
         self.good_shader = Shader('shader/good_shader.vert','shader/good_shader.frag')
+
         # Initialize mouse parameters
         self.last_x = width / 2
         self.last_y = height / 2
@@ -80,13 +81,18 @@ class Viewer:
         self.diffuse_changed = False
         self.ambient_changed = False
         self.specular_changed = False
-        self.diffuse = 0.0
-        self.ambient = 0.0
-        self.specular = 0.0
+        self.diffuse = [0.0, 0.0, 0.0]
+        self.ambient = [0.0, 0.0, 0.0]
+        self.specular = [0.0, 0.0, 0.0]
 
         # Initialize control time
         self.current_time = 0.0
         self.last_update_time = 0.0
+
+        # Initialize light configuration
+        self.shininess = 100
+        self.lightPos = glm.vec3(250, 250, 300)
+        self.lightColor = glm.vec3(1.0, 1.0, 1.0)
 
         # Initialize selection
         self.selected_obj = "No file selected"
@@ -269,9 +275,9 @@ class Viewer:
         """Create a button with an icon and text"""
         icon_texture = self.load_texture(image_path)
 
-        # Calculate total button width (icon + spacing + text)
+        # Calculate total button width (align + icon + spacing + text + align)
         text_size = imgui.calc_text_size(button_text)
-        button_width = icon_size[0] + 8 + text_size.x  # 8 pixels spacing
+        button_width = 2 + icon_size[0] + 8 + text_size.x + 2 # 8 pixels spacing and 2 for alignment
         button_height = max(icon_size[1], text_size.y)
 
         # Start button with custom size
@@ -343,8 +349,6 @@ class Viewer:
         while not glfw.window_should_close(self.win):
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
-
             # Viewport for RGB Scene
             win_pos_width = self.scene_width
             win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
@@ -354,13 +358,20 @@ class Viewer:
             GL.glEnable(GL.GL_SCISSOR_TEST)
             GL.glClearColor(*self.bg_colors, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-
-            GL.glUseProgram(self.texture_shader.render_idx)
+            GL.glUseProgram(self.depth_texture_shader.render_idx)   
 
             for drawable in self.drawables:
-                # update shader
-                drawable.update_shader(self.texture_shader)
-                drawable.setup()
+                drawable.set_mode(1) # mode for rgb image
+
+                # update light configuration
+                if self.lightPos_changed:
+                    drawable.update_lightPos(self.lightPos)
+                
+                if self.lightColor_changed:
+                    drawable.update_lightColor(self.lightColor)
+                
+                if self.shininess_changed:
+                    drawable.update_shininess(self.shininess)
 
                 # Initially set ideal camera pos for any scene
                 if self.initial_pos:
@@ -398,14 +409,8 @@ class Viewer:
             GL.glClearColor(*self.bg_colors, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-            GL.glUseProgram(self.depth_shader.render_idx)
             for drawable in self.drawables:
-                # update shader
-                drawable.update_shader(self.depth_shader)
-                drawable.setup()
-
-                # update reflection coefficient
-                drawable.update_Kmat(self.diffuse, self.specular, self.ambient)
+                drawable.set_mode(0) # mode for depth map
 
                 # update depth map color
                 drawable.update_colormap(self.selected_colormap)
@@ -495,11 +500,13 @@ class Viewer:
 
         imgui.begin("Scene")
 
-        if imgui.button("Select Scene"):
+        select_scene = self.button_with_icon('icons/load.png', 'Select Scene')
+        if select_scene:
             self.selected_scene = self.select_file('./scene')
         imgui.text(f"Selected File: {self.selected_scene}")
 
-        if imgui.button("Select Object"):
+        select_obj = self.button_with_icon('icons/load.png', 'Select Obj')
+        if select_obj:
             self.selected_obj = self.select_file('./object')
         imgui.text(f"Selected File: {self.selected_obj}")
 
@@ -548,15 +555,17 @@ class Viewer:
         if imgui.button("AutoSave"):
             self.show_time_selection = True
 
-        imgui.same_line()
+        # imgui.same_line()
         imgui.set_next_item_width(100)
-        if imgui.button("Save RGB"):
+        save_rgb = self.button_with_icon('icons/save.webp', 'Save RGB')
+        if save_rgb:
             self.rgb_save_path = self.select_folder()
             self.save_rgb(self.rgb_save_path)
 
         imgui.same_line()
         imgui.set_next_item_width(100)
-        if imgui.button("Save Depth"):
+        save_depth = self.button_with_icon('icons/save.webp', 'Save Depth')
+        if save_depth:
             self.depth_save_path = self.select_folder()
             self.save_depth(self.depth_save_path)
 
@@ -582,43 +591,31 @@ class Viewer:
         imgui.end()
 
         ########################################################################
-        #                          Material Config                             #
+        #                          Light Configuration                         #
         ########################################################################
         win_pos_width = self.win_width - self.material_config_width
         win_pos_height = 0
         imgui.set_next_window_position(win_pos_width, win_pos_height)
         imgui.set_next_window_size(self.material_config_width, self.material_config_height)
-        imgui.begin("Material Config")
+        imgui.begin("Light Configuration")
 
-        # Add Diffuse slider
-        imgui.set_next_item_width(imgui.get_window_width()//2)
-        self.diffuse_changed, diffuse_value = imgui.slider_float("Diffuse",
-                                          self.diffuse,
-                                          min_value=0.00,
-                                          max_value=1,
-                                          format="%.2f")
-        if self.diffuse_changed:
-            self.diffuse = diffuse_value
+        # Add light position slider
+        imgui.set_next_item_width(imgui.get_window_width()//1.5)
+        self.lightPos_changed, self.lightPos = imgui.input_float3('Position', self.lightPos[0], self.lightPos[1], self.lightPos[2], format='%.2f')
 
-        # Add Specular slider
-        imgui.set_next_item_width(imgui.get_window_width()//2)
-        self.specular_changed, specular_value = imgui.slider_float("Specular",
-                                          self.specular,
-                                          min_value=0.00,
-                                          max_value=1,
-                                          format="%.2f")
-        if self.specular_changed:
-            self.specular = specular_value
+        # Add light color slider
+        imgui.set_next_item_width(imgui.get_window_width()//1.5)
+        self.lightColor_changed, self.lightColor = imgui.input_float3('Color', self.lightColor[0], self.lightColor[1], self.lightColor[2], format='%.2f')
 
-        # Add Ambient slider
+        # Add shininess slider
         imgui.set_next_item_width(imgui.get_window_width()//2)
-        self.ambient_changed, ambient_value = imgui.slider_float("Ambient",
-                                          self.ambient,
+        self.shininess_changed, shininess_value = imgui.slider_float("Shininess",
+                                          self.shininess,
                                           min_value=0.00,
-                                          max_value=1,
+                                          max_value=100.00,
                                           format="%.2f")
-        if self.ambient_changed:
-            self.ambient = ambient_value
+        if self.shininess_changed:
+            self.shininess = shininess_value
 
         imgui.end()
 
@@ -736,19 +733,10 @@ class Viewer:
         # Add chosen object or scene
         if self.selected_scene != "No file selected":
             self.initial_pos = True # Initially set up camera pos for the scene
-            model.append(Scene(self.texture_shader, self.selected_scene))
+            model.append(Scene(self.depth_texture_shader, self.selected_scene))
 
         if self.selected_obj != "No file selected":
             self.initial_pos = True # Initially set up camera pos for the scene
-            model.append(Object(self.texture_shader, self.selected_obj))
+            model.append(Object(self.depth_texture_shader, self.selected_obj))
 
         self.add(model)
-
-def main():
-    viewer = Viewer()
-    viewer.run()
-
-if __name__ == '__main__':
-    glfw.init()
-    main()
-    glfw.terminate()

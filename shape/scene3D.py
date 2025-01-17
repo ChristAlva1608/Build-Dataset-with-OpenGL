@@ -24,8 +24,8 @@ class Scene:
 
     def parse_obj_file(self,file_path):
         vertices_all = []
-        normals_all = []
         texcoords_all = []
+        normals_all = []
 
         # read the first time for vertices and texcoords only
         with open(file_path, 'r') as f:  # Use 'r' for text files
@@ -61,7 +61,6 @@ class Scene:
         z_list = [z[2] for z in vertices_all]
         self.min_z = min(z_list) # Smallest z value in vertices
         self.max_z = max(z_list) # Largest z value in vertices
-
 
         objects = []  # List to hold all the objects
 
@@ -102,8 +101,8 @@ class Scene:
 
                     if len(vert_id) == 3:
                         current_obj['vert_obj_id'].append(vert_id)
-                        current_obj['normal_obj_id'].append(normal_id)
                         current_obj['textcoords_obj_id'].append(text_id)
+                        current_obj['normal_obj_id'].append(normal_id)
                     elif len(vert_id) == 4:  # Quad face
                         current_obj['vert_obj_id'].append([vert_id[0], vert_id[1], vert_id[2]])  # First triangle
                         current_obj['vert_obj_id'].append([vert_id[0], vert_id[2], vert_id[3]])  # Second triangle
@@ -229,7 +228,6 @@ class Scene:
                 for normal_id in sublist:
                     normals.append(self.normals[int(normal_id)])
 
-            # if obj['texture_name'] == 'wire_115115115':
             model = SubScene( self.shader,
                             vertices,
                             tecos,
@@ -238,6 +236,10 @@ class Scene:
                             ).setup()
             self.subobjs.append(model)  
         return self
+
+    def set_mode(self, num):
+        for subobj in self.subobjs:
+            subobj.uma.upload_uniform_scalar1i(num, 'mode')
 
     def update_shader(self, shader):
         for subobj in self.subobjs:
@@ -252,9 +254,17 @@ class Scene:
             subobj.uma.upload_uniform_scalar1f(near, 'near')
             subobj.uma.upload_uniform_scalar1f(far, 'far')
 
-    def update_Kmat(self, diffuse, specular, ambient):
+    def update_lightPos(self, lightPos):
         for subobj in self.subobjs:
-            subobj.update_Kmat(diffuse, specular, ambient)
+            subobj.update_lightPos(lightPos)
+
+    def update_lightColor(self, lightColor):
+        for subobj in self.subobjs:
+            subobj.update_lightColor(lightColor)
+
+    def update_shininess(self, shininess):
+        for subobj in self.subobjs:
+            subobj.update_shininess(shininess)
 
     def setup(self):
         for subobj in self.subobjs:

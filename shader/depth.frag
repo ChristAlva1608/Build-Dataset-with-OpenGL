@@ -3,8 +3,6 @@ out vec4 FragColor;
 
 uniform float near;
 uniform float far;
-uniform vec3 nearColor;
-uniform vec3 farColor;
 uniform int colormap_selection; // New uniform for colormap selection
 
 uniform float magma_data[256*3];
