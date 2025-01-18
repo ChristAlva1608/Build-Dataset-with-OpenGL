@@ -503,11 +503,13 @@ class Viewer:
         select_scene = self.button_with_icon('icons/load.png', 'Select Scene')
         if select_scene:
             self.selected_scene = self.select_file('./scene')
+            self.load_scene()
         imgui.text(f"Selected File: {self.selected_scene}")
 
         select_obj = self.button_with_icon('icons/load.png', 'Select Obj')
         if select_obj:
             self.selected_obj = self.select_file('./object')
+            self.load_object()
         imgui.text(f"Selected File: {self.selected_obj}")
 
         imgui.set_next_item_width(imgui.get_window_width())
@@ -549,6 +551,10 @@ class Viewer:
         imgui.set_next_item_width(imgui.get_window_width())
         if imgui.button("Move Camera"):
             self.move_camera_flag = True
+
+        imgui.set_next_item_width(imgui.get_window_width())
+        if imgui.button("Reset"):
+            self.reset()
 
         imgui.get_style().colors[imgui.COLOR_BUTTON_HOVERED] = imgui.Vec4(0.6, 0.8, 0.6, 1.0)  # Green hover color
         imgui.set_next_item_width(100)
@@ -725,6 +731,31 @@ class Viewer:
     def scroll_callback(self, window, xoffset, yoffset):
         self.fov -= float(yoffset)
         self.trackball.zoom(yoffset, glfw.get_window_size(window)[1])
+    
+    def reset(self):
+        '''
+        Remove all scenes and objects
+        '''
+        self.drawables.clear()
+
+    def load_scene(self):
+        model = []
+        self.drawables = [drawable for drawable in self.drawables if not isinstance(drawable, Scene)]
+
+        # Add chosen object or scene
+        if self.selected_scene != "No file selected":
+            self.initial_pos = True # Initially set up camera pos for the scene
+            model.append(Scene(self.depth_texture_shader, self.selected_scene))
+
+        self.add(model)
+    
+    def load_object(self):
+        model = []
+
+        if self.selected_obj != "No file selected":
+            model.append(Object(self.depth_texture_shader, self.selected_obj))
+
+        self.add(model)
 
     def create_model(self):
         model = []
