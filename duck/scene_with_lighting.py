@@ -289,7 +289,7 @@ class Viewer:
             self.model = glm.mat4(1.0)
             # self.view = self.trackball.view_matrix()
             self.view = self.trackball.view_matrix2(self.cameraPos)
-            self.projection = self.trackball.projection_matrix(win_size)
+            self.projection = self.trackball.projection_matrix(win_size[0]/win_size[1])
 
             # draw our scene objects
             for drawable in self.drawables:

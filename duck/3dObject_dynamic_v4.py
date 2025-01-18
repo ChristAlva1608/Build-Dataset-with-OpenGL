@@ -42,7 +42,7 @@ class Object3D:
         if material['map_Kd'] is not None:
             # print(material['map_Kd'])
             image_path = material['map_Kd']
-            image_path = './obj/church/' + image_path # hardcode
+            image_path = './obj/warehouse/' + image_path # hardcode
             print(image_path)
 
         # if self.has_texture:
@@ -50,10 +50,14 @@ class Object3D:
         #     self.uma.setup_texture("texture1", image_path)
 
         image = Image.open(image_path)
-        image = image.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image for OpenGL
+
         if image.mode == "LA":
             image = convert_LA_to_RGBA(image)
             self.rgb = False
+        elif image.mode == "RGBA":
+            self.rgb = False
+
+        image = image.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image for OpenGL
         img_data = np.array(image, dtype=np.uint8)
 
         # Generate texture ID and bind it
@@ -62,13 +66,15 @@ class Object3D:
         # Set texture parameters
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        # flatColor = [1.0, 1.0, 1.0, 1.0]
+        # glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, flatColor)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         # Load the texture into OpenGL
         if self.rgb:
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
         else:
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
 
     def setup(self):
         self.vao.add_vbo(0, self.vertices, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
@@ -130,7 +136,14 @@ class Viewer:
         glfw.make_context_current(self.win)
 
         # Enable depth testing
-        GL.glEnable(GL.GL_DEPTH_TEST)
+        glEnable(GL.GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
+        # glEnable(GL_MULTISAMPLE)
+
+        # glCullFace(GL_FRONT)
+        # glFrontFace(GL_CCW)
 
         # Initialize trackball
         self.trackball = Trackball()
@@ -179,7 +192,7 @@ class Viewer:
             win_size = glfw.get_window_size(self.win)
             self.model=glm.mat4(1.0)
             self.view = self.trackball.view_matrix()
-            self.projection = self.trackball.projection_matrix(win_size)
+            self.projection = self.trackball.projection_matrix(win_size[0]/win_size[1])
 
             # draw our scene objects
             for drawable in self.drawables:
@@ -196,11 +209,11 @@ class Viewer:
 # obj_file = "./obj/house_interior/house_interior.obj"
 # mtl_file = "./obj/house_interior/house_interior.mtl"
 
-obj_file = "./obj/church/Sacrification_Church_of_Pyhamaa_SF.obj"
-mtl_file = "./obj/church/Sacrification_Church_of_Pyhamaa_SF.mtl"
+# obj_file = "./obj/church/Sacrification_Church_of_Pyhamaa_SF.obj"
+# mtl_file = "./obj/church/Sacrification_Church_of_Pyhamaa_SF.mtl"
 
-# obj_file = "./obj/warehouse/ware-house.obj"
-# mtl_file = "./obj/warehouse/ware-house.mtl"
+obj_file = "./obj/warehouse/ware-house.obj"
+mtl_file = "./obj/warehouse/ware-house.mtl"
 
 texture_file = "./image/ledinh.jpeg"
 
