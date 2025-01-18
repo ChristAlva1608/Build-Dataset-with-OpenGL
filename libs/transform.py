@@ -246,9 +246,9 @@ class Trackball:
     # def projection_matrix(self, winsize):
     def projection_matrix(self, aspectRatio):
         """ Projection matrix with z-clipping range adaptive to distance """
-        z_range = vec(0.1, 100) * self.distance  # proportion to dist
+        z_range = vec(0.1, 100.0) * self.distance  # proportion to dist
         # return perspective(35, winsize[0] / winsize[1], *z_range)
-        return perspective(35, aspectRatio, *z_range)
+        return perspective(45, aspectRatio, *z_range)
 
     def matrix(self):
         """ Rotational component of trackball position """
@@ -272,6 +272,6 @@ class Trackball:
         return glm.mat4(rotation_only)
 
     def depth_projection_matrix(self, aspectRatio):
-        z_range = vec(0.1, 700.0)  # proportion to dist
+        z_range = vec(0.1, 800.0)  # proportion to dist
         # print(self.distance)
         return perspective(45, aspectRatio, *z_range)
