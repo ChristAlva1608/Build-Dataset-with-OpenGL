@@ -22,7 +22,7 @@ class SubScene:
         self.uma = UManager(self.shader)
 
         self.use_texture = True if (len(teco) > 0 and material['map_Kd'] is not None) else False
-        
+
         # init vertex attributes
         self.vertices = np.array(vert, dtype=np.float32)
         self.textcoords = np.array(teco, dtype=np.float32)
@@ -30,6 +30,11 @@ class SubScene:
         
         # init materials
         self.materials = material
+
+        # init transformation matrix
+        self.model = glm.mat4(1.0)
+        self.view = glm.lookAt(glm.vec3(0, 0, 0), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
+        self.projection = glm.perspective(glm.radians(45.0), 800.0 / 600.0, 0.1, 100.0)
 
         # init texture
         self.texture_id = {}
@@ -68,6 +73,18 @@ class SubScene:
     def update_shininess(self, shininess):
         self.uma.upload_uniform_scalar1f(shininess, 'shininess')
 
+    def update_model_matrix(self, model):
+        print('current model matrix', self.model)
+        self.model = model * self.model
+        print('model matrix after applied new', self.model)
+        
+
+    def update_view_matrix(self, view):
+        self.view = view
+
+    def update_projection_matrix(self, projection):
+        self.projection = projection
+
     def setup(self):
         self.vao.add_vbo(0, self.vertices, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
         self.vao.add_vbo(1, self.normals, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
@@ -92,7 +109,7 @@ class SubScene:
 
         return self
 
-    def draw(self, model, view, projection, cameraPos):
+    def draw(self, cameraPos):
         self.vao.activate()
         glUseProgram(self.shader.render_idx)
 
@@ -112,9 +129,9 @@ class SubScene:
 
         self.uma.upload_uniform_vector3fv(np.array(cameraPos), "viewPos")
 
-        self.uma.upload_uniform_matrix4fv(np.array(model), 'model', True)
-        self.uma.upload_uniform_matrix4fv(np.array(view), 'view', True)
-        self.uma.upload_uniform_matrix4fv(np.array(projection), 'projection', True)
+        self.uma.upload_uniform_matrix4fv(np.array(self.model), 'model', True)
+        self.uma.upload_uniform_matrix4fv(np.array(self.view), 'view', True)
+        self.uma.upload_uniform_matrix4fv(np.array(self.projection), 'projection', True)
 
         glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices)*3)
 

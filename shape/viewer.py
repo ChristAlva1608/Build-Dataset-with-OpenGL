@@ -95,8 +95,11 @@ class Viewer:
         self.lightColor = glm.vec3(1.0, 1.0, 1.0)
 
         # Initialize selection
-        self.selected_obj = "No file selected"
-        self.selected_scene = "No file selected"
+        self.selected_obj_path = "No file selected"
+        self.selected_scene_path = "No file selected"
+        self.selected_object = None
+        self.selected_scene = None
+        self.scale_changed = False
 
         # Initialize trackball
         self.trackball = Trackball()
@@ -117,6 +120,10 @@ class Viewer:
         self.far = 1000
         self.near_colors = [0.0, 0.0, 0.0]
         self.far_colors = [1.0, 1.0, 1.0]
+
+        # Initialize object config
+        self.scale_factor = 1
+        self.selected_object = None
 
         # Initialize cmap
         self.selected_colormap = 0
@@ -153,6 +160,9 @@ class Viewer:
 
         self.scene_width = self.win_width // 6
         self.scene_height = self.win_height // 3
+
+        self.object_width = self.win_width // 6
+        self.object_height = self.win_height // 3
 
         self.operation_width = self.win_width // 6 
         self.operation_height = self.win_height // 3
@@ -392,14 +402,20 @@ class Viewer:
                         self.cameraPos = self.move_camera_around()  # Update camera position
                         self.last_update_time = self.current_time    
                 # self.move_camera_around()
-                model = glm.mat4(1.0)
 
-                # view = self.trackball.view_matrix2(-self.cameraPos)
+                if self.selected_object == drawable and self.scale_changed:
+                    scale_matrix = scale(self.scale_factor)
+                    drawable.update_attribute('model_matrix', scale_matrix)
+                    print(' object name ', drawable.name)
+
                 view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
-                projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 1000.0)
+                drawable.update_attribute('view_matrix', view)
+
+                projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+                drawable.update_attribute('projection_matrix', projection)
 
                 # Normal rendering
-                drawable.draw(model, view, projection, self.cameraPos)
+                drawable.draw(self.cameraPos)
 
             # Viewport for Depth Scene
             win_pos_width = self.scene_width + self.rgb_view_width
@@ -419,24 +435,29 @@ class Viewer:
                 if self.initial_pos:
                     z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
                     self.cameraPos = glm.vec3(0.0, 0.0, z)
-                
+
                 if self.move_camera_flag:
                     current_time = glfw.get_time()
                     if current_time - self.last_update_time >= 1.0:  # Check if 1 second has passed
                         self.cameraPos = self.move_camera_around()  # Update camera position
                         self.last_update_time = current_time    
                 # self.move_camera_around()
-                model = glm.mat4(1.0)
-                
-                # view = self.trackball.view_matrix2(-self.cameraPos)
+
+                if self.selected_object == drawable and self.scale_changed:
+                    scale_matrix = scale(self.scale_factor) * scale(1/self.scale_factor) # to scale back before apply new scale
+                    drawable.update_attribute('model_matrix', scale_matrix)
+
                 view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
+                drawable.update_attribute('view_matrix', view)
+
                 projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+                drawable.update_attribute('projection_matrix', projection)
 
                 # Depth map rendering
                 drawable.update_near_far(self.near, self.far)
                 
                 # Draw the full object
-                drawable.draw(model, view, projection, self.cameraPos)
+                drawable.draw(self.cameraPos)
 
                 # Visualize with chosen colormap
                 if self.selected_colormap == 1:
@@ -500,17 +521,11 @@ class Viewer:
 
         imgui.begin("Scene")
 
-        select_scene = self.button_with_icon('icons/load.png', 'Select Scene')
-        if select_scene:
-            self.selected_scene = self.select_file('./scene')
-            self.load_scene()
-        imgui.text(f"Selected File: {self.selected_scene}")
-
-        select_obj = self.button_with_icon('icons/load.png', 'Select Obj')
-        if select_obj:
-            self.selected_obj = self.select_file('./object')
-            self.load_object()
-        imgui.text(f"Selected File: {self.selected_obj}")
+        select_scene_flag = self.button_with_icon('icons/load.png', 'Select Scene')
+        if select_scene_flag:
+            self.selected_scene_path = self.select_file('./scene')
+            
+        imgui.text(f"Selected File: {self.selected_scene_path}")
 
         imgui.set_next_item_width(imgui.get_window_width())
         camera1 = self.button_with_icon('icons/camera.png', 'Camera A')
@@ -530,8 +545,67 @@ class Viewer:
         button_height = font_size + vertical_padding*2
         imgui.set_cursor_pos((imgui.get_window_width()//4, imgui.get_window_height() - button_height))
         imgui.set_next_item_width(imgui.get_window_width()//2)
-        if imgui.button("Load Model"):
-            self.create_model()
+        if imgui.button("Load Scene"):
+            self.load_scene()
+
+        imgui.end()
+
+        ########################################################################
+        #                                Object                                #
+        ########################################################################
+        
+        win_pos_width = 0
+        win_pos_height = self.scene_height
+        imgui.set_next_window_position(win_pos_width, win_pos_height)
+        imgui.set_next_window_size(self.object_width, self.object_height)
+
+        imgui.begin("Object")
+
+        select_obj_flag = self.button_with_icon('icons/load.png', 'Select Obj')
+        if select_obj_flag:
+            self.selected_obj_path = self.select_file('./object')
+            self.load_object()
+        imgui.text(f"Selected File: {self.selected_obj_path}")
+
+        imgui.set_next_item_width(100)
+        current_item = "" if self.selected_object is None else self.selected_object.name
+        if imgui.begin_combo("List of Objects", current_item):
+            # Iterate through all drawables
+            for drawable in self.drawables:
+                if isinstance(drawable, Object):  # Check if the drawable is an Object
+                    is_selected = self.selected_object == drawable
+                    # Render each object as a selectable item
+                    if imgui.selectable(drawable.name, is_selected)[0]:  # Note: selectable returns a tuple
+                        self.selected_object = drawable
+                    # Set the selected state in the combo box
+                    if is_selected:
+                        imgui.set_item_default_focus()
+            imgui.end_combo()
+
+        if self.selected_object:
+            imgui.text(f"{self.selected_object.name} is selected")
+        else:
+            imgui.text(f"No object is selected")
+
+        imgui.set_next_item_width(100)
+        self.scale_changed, self.scale_factor = imgui.input_float("Scale factor", self.scale_factor, format="%.2f")
+
+        if imgui.button("Drag/Drop"):
+            # Create a hand cursor
+            hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
+
+            # Set the hand cursor for the window
+            glfw.set_cursor(self.win, hand_cursor)
+
+            self.drag_object() # TO-DO CODE
+
+        font_size = imgui.get_font_size()
+        vertical_padding = 8
+        button_height = font_size + vertical_padding*2
+        imgui.set_cursor_pos((imgui.get_window_width()//4, imgui.get_window_height() - button_height))
+        imgui.set_next_item_width(imgui.get_window_width()//2)
+        if imgui.button("Load Object"):
+            self.load_object()
 
         imgui.end()
 
@@ -539,7 +613,7 @@ class Viewer:
         #                              Operation                              #
         ########################################################################
         win_pos_width = 0
-        win_pos_height = self.scene_height
+        win_pos_height = self.scene_height + self.object_height
         imgui.set_next_window_position(win_pos_width, win_pos_height)
         imgui.set_next_window_size(self.operation_width, self.operation_height)
         imgui.begin("Operation")
@@ -563,14 +637,14 @@ class Viewer:
 
         # imgui.same_line()
         imgui.set_next_item_width(100)
-        save_rgb = self.button_with_icon('icons/save.webp', 'Save RGB')
+        save_rgb = self.button_with_icon('icons/save.png', 'Save RGB')
         if save_rgb:
             self.rgb_save_path = self.select_folder()
             self.save_rgb(self.rgb_save_path)
 
         imgui.same_line()
         imgui.set_next_item_width(100)
-        save_depth = self.button_with_icon('icons/save.webp', 'Save Depth')
+        save_depth = self.button_with_icon('icons/save.png', 'Save Depth')
         if save_depth:
             self.depth_save_path = self.select_folder()
             self.save_depth(self.depth_save_path)
@@ -738,24 +812,47 @@ class Viewer:
         '''
         self.drawables.clear()
 
+    def lay_object(self):
+        if not self.selected_object or not self.selected_scene:
+            return glm.mat4(1.0)
+        object_bottom = self.selected_object.min_y
+        scene_bottom = self.selected_scene.min_y
+
+        if object_bottom > scene_bottom and scene_bottom < 0:
+            translation_matrix = translate(0, 0, (scene_bottom - object_bottom))
+        if object_bottom < scene_bottom and scene_bottom < 0:
+            translation_matrix = translate(0, 0, -(scene_bottom - object_bottom))
+        if object_bottom > scene_bottom and scene_bottom > 0:
+            translation_matrix = translate(0, 0, -(scene_bottom - object_bottom))
+        if object_bottom < scene_bottom and scene_bottom > 0:
+            translation_matrix = translate(0, 0, (scene_bottom - object_bottom))
+        return translation_matrix
+
     def load_scene(self):
         model = []
         self.drawables = [drawable for drawable in self.drawables if not isinstance(drawable, Scene)]
 
         # Add chosen object or scene
-        if self.selected_scene != "No file selected":
+        if self.selected_scene_path != "No file selected":
             self.initial_pos = True # Initially set up camera pos for the scene
-            model.append(Scene(self.depth_texture_shader, self.selected_scene))
+            self.selected_scene = Scene(self.depth_texture_shader, self.selected_scene_path)
+            model.append(self.selected_scene)
 
         self.add(model)
-    
+
     def load_object(self):
         model = []
 
-        if self.selected_obj != "No file selected":
-            model.append(Object(self.depth_texture_shader, self.selected_obj))
+        if self.selected_obj_path != "No file selected":
+            self.selected_object = Object(self.depth_texture_shader, self.selected_obj_path)
+            translation_matrix = self.lay_object()
+            self.selected_object.update_attribute('model_matrix', translation_matrix)
+            model.append(self.selected_object)
 
         self.add(model)
+    
+    def scale_object(self, scale_factor):
+        scale_matrix = scale(scale_factor)
 
     def create_model(self):
         model = []

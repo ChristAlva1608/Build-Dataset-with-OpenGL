@@ -17,9 +17,11 @@ class Scene:
         self.shader = shader
         self.vao = VAO()
         self.uma = UManager(self.shader)
+        
         self.subobjs = []
         self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
+
         self.split_obj()
 
     def parse_obj_file(self,file_path):
@@ -228,6 +230,7 @@ class Scene:
                 for normal_id in sublist:
                     normals.append(self.normals[int(normal_id)])
 
+            # if (obj['texture_name']=='wire_115115115'):
             model = SubScene( self.shader,
                             vertices,
                             tecos,
@@ -266,10 +269,17 @@ class Scene:
         for subobj in self.subobjs:
             subobj.update_shininess(shininess)
 
+    def update_attribute(self, attr, value):
+        update_name = 'update_' + attr
+        for subobj in self.subobjs:
+            if hasattr(subobj, update_name):
+                method = getattr(subobj, update_name)
+                method(value)
+
     def setup(self):
         for subobj in self.subobjs:
             subobj.setup()
 
-    def draw(self, model, view, projection, cameraPos):
+    def draw(self, cameraPos):
         for subobj in self.subobjs:
-            subobj.draw(model, view, projection, cameraPos)
+            subobj.draw(cameraPos)

@@ -17,9 +17,12 @@ class Object:
         self.shader = shader
         self.vao = VAO()
         self.uma = UManager(self.shader)
+
         self.subobjs = []
         self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
+        self.name = os.path.basename(file_path)[:-4]
+
         self.split_obj()
 
     def parse_obj_file(self,file_path):
@@ -279,10 +282,17 @@ class Object:
         for subobj in self.subobjs:
             subobj.update_shininess(shininess)
 
+    def update_attribute(self, attr, value):
+        update_name = 'update_' + attr
+        for subobj in self.subobjs:
+            if hasattr(subobj, update_name):
+                method = getattr(subobj, update_name)
+                method(value)
+
     def setup(self):
         for subobj in self.subobjs:
             subobj.setup()
 
-    def draw(self, model, view, projection, cameraPos):
+    def draw(self, cameraPos):
         for subobj in self.subobjs:
-            subobj.draw(model, view, projection, cameraPos)
+            subobj.draw(cameraPos)
