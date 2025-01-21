@@ -67,6 +67,8 @@ class Viewer:
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
         self.good_shader = Shader('shader/good_shader.vert','shader/good_shader.frag')
 
+        self.multi_cam_flag = False
+
         # Initialize mouse parameters
         self.last_x = width / 2
         self.last_y = height / 2
@@ -76,36 +78,32 @@ class Viewer:
         self.pitch = 0.0
         self.fov = 45.0
 
-        # Initialize control flag
-        self.move_camera_flag = False
-        self.diffuse_changed = False
-        self.ambient_changed = False
-        self.specular_changed = False
-        self.diffuse = [0.0, 0.0, 0.0]
-        self.ambient = [0.0, 0.0, 0.0]
-        self.specular = [0.0, 0.0, 0.0]
+        # Initialize scene config
+        self.selected_scene_path = "No file selected"
+        self.selected_scene = None
+        self.bg_colors = [0.2, 0.2, 0.2]
+        self.bg_changed = False
 
-        # Initialize control time
+        # Initialize object config
+        self.selected_obj_path = "No file selected"
+        self.selected_object = None
+        self.scale_changed = False
+        self.scale_factor = 1
+        self.prev_scale_factor = 1
+        self.selected_object = None
+
+        # Initialize operation
+        self.move_camera_flag = False
+        self.time_save = 0.0
+        self.time_count = 0.0
+        self.rgb_save_path = ""
+        self.depth_save_path = ""
+        self.show_time_selection = False
         self.current_time = 0.0
         self.last_update_time = 0.0
 
-        # Initialize light configuration
-        self.shininess = 100
-        self.lightPos = glm.vec3(250, 250, 300)
-        self.lightColor = glm.vec3(1.0, 1.0, 1.0)
-
-        # Initialize selection
-        self.selected_obj_path = "No file selected"
-        self.selected_scene_path = "No file selected"
-        self.selected_object = None
-        self.selected_scene = None
-        self.scale_changed = False
-
-        # Initialize trackball
-        self.trackball = Trackball()
-        self.mouse = (0, 0)
-
-        # Initialize vcamera parameters
+        # Initialize camera config
+        self.radius = 0.0
         self.cameraSpeed = 1
         self.old_cameraPos = glm.vec3(0.0, 0.0, 10.0)
         self.cameraPos = glm.vec3(0.0, 0.0, 10.0)
@@ -114,33 +112,28 @@ class Viewer:
         self.cameraPos_A = glm.vec3(0.0, 0.0, 0.0)
         self.cameraPos_B = glm.vec3(0.0, 0.0, 0.0)
         self.lastFrame = 0.0
+        self.selected_camera = None
+        self.num_vcameras_changed = False
+        self.num_vcameras = 1
 
-        # Initialize for near & far planes
+        # Initialize light config
+        self.shininess = 100
+        self.lightPos = glm.vec3(250, 250, 300)
+        self.lightColor = glm.vec3(1.0, 1.0, 1.0)
+
+        # Initialize depth config
         self.near = 0.1
         self.far = 1000
         self.near_colors = [0.0, 0.0, 0.0]
         self.far_colors = [1.0, 1.0, 1.0]
-
-        # Initialize object config
-        self.scale_factor = 1
-        self.selected_object = None
-
-        # Initialize cmap
         self.selected_colormap = 0
+        
+        # Initialize trackball
+        self.trackball = Trackball()
+        self.mouse = (0, 0)
 
         # Initialize camera pos flag
         self.initial_pos = False
-
-        # Initialize autosave
-        self.time_save = 0.0
-        self.time_count = 0.0
-        self.rgb_save_path = ""
-        self.depth_save_path = ""
-        self.show_time_selection = False
-
-        # Initialize background color
-        self.bg_colors = [0.2, 0.2, 0.2]
-        self.bg_changed = False
 
         # Register callbacks
         glfw.set_key_callback(self.win, self.on_key)
@@ -167,18 +160,16 @@ class Viewer:
         self.operation_width = self.win_width // 6 
         self.operation_height = self.win_height // 3
 
-        self.material_config_width = self.win_width // 6 
-        self.material_config_height = self.win_height // 3
+        self.camera_config_width = self.win_width // 6 
+        self.camera_config_height = self.win_height // 3
+
+        self.light_config_width = self.win_width // 6 
+        self.light_config_height = self.win_height // 3
 
         self.depth_config_width = self.win_width // 6 
         self.depth_config_height = self.win_height // 3
 
-        # self.command_width = self.win_width // 6
-        # self.command_height = self.win_height // 3
-        self.command_width = 0
-        self.command_height = 0
-
-        self.rgb_view_width = (self.win_width - self.scene_width - self.material_config_width) // 2
+        self.rgb_view_width = (self.win_width - self.scene_width - self.light_config_width) // 2
         self.rgb_view_height = self.win_height
 
         self.depth_view_width = self.rgb_view_width
@@ -355,6 +346,147 @@ class Viewer:
         self.cameraPos = self.cameraPos_B
         self.cameraFront = glm.vec3(1.0, 0.0, 0.0)
 
+    def multi_cam(self):
+        # Define the hemisphere of multi-camera
+        sphere = Sphere(self.phong_shader).setup()
+
+        for drawable in self.drawables:
+            if isinstance(drawable, Scene):
+                if drawable.max_z > drawable.max_x:
+                    sphere.radius = drawable.max_z + (1 / 3) * (drawable.max_z - drawable.min_z)
+                else:
+                    sphere.radius = drawable.max_x + (1 / 3) * (drawable.max_x - drawable.min_x)
+            break
+        
+        sphere.generate_sphere() # update vertices with new radius
+        sphere.draw()
+
+        self.vcameras = []
+        self.num_vcameras = 50
+        for i in range(self.num_vcameras):
+            vcamera = VCamera(self.phong_shader).setup()
+            vcamera.update_label(i)
+
+            # Position vcamera around the object
+            theta = i * (2 * np.pi) / self.num_vcameras  # Distribute evenly around the sphere
+            x = sphere.radius * np.cos(theta)
+            z = sphere.radius * np.sin(theta)
+            
+            P = glm.vec3(x,0,z)
+            O = glm.vec3(0.0, 0.0, 0.0)
+            OP = O - P # direction vector of vcamera
+
+            # First, move the vcamera to the position in sphere
+            translation = glm.translate(glm.mat4(1.0), P)
+
+            # Split direction vector into 2 component vector
+            y_component_vec = glm.vec3(0.0, OP.y, 0.0)
+            xz_component_vec = glm.vec3(OP.x, 0.0, OP.z)
+
+            # Two steps to set the direction of the camera directly look into the sphere center
+            # Step 1: rotate around y-axis
+            init_vec1 = glm.vec3(0.0,0.0,-1.0)
+            dot_product = glm.dot(xz_component_vec, init_vec1)
+            magnitude_xz_component_vec = glm.length(xz_component_vec)
+            magnitude_init_vec1 = glm.length(init_vec1)
+
+            # Calculate the cosine of the angle
+            cos_theta = dot_product / (magnitude_xz_component_vec * magnitude_init_vec1)
+
+            # Ensure the cosine is within the valid range for arccos due to floating point precision
+            cos_theta = np.clip(cos_theta, -1.0, 1.0)
+
+            # Calculate the angle in radians
+            y_angle = np.arccos(cos_theta)
+
+            if P.x < 0: # If position if left-half sphere
+                y_axis_rotation = glm.rotate(glm.mat4(1.0), -y_angle, glm.vec3(0.0, 1.0, 0.0))
+            else: # If position if left-half sphere
+                y_axis_rotation = glm.rotate(glm.mat4(1.0), y_angle, glm.vec3(0.0, 1.0, 0.0))
+
+            # Apply model matrix for vcamera
+            vcamera.model = translation * y_axis_rotation
+
+            # Set up view matrix for camera
+            eye = P
+            at = glm.vec3(0,0,0)
+            up = glm.normalize(glm.vec3(vcamera.model[1]))
+
+            vcamera.view = glm.lookAt(eye, at, up)
+            vcamera.projection = glm.perspective(glm.radians(self.fov), self.win_width / self.win_height, 0.1, 100.0)
+
+            self.vcameras.append(vcamera)
+
+        win_pos_width = self.scene_width
+        win_pos_height = self.win_height - self.rgb_view_height
+        GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
+
+        for vcamera in self.vcameras:
+            win_size = glfw.get_window_size(self.win)
+            vcamera.view = self.trackball.view_matrix4()
+            # vcamera.projection = self.trackball.projection_matrix(win_size)
+            vcamera.draw()
+
+        # Show multi-cam system on the left
+        for drawable in self.drawables:
+            drawable.set_mode(1) # mode for rgb image
+
+            # update light configuration
+            if self.lightPos_changed:
+                drawable.update_lightPos(self.lightPos)
+            
+            if self.lightColor_changed:
+                drawable.update_lightColor(self.lightColor)
+            
+            if self.shininess_changed:
+                drawable.update_shininess(self.shininess)
+
+            # Initially set ideal camera pos for any scene
+            if self.initial_pos:
+                x = drawable.max_x + 1/3 * (drawable.max_x - drawable.min_x)
+                z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
+                
+                # Set up static camera view A and B in initial position
+                self.cameraPos_A = glm.vec3(0.0, 0.0, z)
+                self.cameraPos_B = glm.vec3(x, 0.0, 0.0)
+
+                # Set up current camera pos
+                self.old_cameraPos = self.cameraPos
+                self.cameraPos = self.cameraPos_A
+
+            if self.move_camera_flag:
+                self.current_time = glfw.get_time()
+                if self.current_time - self.last_update_time >= 1.0:  # Check if 1 second has passed
+                    self.cameraPos = self.move_camera_around()  # Update camera position
+                    self.last_update_time = self.current_time    
+            # self.move_camera_around()
+
+            if self.selected_object == drawable and self.scale_changed:
+                scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before apply new scale
+                self.prev_scale_factor = self.scale_factor
+                drawable.update_attribute('model_matrix', scale_matrix)
+
+            if self.selected_camera:
+                view = self.selected_camera.view
+            view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
+            drawable.update_attribute('view_matrix', view)
+
+            projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+            drawable.update_attribute('projection_matrix', projection)
+
+            # Normal rendering
+            drawable.draw(self.cameraPos)
+
+        # # Render each camera's view on the right
+        # for i, vcamera in enumerate(self.vcameras):
+        #     row, col = divmod(i, cols)
+        #     GL.glViewport(left_width + col * cell_width, row * cell_height, cell_width, cell_height)
+        #     for drawable in self.drawables:
+        #         drawable.view = vcamera.view
+        #         drawable.projection = vcamera.projection
+        #         # drawable.model = vcamera.model
+        #         drawable.draw()
+
     def run(self):
         while not glfw.window_should_close(self.win):
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
@@ -363,107 +495,111 @@ class Viewer:
             win_pos_width = self.scene_width
             win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
 
-            GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-            GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-            GL.glEnable(GL.GL_SCISSOR_TEST)
-            GL.glClearColor(*self.bg_colors, 1.0)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-            GL.glUseProgram(self.depth_texture_shader.render_idx)   
+            if self.multi_cam_flag:
+                self.multi_cam()
 
-            for drawable in self.drawables:
-                drawable.set_mode(1) # mode for rgb image
+            # GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
+            # GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
+            # GL.glEnable(GL.GL_SCISSOR_TEST)
+            # GL.glClearColor(*self.bg_colors, 1.0)
+            # GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+            # GL.glUseProgram(self.depth_texture_shader.render_idx)   
 
-                # update light configuration
-                if self.lightPos_changed:
-                    drawable.update_lightPos(self.lightPos)
+            # for drawable in self.drawables:
+            #     drawable.set_mode(1) # mode for rgb image
+
+            #     # update light configuration
+            #     if self.lightPos_changed:
+            #         drawable.update_lightPos(self.lightPos)
                 
-                if self.lightColor_changed:
-                    drawable.update_lightColor(self.lightColor)
+            #     if self.lightColor_changed:
+            #         drawable.update_lightColor(self.lightColor)
                 
-                if self.shininess_changed:
-                    drawable.update_shininess(self.shininess)
+            #     if self.shininess_changed:
+            #         drawable.update_shininess(self.shininess)
 
-                # Initially set ideal camera pos for any scene
-                if self.initial_pos:
-                    x = drawable.max_x + 1/3 * (drawable.max_x - drawable.min_x)
-                    z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
+            #     # Initially set ideal camera pos for any scene
+            #     if self.initial_pos:
+            #         x = drawable.max_x + 1/3 * (drawable.max_x - drawable.min_x)
+            #         z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
                     
-                    # Set up static camera view A and B in initial position
-                    self.cameraPos_A = glm.vec3(0.0, 0.0, z)
-                    self.cameraPos_B = glm.vec3(x, 0.0, 0.0)
+            #         # Set up static camera view A and B in initial position
+            #         self.cameraPos_A = glm.vec3(0.0, 0.0, z)
+            #         self.cameraPos_B = glm.vec3(x, 0.0, 0.0)
 
-                    # Set up current camera pos
-                    self.old_cameraPos = self.cameraPos
-                    self.cameraPos = self.cameraPos_A
+            #         # Set up current camera pos
+            #         self.old_cameraPos = self.cameraPos
+            #         self.cameraPos = self.cameraPos_A
 
-                if self.move_camera_flag:
-                    self.current_time = glfw.get_time()
-                    if self.current_time - self.last_update_time >= 1.0:  # Check if 1 second has passed
-                        self.cameraPos = self.move_camera_around()  # Update camera position
-                        self.last_update_time = self.current_time    
-                # self.move_camera_around()
+            #     if self.move_camera_flag:
+            #         self.current_time = glfw.get_time()
+            #         if self.current_time - self.last_update_time >= 1.0:  # Check if 1 second has passed
+            #             self.cameraPos = self.move_camera_around()  # Update camera position
+            #             self.last_update_time = self.current_time    
+            #     # self.move_camera_around()
 
-                if self.selected_object == drawable and self.scale_changed:
-                    scale_matrix = scale(self.scale_factor)
-                    drawable.update_attribute('model_matrix', scale_matrix)
-                    print(' object name ', drawable.name)
+            #     if self.selected_object == drawable and self.scale_changed:
+            #         scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before apply new scale
+            #         self.prev_scale_factor = self.scale_factor
+            #         drawable.update_attribute('model_matrix', scale_matrix)
 
-                view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
-                drawable.update_attribute('view_matrix', view)
+            #     view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
+            #     drawable.update_attribute('view_matrix', view)
 
-                projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
-                drawable.update_attribute('projection_matrix', projection)
+            #     projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+            #     drawable.update_attribute('projection_matrix', projection)
 
-                # Normal rendering
-                drawable.draw(self.cameraPos)
+            #     # Normal rendering
+            #     drawable.draw(self.cameraPos)
 
-            # Viewport for Depth Scene
-            win_pos_width = self.scene_width + self.rgb_view_width
-            win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
-            GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-            GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-            GL.glClearColor(*self.bg_colors, 1.0)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+            # # Viewport for Depth Scene
+            # win_pos_width = self.scene_width + self.rgb_view_width
+            # win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
+            # GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+            # GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+            # GL.glClearColor(*self.bg_colors, 1.0)
+            # GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-            for drawable in self.drawables:
-                drawable.set_mode(0) # mode for depth map
+            # for drawable in self.drawables:
+            #     drawable.set_mode(0) # mode for depth map
 
-                # update depth map color
-                drawable.update_colormap(self.selected_colormap)
+            #     # update depth map color
+            #     drawable.update_colormap(self.selected_colormap)
 
-                # Initially set ideal camera pos for any scene
-                if self.initial_pos:
-                    z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
-                    self.cameraPos = glm.vec3(0.0, 0.0, z)
+            #     # Initially set ideal camera pos for any scene
+            #     if self.initial_pos:
+            #         z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
+            #         self.cameraPos = glm.vec3(0.0, 0.0, z)
 
-                if self.move_camera_flag:
-                    current_time = glfw.get_time()
-                    if current_time - self.last_update_time >= 1.0:  # Check if 1 second has passed
-                        self.cameraPos = self.move_camera_around()  # Update camera position
-                        self.last_update_time = current_time    
-                # self.move_camera_around()
+            #     if self.move_camera_flag:
+            #         current_time = glfw.get_time()
+            #         if current_time - self.last_update_time >= 1.0:  # Check if 1 second has passed
+            #             self.cameraPos = self.move_camera_around()  # Update camera position
+            #             self.last_update_time = current_time    
+            #     # self.move_camera_around()
 
-                if self.selected_object == drawable and self.scale_changed:
-                    scale_matrix = scale(self.scale_factor) * scale(1/self.scale_factor) # to scale back before apply new scale
-                    drawable.update_attribute('model_matrix', scale_matrix)
+            #     if self.selected_object == drawable and self.scale_changed:
+            #         scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before apply new scale
+            #         self.prev_scale_factor = self.scale_factor
+            #         drawable.update_attribute('model_matrix', scale_matrix)
 
-                view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
-                drawable.update_attribute('view_matrix', view)
+            #     view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp)
+            #     drawable.update_attribute('view_matrix', view)
 
-                projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
-                drawable.update_attribute('projection_matrix', projection)
+            #     projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+            #     drawable.update_attribute('projection_matrix', projection)
 
-                # Depth map rendering
-                drawable.update_near_far(self.near, self.far)
+            #     # Depth map rendering
+            #     drawable.update_near_far(self.near, self.far)
                 
-                # Draw the full object
-                drawable.draw(self.cameraPos)
+            #     # Draw the full object
+            #     drawable.draw(self.cameraPos)
 
-                # Visualize with chosen colormap
-                if self.selected_colormap == 1:
-                    self.pass_magma_data(self.depth_shader)
+            #     # Visualize with chosen colormap
+            #     if self.selected_colormap == 1:
+            #         self.pass_magma_data(self.depth_shader)
 
-            GL.glDisable(GL.GL_SCISSOR_TEST)
+            # GL.glDisable(GL.GL_SCISSOR_TEST)
 
             self.initial_pos = False
 
@@ -623,8 +759,8 @@ class Viewer:
             self.use_trackball()
 
         imgui.set_next_item_width(imgui.get_window_width())
-        if imgui.button("Move Camera"):
-            self.move_camera_flag = True
+        if imgui.button("Multi Camera"):
+            self.multi_cam_flag = True
 
         imgui.set_next_item_width(imgui.get_window_width())
         if imgui.button("Reset"):
@@ -671,12 +807,56 @@ class Viewer:
         imgui.end()
 
         ########################################################################
-        #                          Light Configuration                         #
+        #                          Camera Configuration                        #
         ########################################################################
-        win_pos_width = self.win_width - self.material_config_width
+        win_pos_width = self.win_width - self.light_config_width
         win_pos_height = 0
         imgui.set_next_window_position(win_pos_width, win_pos_height)
-        imgui.set_next_window_size(self.material_config_width, self.material_config_height)
+        imgui.set_next_window_size(self.light_config_width, self.light_config_height)
+        imgui.begin("Camera Configuration")
+
+        imgui.set_next_item_width(100)
+        radius_changed, radius_value = imgui.slider_float("Sphere Radius",
+                                          self.radius,
+                                          min_value=0.00,
+                                          max_value=100.00,
+                                          format="%.2f")
+        
+        imgui.set_next_item_width(100)
+        self.num_vcameras_changed, self.num_vcameras = imgui.input_int("Num of Cameras", self.num_vcameras)
+
+        if not self.multi_cam_flag:
+            imgui.text(f'Multi-camera is not been chosen')
+        else: 
+            imgui.text(f'Please choose a virtual camera')
+
+        imgui.set_next_item_width(100)
+        current_item = "" if self.selected_camera is None else self.selected_camera.label
+        if imgui.begin_combo("List of Cameras", current_item):
+            # Iterate through all vcamera
+            for i, vcamera in enumerate(self.vcameras):
+                if isinstance(vcamera, VCamera):  
+                    is_selected = self.selected_camera == vcamera
+                    # Render each camera as a selectable item
+                    if imgui.selectable(vcamera.label, is_selected)[0]:  
+                        self.selected_camera = vcamera
+                    # Set the selected state in the combo box
+                    if is_selected:
+                        imgui.set_item_default_focus()
+            imgui.end_combo()
+        
+        if radius_changed:
+            self.radius = radius_value
+        
+        imgui.end()
+
+        ########################################################################
+        #                          Light Configuration                         #
+        ########################################################################
+        win_pos_width = self.win_width - self.light_config_width
+        win_pos_height = self.camera_config_height
+        imgui.set_next_window_position(win_pos_width, win_pos_height)
+        imgui.set_next_window_size(self.light_config_width, self.light_config_height)
         imgui.begin("Light Configuration")
 
         # Add light position slider
@@ -703,7 +883,7 @@ class Viewer:
         #                              Depth Config                            #
         ########################################################################
         win_pos_width = self.win_width - self.depth_config_width
-        win_pos_height = self.material_config_height
+        win_pos_height = self.camera_config_height + self.light_config_height
         imgui.set_next_window_position(win_pos_width, win_pos_height)
         imgui.set_next_window_size(self.depth_config_width, self.depth_config_height)
         imgui.begin("Depth Config")
@@ -751,17 +931,6 @@ class Viewer:
             self.far = far_value
 
         imgui.end()
-
-        ########################################################################
-        #                               Command                                #
-        ########################################################################
-        # win_pos_width = self.scene_width + self.operation_width + self.rgb_view_width + self.depth_view_width
-        # win_pos_height = 0
-        # imgui.set_next_window_position(win_pos_width, win_pos_height)
-        # imgui.set_next_window_size(self.command_width, self.command_width)
-        # imgui.begin("Command")
-
-        # imgui.end()
 
         imgui.render()
         self.imgui_impl.render(imgui.get_draw_data())
@@ -819,13 +988,14 @@ class Viewer:
         scene_bottom = self.selected_scene.min_y
 
         if object_bottom > scene_bottom and scene_bottom < 0:
-            translation_matrix = translate(0, 0, (scene_bottom - object_bottom))
+            translation_matrix = translate(0, (scene_bottom - object_bottom), 0)
         if object_bottom < scene_bottom and scene_bottom < 0:
-            translation_matrix = translate(0, 0, -(scene_bottom - object_bottom))
+            translation_matrix = translate(0, -(scene_bottom - object_bottom), 0)
         if object_bottom > scene_bottom and scene_bottom > 0:
-            translation_matrix = translate(0, 0, -(scene_bottom - object_bottom))
+            translation_matrix = translate(0, -(scene_bottom - object_bottom), 0)
         if object_bottom < scene_bottom and scene_bottom > 0:
-            translation_matrix = translate(0, 0, (scene_bottom - object_bottom))
+            translation_matrix = translate(0, (scene_bottom - object_bottom), 0)
+
         return translation_matrix
 
     def load_scene(self):
@@ -850,21 +1020,18 @@ class Viewer:
             model.append(self.selected_object)
 
         self.add(model)
-    
-    def scale_object(self, scale_factor):
-        scale_matrix = scale(scale_factor)
 
-    def create_model(self):
-        model = []
-        self.drawables.clear()
+    # def create_model(self):
+    #     model = []
+    #     self.drawables.clear()
 
-        # Add chosen object or scene
-        if self.selected_scene != "No file selected":
-            self.initial_pos = True # Initially set up camera pos for the scene
-            model.append(Scene(self.depth_texture_shader, self.selected_scene))
+    #     # Add chosen object or scene
+    #     if self.selected_scene != "No file selected":
+    #         self.initial_pos = True # Initially set up camera pos for the scene
+    #         model.append(Scene(self.depth_texture_shader, self.selected_scene))
 
-        if self.selected_obj != "No file selected":
-            self.initial_pos = True # Initially set up camera pos for the scene
-            model.append(Object(self.depth_texture_shader, self.selected_obj))
+    #     if self.selected_obj != "No file selected":
+    #         self.initial_pos = True # Initially set up camera pos for the scene
+    #         model.append(Object(self.depth_texture_shader, self.selected_obj))
 
-        self.add(model)
+    #     self.add(model)
