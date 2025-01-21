@@ -69,7 +69,7 @@ class SubObj:
     
     def update_model_matrix(self, model):
         print('current model matrix', self.model)
-        self.model = model * self.model
+        self.model = model @ self.model
         print('model matrix after applied new', self.model)
 
     def update_view_matrix(self, view):
