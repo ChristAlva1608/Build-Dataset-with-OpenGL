@@ -436,7 +436,7 @@ class Viewer:
 
             # Set up view matrix for camera
             eye = P
-            at = glm.vec3(0,0,0)
+            at = P + glm.normalize(P) # Point in the direction of the outward ray
             up = glm.normalize(glm.vec3(vcamera.model[1]))
 
             vcamera.view = glm.lookAt(eye, at, up)
