@@ -68,7 +68,7 @@ class Viewer:
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
         self.good_shader = Shader('shader/good_shader.vert','shader/good_shader.frag')
 
-        self.multi_cam_flag = False
+        self.load_config_flag = False
 
         # Initialize mouse parameters
         self.last_x = width / 2
@@ -95,6 +95,7 @@ class Viewer:
 
         # Initialize operation
         self.move_camera_flag = False
+        self.multi_cam_flag = False
         self.time_save = 0.0
         self.time_count = 0.0
         self.rgb_save_path = ""
@@ -450,6 +451,7 @@ class Viewer:
             new_vcamera.view = self.trackball.view_matrix4()
             new_vcamera.projection = vcamera.projection
             new_vcamera.draw()
+
     def process_scene_config(self):
         dir_path = './config/'
         file_path = dir_path + os.path.basename(self.selected_scene_path)[:-3] + 'yaml'
@@ -463,8 +465,9 @@ class Viewer:
 
     def run(self):
         while not glfw.window_should_close(self.win):
-            if self.selected_scene_path != "No file selected":
+            if self.selected_scene_path != "No file selected" and self.load_config_flag:
                 self.process_scene_config()
+                self.load_config_flag = False
 
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -665,6 +668,7 @@ class Viewer:
         imgui.set_cursor_pos((imgui.get_window_width()//4, imgui.get_window_height() - button_height))
         imgui.set_next_item_width(imgui.get_window_width()//2)
         if imgui.button("Load Scene"):
+            self.load_config_flag = True
             self.load_scene()
 
         imgui.end()
