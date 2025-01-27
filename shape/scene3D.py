@@ -52,11 +52,11 @@ class Scene:
                     w = float(parts[3]) if len(parts) > 3 else 0.0  # Default w to 0.0 if not provided
                     texcoords_all.append([u, v, w])
 
-        x_list = [x[2] for x in vertices_all]
+        x_list = [x[0] for x in vertices_all]
         self.min_x = min(x_list) # Smallest x value in vertices
         self.max_x = max(x_list) # Largest x value in vertices
 
-        y_list = [y[2] for y in vertices_all]
+        y_list = [y[1] for y in vertices_all]
         self.min_y = min(y_list) # Smallest y value in vertices
         self.max_y = max(y_list) # Largest y value in vertices
 
@@ -275,6 +275,12 @@ class Scene:
             if hasattr(subobj, update_name):
                 method = getattr(subobj, update_name)
                 method(value)
+
+    def get_transformed_vertices(self):
+        transform_vertices = []
+        for subobj in self.subobjs:
+            transform_vertices.extend(subobj.transform_vertices())
+        return transform_vertices
 
     def setup(self):
         for subobj in self.subobjs:

@@ -76,6 +76,7 @@ class Viewer:
         self.last_y = height / 2
         self.first_mouse = True
         self.left_mouse_pressed = False
+        self.right_mouse_pressed = False
         self.yaw = -90.0
         self.pitch = 0.0
         self.fov = 45.0
@@ -92,7 +93,6 @@ class Viewer:
         self.scale_changed = False
         self.scale_factor = 1
         self.prev_scale_factor = 1
-        self.selected_object = None
 
         # Initialize operation
         self.move_camera_flag = False
@@ -104,7 +104,7 @@ class Viewer:
         self.show_time_selection = False
         self.current_time = 0.0
         self.last_update_time = 0.0
-        self.is_dragging = False
+        self.drag_object_flag = False
 
         # Initialize camera config
         self.sphere_radius = 0.1
@@ -143,6 +143,7 @@ class Viewer:
         # Register callbacks
         glfw.set_key_callback(self.win, self.on_key)
         glfw.set_cursor_pos_callback(self.win, self.on_mouse_move)
+        glfw.set_mouse_button_callback(self.win, self.mouse_button_callback)
         glfw.set_scroll_callback(self.win, self.scroll_callback)
 
         print('OpenGL', GL.glGetString(GL.GL_VERSION).decode() + ', GLSL',
@@ -211,55 +212,74 @@ class Viewer:
         """ Rotate on left-click & drag, pan on right-click & drag """
         old = self.mouse
         self.mouse = (xpos, glfw.get_window_size(window)[1] - ypos)
-        if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT):
-            self.trackball.drag(old, self.mouse, glfw.get_window_size(window))
 
-        if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_RIGHT):
-            self.trackball.pan(old, self.mouse)
+        if self.drag_object_flag:
+            # Make sure that the left mouse is pressed when dragging the object
+            if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT):
+                # Normalize the previous and current mouse positions to the range [-1, 1]
+                # old, new = ((2 * np.asarray(pos) - glfw.get_window_size(window)) / glfw.get_window_size(window) for pos in (old, self.mouse))
+                delta_x = self.mouse[0] - old[0]  # Calculate the horizontal movement delta
+                delta_y = self.mouse[1] - old[1]  # Calculate the vertical movement delta
+
+                # Create a translation matrix based on the mouse movement
+                translation_matrix = glm.translate(glm.mat4(1.0), glm.vec3(delta_x, delta_y, 0))
+
+                # Identify the object under the current mouse position
+                # self.selected_object = self.check_selected_object(self.mouse)
+
+                # Apply the translation to the selected object's model matrix
+                if self.selected_object:
+                    self.selected_object.update_attribute("model_matrix", translation_matrix)
+
+        else:
+            if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT):
+                self.trackball.drag(old, self.mouse, glfw.get_window_size(window))
+
+            if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_RIGHT):
+                self.trackball.pan(old, self.mouse)
 
     def scroll_callback(self, window, xoffset, yoffset):
         self.fov -= float(yoffset)
         self.trackball.zoom(yoffset, glfw.get_window_size(window)[1])
 
-    def on_mouse_down(self, x, y):
-        ''' Function to handle mouse/touch down event '''
-        global is_dragging
-        
-        # Perform intersection test to check if the user clicked on the selected object
-        if self.intersect_object(self.selected_scene, self.selected_object, x, y):
-            is_dragging = True
-            # Store the initial object position
-            initial_pos = self.selected_object.position
+    def mouse_button_callback(self, window, button, action, mods):
+        if button == glfw.MOUSE_BUTTON_LEFT:
+            if action == glfw.PRESS:
+                self.left_mouse_pressed = True
+            elif action == glfw.RELEASE:
+                self.left_mouse_pressed = False
+        elif button == glfw.MOUSE_BUTTON_RIGHT:
+            if action == glfw.PRESS:
+                self.right_mouse_pressed = True
+            elif action == glfw.RELEASE:
+                self.right_mouse_pressed = False
 
-    def on_mouse_move(self, x, y):
-        ''' Function to handle mouse/touch move event '''
-        global is_dragging
-        
-        if is_dragging:
-            # Perform intersection test to find the new drop location
-            new_pos = self.find_drop_location(self.selected_scene, self.selected_object, x, y)
-            
-            # Update the object's position
-            self.selected_object.position = new_pos
+    def check_selected_object(self, cur_pos):
+        ''' Function to check which object user want to drag '''
+        for i,drawable in enumerate(self.drawables):
+            if isinstance(drawable, Object):
+                vertices = drawable.get_transformed_vertices() # list of vertices with type glm.vec3
 
-    def on_mouse_up(self, x, y):
-        ''' Function to handle mouse/touch up event '''
-        global is_dragging
-        
-        if is_dragging:
-            # Perform intersection test to find the new drop location
-            new_pos = self.find_drop_location(self.selected_scene, self.selected_object, x, y)
-            
-            # Update the object's position
-            self.selected_object.position = new_pos
-            
-            is_dragging = False
-        
-    def intersect_object(self):
-        pass
+                x_list = [vertex.x for vertex in vertices]
+                min_x = min(x_list) # Smallest x value in vertices
+                max_x = max(x_list) # Largest x value in vertices
 
-    def find_drop_location(self):
-        pass
+                y_list = [vertex.y for vertex in vertices]
+                np.savetxt('y.txt', y_list)
+                min_y = min(y_list) # Smallest y value in vertices
+                max_y = max(y_list) # Largest y value in vertices
+
+                print(f'drawable number {i}')
+                print(f'min_x: {min_x}')
+                print(f'max_x: {max_x}')
+                print(f'min_y: {min_y}')
+                print(f'max_y: {max_y}')
+                print(f'mouse x: {cur_pos[0]}')
+                print(f'mouse y: {cur_pos[1]}')
+
+                if (min_x <= cur_pos[0] and cur_pos[0] <= max_x and min_y <= cur_pos[1] and cur_pos[1] <= max_y):
+                    print('satisfied')
+                    return drawable
 
     def select_file(self, starting_folder):
         app = QApplication(sys.argv)
@@ -508,6 +528,7 @@ class Viewer:
         self.multi_cam_flag = False
         self.load_config_flag = False
         self.move_camera_flag = False
+        self.drag_object_flag = False
 
     def load_scene(self):
         model = []
@@ -535,6 +556,7 @@ class Viewer:
         self.add(model)
 
     def use_trackball(self):
+        self.drag_object_flag = False # reset drag drop object
         for drawable in self.drawables:
             win_size = glfw.get_window_size(self.win)
             drawable.view = self.trackball.view_matrix()
@@ -557,7 +579,7 @@ class Viewer:
         sphere.radius = self.sphere_radius
         sphere.generate_sphere() # update vertices with new radius
         return random.choice(sphere.vertices)
-    
+
     ''' User Interface '''
     def imgui_menu(self):
         # Create a new frame
@@ -650,7 +672,7 @@ class Viewer:
             # Set the hand cursor for the window
             glfw.set_cursor(self.win, hand_cursor)
 
-            self.drag_object() # TO-DO CODE
+            self.drag_object_flag = True
 
         font_size = imgui.get_font_size()
         vertical_padding = 8
@@ -823,7 +845,7 @@ class Viewer:
         # Add light color slider
         imgui.set_next_item_width(imgui.get_window_width()//1.5)
         self.lightColor_changed, self.lightColor = imgui.input_float3('Color', self.lightColor[0], self.lightColor[1], self.lightColor[2], format='%.2f')
-        print(self.lightColor)
+
         # Add shininess slider
         imgui.set_next_item_width(imgui.get_window_width()//2)
         self.shininess_changed, shininess_value = imgui.slider_float("Shininess",
@@ -947,7 +969,9 @@ class Viewer:
                 if self.selected_object == drawable and self.scale_changed:
                     scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before applying new scale
                     self.prev_scale_factor = self.scale_factor
+                    print('scale1')
                     drawable.update_attribute('model_matrix', scale_matrix)
+                    # drawable.model = scale_matrix * drawable.model
                 
                 # Define view matrix
                 view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
@@ -996,7 +1020,9 @@ class Viewer:
                 if self.selected_object == drawable and self.scale_changed:
                     scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before apply new scale
                     self.prev_scale_factor = self.scale_factor
+                    print('scale2')
                     drawable.update_attribute('model_matrix', scale_matrix)
+                    # drawable.model = scale_matrix * drawable.model
 
                 # Define view matrix
                 view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
