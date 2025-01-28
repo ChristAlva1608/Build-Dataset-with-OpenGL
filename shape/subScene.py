@@ -77,7 +77,7 @@ class SubScene:
         print('current model matrix', self.model)
         self.model = model * self.model
         print('model matrix after applied new', self.model)
-        
+
 
     def update_view_matrix(self, view):
         self.view = view
@@ -85,6 +85,27 @@ class SubScene:
     def update_projection_matrix(self, projection):
         self.projection = projection
 
+    def transform_vertices(self):
+        transformed_vertices = []
+        for vertex in self.vertices:
+            # Convert to homogeneous coordinates
+            if not isinstance(self.model, glm.mat4):
+                self.model = glm.mat4(*self.model.flatten())
+            if not isinstance(self.view, glm.mat4):
+                self.view = glm.mat4(*self.view.flatten())
+            if not isinstance(self.projection, glm.mat4):
+                self.projection = glm.mat4(*self.projection.flatten())
+            vertex_homogeneous = glm.vec4(vertex[0], vertex[1], vertex[2], 1.0)
+            
+            # Apply model, view, and projection transformations
+            vert_pos4 = self.projection * self.view * self.model * vertex_homogeneous
+            # vert_pos = glm.vec3(vert_pos4) / vert_pos4.w  # Perspective divide
+
+            # Append the transformed position and normal to the results
+            transformed_vertices.append(vert_pos4)
+
+        return transformed_vertices
+    
     def setup(self):
         self.vao.add_vbo(0, self.vertices, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
         self.vao.add_vbo(1, self.normals, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)

@@ -196,9 +196,25 @@ class Viewer:
                 GL.glPolygonMode(GL.GL_FRONT_AND_BACK, next(self.fill_modes))
 
             if key == glfw.KEY_W:
-                self.cameraPos += self.cameraSpeed * self.cameraFront
+                delta_z = self.cameraSpeed * self.cameraFront
+
+                if self.drag_object_flag:
+                    translation_matrix = glm.translate(glm.mat4(1.0), -delta_z)
+                    if self.selected_object:
+                        self.selected_object.update_attribute("model_matrix", translation_matrix)
+                else:
+                    self.cameraPos += delta_z
+
             if key == glfw.KEY_S:
-                self.cameraPos -= self.cameraSpeed * self.cameraFront
+                delta_z = self.cameraSpeed * self.cameraFront
+                
+                if self.drag_object_flag:
+                    translation_matrix = glm.translate(glm.mat4(1.0), delta_z)
+                    if self.selected_object:
+                        self.selected_object.update_attribute("model_matrix", translation_matrix)
+                else:
+                    self.cameraPos -= delta_z
+
             if key == glfw.KEY_A:
                 self.cameraPos -= glm.normalize(glm.cross(self.cameraFront, self.cameraUp)) * self.cameraSpeed
             if key == glfw.KEY_D:
@@ -269,16 +285,7 @@ class Viewer:
                 min_y = min(y_list) # Smallest y value in vertices
                 max_y = max(y_list) # Largest y value in vertices
 
-                print(f'drawable number {i}')
-                print(f'min_x: {min_x}')
-                print(f'max_x: {max_x}')
-                print(f'min_y: {min_y}')
-                print(f'max_y: {max_y}')
-                print(f'mouse x: {cur_pos[0]}')
-                print(f'mouse y: {cur_pos[1]}')
-
                 if (min_x <= cur_pos[0] and cur_pos[0] <= max_x and min_y <= cur_pos[1] and cur_pos[1] <= max_y):
-                    print('satisfied')
                     return drawable
 
     def select_file(self, starting_folder):
@@ -969,7 +976,6 @@ class Viewer:
                 if self.selected_object == drawable and self.scale_changed:
                     scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before applying new scale
                     self.prev_scale_factor = self.scale_factor
-                    print('scale1')
                     drawable.update_attribute('model_matrix', scale_matrix)
                     # drawable.model = scale_matrix * drawable.model
                 
