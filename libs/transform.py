@@ -231,23 +231,21 @@ class Trackball:
         return translation_matrix @ self.matrix()
 
     def view_matrix3(self, eye, at, up):
-        # import glm
-
-        # # Create a translation matrix with the desired camera position
-        # translation_matrix = glm.translate(-cameraPos)
-
-        # # Determine the angle between old and new position
-        # old_vector = old_cameraPos
-        # new_vector = cameraPos
-        # magnitude_old = glm.length(old_vector)
-        # magnitude_new = glm.length(new_vector)
-        # angle = np.dot(old_vector, new_vector) / (magnitude_old * magnitude_new)
-
-        # rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
-
-
         # return rotation_matrix @ translation_matrix @ self.matrix()
         return lookat(eye, at, up) @ self.matrix()
+
+    def view_matrix4(self):
+        import glm
+
+        # Create a translation matrix with the desired camera position
+        translation_matrix = glm.translate(
+            glm.mat4(1.0),
+            glm.vec3(0, 0, -self.distance)
+        )
+
+        # Apply rotation and translation together for the final view matrix
+        return translation_matrix @ self.matrix()
+
 
     def projection_matrix(self, winsize):
         """ Projection matrix with z-clipping range adaptive to distance """

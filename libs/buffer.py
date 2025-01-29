@@ -50,6 +50,7 @@ class UManager(object):
     @staticmethod
     def load_texture(filename):
         texture = cv2.cvtColor(cv2.imread(filename, 1), cv2.COLOR_BGR2RGB)
+        texture = np.flipud(texture)
         return texture
 
     def _get_texture_loc(self):
