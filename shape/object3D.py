@@ -65,60 +65,65 @@ class Object:
         self.min_z = min(z_list) # Smallest z value in vertices
         self.max_z = max(z_list) # Largest z value in vertices
 
-        objects = []  # List to hold all the objects
-
-        with open(file_path, 'r') as f:  # Open the .obj file for reading
-            current_obj = None  # Will store the current object being processed
-
+        objects = []  # Store objects
+        current_obj = None  # Store the current object
+        last_obj_name = None  # Track last object name (to prevent duplication)
+        
+        # Second pass for parsing objects and faces
+        with open(file_path, 'r') as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith('#'):  # Skip empty lines and comments
+                if not line or line.startswith('#'):
                     continue
 
                 parts = line.split()
 
-                # When encountering a new object (o)
-                if parts[0] == 'g':
-                    if current_obj:  # If there's an object being processed, add it to the list
+                # If we encounter a new object/group, ensure we only create a new one when necessary
+                if parts[0] in ('o', 'g'):
+                    obj_name = parts[1]
+
+                    # Avoid creating duplicate objects if "o" and "g" appear consecutively
+                    if last_obj_name == obj_name:
+                        continue  # Skip redundant declarations of the same object
+
+                    # If there's an existing object, save it before starting a new one
+                    if current_obj:
                         objects.append(current_obj)
 
-                    # Start a new object
+                    # Create a new object
                     current_obj = {
-                        'obj_name': parts[1],  # Object name from 'o'
-                        'vert_obj_id': [],  # List to store the vertices for the object
-                        'textcoords_obj_id': [],  # List to store texture coordinates
-                        'normal_obj_id': [],  # List to store the normals for the object
-                        'texture_name': None,  # Texture name (if any)
+                        'obj_name': obj_name,
+                        'vert_obj_id': [],
+                        'textcoords_obj_id': [],
+                        'normal_obj_id': [],
+                        'texture_name': None,
                     }
 
-                # Process texture name (use 'usemtl' to get texture name if available)
-                elif parts[0] == 'usemtl':
-                    current_obj['texture_name'] = parts[1]
+                    last_obj_name = obj_name  # Update last known object name
 
-                # Process faces (f)
-                elif parts[0] == 'f':  # Face definition
-                    # Parse face indices (converting from 1-based to 0-based)
+                # Process texture material assignment
+                elif parts[0] == 'usemtl':
+                    if current_obj:
+                        current_obj['texture_name'] = parts[1]
+
+                # Process face definitions
+                elif parts[0] == 'f':
                     vert_id = [int(part.split('/')[0]) - 1 for part in parts[1:]]
-                    text_id = [int(part.split('/')[1]) - 1 for part in parts[1:]]
-                    normal_id = [int(part.split('/')[2]) - 1 for part in parts[1:]]
+                    text_id = [int(part.split('/')[1]) - 1 if '/' in part and part.split('/')[1] else -1 for part in parts[1:]]
+                    normal_id = [int(part.split('/')[2]) - 1 if '/' in part and len(part.split('/')) > 2 else -1 for part in parts[1:]]
 
                     if len(vert_id) == 3:
                         current_obj['vert_obj_id'].append(vert_id)
                         current_obj['textcoords_obj_id'].append(text_id)
                         current_obj['normal_obj_id'].append(normal_id)
-                    elif len(vert_id) == 4:  # Quad face
-                        current_obj['vert_obj_id'].append([vert_id[0], vert_id[1], vert_id[2]])  # First triangle
-                        current_obj['vert_obj_id'].append([vert_id[0], vert_id[2], vert_id[3]])  # Second triangle
+                    elif len(vert_id) == 4:  # Handle quads by splitting into two triangles
+                        current_obj['vert_obj_id'].extend([[vert_id[0], vert_id[1], vert_id[2]], [vert_id[0], vert_id[2], vert_id[3]]])
+                        current_obj['textcoords_obj_id'].extend([[text_id[0], text_id[1], text_id[2]], [text_id[0], text_id[2], text_id[3]]])
+                        current_obj['normal_obj_id'].extend([[normal_id[0], normal_id[1], normal_id[2]], [normal_id[0], normal_id[2], normal_id[3]]])
 
-                        current_obj['textcoords_obj_id'].append([text_id[0], text_id[1], text_id[2]])
-                        current_obj['textcoords_obj_id'].append([text_id[0], text_id[2], text_id[3]])
-
-                        current_obj['normal_obj_id'].append([normal_id[0], normal_id[1], normal_id[2]])
-                        current_obj['normal_obj_id'].append([normal_id[0], normal_id[2], normal_id[3]])
-
-            # Append the last object after finishing the file
-            if current_obj:
-                objects.append(current_obj) # [[[1,1,1],[1,1,2]], [[2,2,2],[3,3,3]]]
+        # Append the last object if it exists
+        if current_obj:
+            objects.append(current_obj)
 
         return vertices_all, texcoords_all, normals_all, objects
 
