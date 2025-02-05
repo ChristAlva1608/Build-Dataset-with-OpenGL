@@ -1,4 +1,3 @@
-obj/
 depth_images/
 patch/
 rgb_images/
@@ -10,3 +9,5 @@ materials.txt
 obj.txt
 test.txt
 .DS_Store
+.venv/
+.idea/

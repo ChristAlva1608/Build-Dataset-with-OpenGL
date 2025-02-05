@@ -2,7 +2,7 @@ import glfw
 from shape.viewer import *
 
 def main():
-    viewer = Viewer()
+    viewer = Viewer(1200, 700)
     viewer.run()
 
 if __name__ == '__main__':

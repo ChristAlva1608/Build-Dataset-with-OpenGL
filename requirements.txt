@@ -43,3 +43,7 @@ typing_extensions==4.12.2
 tzdata==2024.1
 wheel==0.43.0
 xatlas==0.0.9
+PyYAML==6.0.2
+PyQt6==6.8.0
+PyQt6-Qt6==6.8.1
+PyQt6_sip==13.9.1

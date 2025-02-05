@@ -17,8 +17,8 @@ from libs.shader import *
 from libs.transform import *
 
 from .object3D import *
-from .scene3D import *
-# from scene3D_v2 import *
+# from .scene3D import *
+from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -59,6 +59,9 @@ class Viewer:
         # Enable depth testing
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glDepthFunc(GL.GL_LESS)
+
+        # bleding for RGBA
+        GL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # Initialize shaders
         self.depth_shader = Shader("shader/depth.vert", "shader/depth.frag")
@@ -189,6 +192,7 @@ class Viewer:
     def render_rgb_viewport(self):
         GL.glClearColor(0.2, 0.2, 0.2, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        GL.glEnable(GL_BLEND)
 
         # Viewport for RGB Scene
         win_pos_width = self.scene_width
@@ -256,6 +260,7 @@ class Viewer:
 
             # Normal rendering
             drawable.draw(self.cameraPos)
+        GL.glDisable(GL_BLEND)
 
     def add(self, drawables):
         """ add objects to draw in this windows """
