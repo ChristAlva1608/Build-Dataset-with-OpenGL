@@ -71,6 +71,8 @@ class Viewer:
 
         self.load_config_flag = False
 
+        self.obj_management = {}
+
         # Initialize mouse parameters
         self.last_x = width / 2
         self.last_y = height / 2
@@ -230,8 +232,22 @@ class Viewer:
             if self.selected_object == drawable and self.scale_changed:
                 scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before applying new scale
                 self.prev_scale_factor = self.scale_factor
+                self.obj_management[self.selected_object.name]['prev_scale_factor'] = self.prev_scale_factor # update in dict of object
+
                 drawable.update_attribute('model_matrix', scale_matrix)
             
+
+            x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
+            x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
+            # if self.selected_object == drawable and self.drag_object_flag:
+            #     x = random.uniform(x_min + abs(drawable.min_x), x_max - abs(drawable.max_x))
+            #     y = random.uniform(y_min + abs(drawable.min_y), y_max - abs(drawable.max_y))
+            #     z = random.uniform(z_min + abs(drawable.min_z), z_max - abs(drawable.max_z))
+            #     translation_matrix = glm.translate(glm.mat4(1.0), glm.vec3(x, y, z))
+            #     print(translation_matrix)
+            #     print('----')
+            #     drawable.update_attribute('model_matrix', translation_matrix)
+            #     self.drag_object_flag = False
             # Define view matrix
             view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
 
@@ -598,11 +614,14 @@ class Viewer:
                     drawable.update_shininess(self.shininess)
                 
                 if isinstance(drawable, Object):
-                    x = random.uniform(x_min, x_max)
-                    y = random.uniform(y_min, y_max)
-                    z = random.uniform(z_min, z_max)
+                    x = random.uniform(x_min + abs(drawable.min_x), x_max - abs(drawable.max_x))
+                    y = random.uniform(y_min + abs(drawable.min_y), y_max - abs(drawable.max_y))
+                    z = random.uniform(z_min + abs(drawable.min_z), z_max - abs(drawable.max_z))
                     translation_matrix = glm.translate(glm.mat4(1.0), glm.vec3(x, y, z))
                     drawable.update_attribute('model_matrix', translation_matrix)
+
+                    print(translation_matrix)
+                    print('----')
 
                 # drawable.update_attribute('view_matrix', view)
 
@@ -616,7 +635,9 @@ class Viewer:
             self.save_depth(self.depth_save_path)
             # self.render_rgb_viewport()
         
+        print('finish random')
         self.save_all_flag = True
+        self.autosave = not self.autosave
 
     def multi_cam(self):
         # Define the hemisphere of multi-camera
@@ -697,6 +718,15 @@ class Viewer:
             # self.selected_object.update_attribute('model_matrix', translation_matrix)
             model.append(self.selected_object)
 
+            # Add new object to object managament
+            self.obj_management[self.selected_object.name] = {}
+
+            # Set scale factor for new object
+            self.prev_scale_factor = 1
+            self.scale_factor = 1
+            self.obj_management[self.selected_object.name]['prev_scale_factor'] = 1
+            self.obj_management[self.selected_object.name]['scale_factor'] = 1
+            
         self.add(model)
 
     def use_trackball(self):
@@ -801,8 +831,8 @@ class Viewer:
                             self.selected_object = drawable
 
                             # Reset scale factor only if a different object is selected
-                            self.prev_scale_factor = 1
-                            self.scale_factor = 1
+                            self.prev_scale_factor = self.obj_management[self.selected_object.name]['prev_scale_factor']
+                            self.scale_factor = self.obj_management[self.selected_object.name]['scale_factor']
 
                     if is_selected:
                         imgui.set_item_default_focus()
@@ -816,6 +846,8 @@ class Viewer:
 
         imgui.set_next_item_width(100)
         self.scale_changed, self.scale_factor = imgui.input_float("Scale factor", self.scale_factor, step=0.1, format="%.2f")
+        if self.selected_object:
+            self.obj_management[self.selected_object.name]['scale_factor'] = self.scale_factor # update in dict of object
 
         if imgui.button("Drag/Drop"):
             self.drag_object_flag = not self.drag_object_flag
@@ -838,10 +870,6 @@ class Viewer:
         imgui.set_next_item_width(imgui.get_window_width()//2)
         if imgui.button("Load Object"):
             self.load_object()
-
-            # Reset for new object
-            self.prev_scale_factor = 1
-            self.scale_factor = 1
 
         imgui.end()
 
