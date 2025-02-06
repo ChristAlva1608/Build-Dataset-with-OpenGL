@@ -38,24 +38,18 @@ class Scene:
 
         all_vertices = []
 
-        # for _, mesh in scene.meshes.items():
         for mesh in scene.meshes.values():
             for material in mesh.materials:
-                current_obj = {
-                    'texcoords': [],
-                    'normals': [],
-                    'vertices': [],
-                    'material': material.name
-                }
-                vertices = self.process_material_data(material, current_obj)
+                texcoords, normals, vertices = self.process_material_data(material)
 
-                model = SubScene(self.shader,
-                                 current_obj['vertices'],
-                                 current_obj['texcoords'],
-                                 current_obj['normals'],
-                                 self.materials[current_obj['material']],
-                                 self.dir_path
-                                 ).setup()
+                model = SubScene(
+                    self.shader,
+                    vertices,
+                    texcoords,
+                    normals,
+                    self.materials[material.name],
+                    self.dir_path
+                ).setup()
 
                 self.subObjs.append(model)
                 all_vertices.extend(vertices)
@@ -70,29 +64,29 @@ class Scene:
         print("Finish min max")
         return overall_min.tolist(), overall_max.tolist()
 
-    def process_material_data(self, material, current_obj):
+    def process_material_data(self, material):
         data = material.vertices  # List of vertex data
         num_texcoords = 2
         num_normals = 3
         num_vertices = 3
 
+        texcoords = []
+        normals = []
         vertices = []
 
         if material.has_uvs:
             for i in range(0, len(data), num_texcoords + num_normals + num_vertices):
-                current_obj['texcoords'].extend(data[i:i + num_texcoords])
-                current_obj['normals'].extend(data[i + num_texcoords:i + num_texcoords + num_normals])
+                texcoords.extend(data[i:i + num_texcoords])
+                normals.extend(data[i + num_texcoords:i + num_texcoords + num_normals])
                 vertex = data[i + num_texcoords + num_normals:i + num_texcoords + num_normals + num_vertices]
-                current_obj['vertices'].extend(vertex)
-                vertices.extend(vertex)  # Collect all vertices
+                vertices.extend(vertex)
         else:
             for i in range(0, len(data), num_normals + num_vertices):
-                current_obj['normals'].extend(data[i:i + num_normals])
+                normals.extend(data[i:i + num_normals])
                 vertex = data[i + num_normals:i + num_normals + num_vertices]
-                current_obj['vertices'].extend(vertex)
                 vertices.extend(vertex)
 
-        return vertices  # Return all collected vertices
+        return texcoords, normals, vertices
 
     def load_materials(self, file_path):
         materials = {}
