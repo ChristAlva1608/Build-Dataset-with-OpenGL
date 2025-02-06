@@ -19,113 +19,80 @@ class Scene:
         self.vao = VAO()
         self.uma = UManager(self.shader)
 
-        self.objects = []
         self.subObjs = []
 
-        overall_min, overall_max = self.parse_file_pywavefront(file_path)
-
-        self.min_x = overall_min['x']
-        self.max_x = overall_max['x']
-        self.min_y = overall_min['y']
-        self.max_y = overall_max['y']
-        self.min_z = overall_min['z']
-        self.max_z = overall_max['z']
         self.dir_path = os.path.dirname(file_path)
         mtl_path = file_path.replace(".obj", ".mtl")
         self.materials = self.load_materials(mtl_path)
-        self.split_obj()
+
+        overall_min, overall_max = self.parse_file_pywavefront(file_path)
+        self.min_x, self.min_y, self.min_z = overall_min
+        self.max_x, self.max_y, self.max_z = overall_max
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
+        print("Finished Parsing PyWavefront")
 
-        overall_min = {'x': float('inf'), 'y': float('inf'), 'z': float('inf')}
-        overall_max = {'x': float('-inf'), 'y': float('-inf'), 'z': float('-inf')}
+        overall_min = np.array([float('inf'), float('inf'), float('inf')])
+        overall_max = np.array([float('-inf'), float('-inf'), float('-inf')])
 
-        for mesh_name, mesh in scene.meshes.items():
-            # print("Length of materials:", len(mesh.materials))
-            if len(mesh.materials) == 1: # 1 object 1 material
-                # print("each object has 1 materials")
+        all_vertices = []
+
+        # for _, mesh in scene.meshes.items():
+        for mesh in scene.meshes.values():
+            for material in mesh.materials:
                 current_obj = {
-                    'name': mesh_name,
                     'texcoords': [],
                     'normals': [],
                     'vertices': [],
-                    'material': None,
+                    'material': material.name
                 }
-                # print("Has texture (sig)", mesh.materials[0].has_uvs)
-                hasUV = mesh.materials[0].has_uvs
-                self.process_material_data(mesh.materials[0], current_obj, hasUV, overall_min, overall_max)
-                self.objects.append(current_obj)
+                vertices = self.process_material_data(material, current_obj)
 
-            else: # 1 object many materials
-                # print("has multiple materials")
-                for mat in mesh.materials:
-                    current_obj = {
-                        'name': mat.name,
-                        'texcoords': [],
-                        'normals': [],
-                        'vertices': [],
-                        'material': None,
-                    }
-                    # print("Has texture (mul)", mat.has_uvs)
-                    hasUV = mat.has_uvs
-                    self.process_material_data(mat, current_obj, hasUV, overall_min, overall_max)
-                    self.objects.append(current_obj)
+                model = SubScene(self.shader,
+                                 current_obj['vertices'],
+                                 current_obj['texcoords'],
+                                 current_obj['normals'],
+                                 self.materials[current_obj['material']],
+                                 self.dir_path
+                                 ).setup()
 
-        return overall_min, overall_max
+                self.subObjs.append(model)
+                all_vertices.extend(vertices)
 
-    def process_material_data(self, material, current_obj, UV_flag, overall_min, overall_max):
-        data = material.vertices  # [vt_x1, vt_y1, vn_x1    , vn_y1, vn_z1, v_x1, v_y1, v_z1 ...]
-        current_obj['material'] = material.name
+        print("Finish parsing meshes")
 
-        # Define the size of each group
+        if all_vertices:
+            all_vertices = np.array(all_vertices).reshape(-1, 3)
+            overall_min = np.min(all_vertices, axis=0)
+            overall_max = np.max(all_vertices, axis=0)
+
+        print("Finish min max")
+        return overall_min.tolist(), overall_max.tolist()
+
+    def process_material_data(self, material, current_obj):
+        data = material.vertices  # List of vertex data
         num_texcoords = 2
         num_normals = 3
         num_vertices = 3
 
-        if UV_flag:
+        vertices = []
+
+        if material.has_uvs:
             for i in range(0, len(data), num_texcoords + num_normals + num_vertices):
-                current_obj['texcoords'].append(data[i:i + num_texcoords])
-                current_obj['normals'].append(data[i + num_texcoords:i + num_texcoords + num_normals])
-
+                current_obj['texcoords'].extend(data[i:i + num_texcoords])
+                current_obj['normals'].extend(data[i + num_texcoords:i + num_texcoords + num_normals])
                 vertex = data[i + num_texcoords + num_normals:i + num_texcoords + num_normals + num_vertices]
-                current_obj['vertices'].append(vertex)
-
-                # Update overall min and max
-                overall_min['x'] = min(overall_min['x'], vertex[0])
-                overall_min['y'] = min(overall_min['y'], vertex[1])
-                overall_min['z'] = min(overall_min['z'], vertex[2])
-
-                overall_max['x'] = max(overall_max['x'], vertex[0])
-                overall_max['y'] = max(overall_max['y'], vertex[1])
-                overall_max['z'] = max(overall_max['z'], vertex[2])
-        else: # have no textcoords
+                current_obj['vertices'].extend(vertex)
+                vertices.extend(vertex)  # Collect all vertices
+        else:
             for i in range(0, len(data), num_normals + num_vertices):
-                current_obj['normals'].append(data[i:i + num_normals])
-                # Extract vertex coordinates
+                current_obj['normals'].extend(data[i:i + num_normals])
                 vertex = data[i + num_normals:i + num_normals + num_vertices]
-                current_obj['vertices'].append(vertex)
+                current_obj['vertices'].extend(vertex)
+                vertices.extend(vertex)
 
-                # Update overall min and max
-                overall_min['x'] = min(overall_min['x'], vertex[0])
-                overall_min['y'] = min(overall_min['y'], vertex[1])
-                overall_min['z'] = min(overall_min['z'], vertex[2])
-
-                overall_max['x'] = max(overall_max['x'], vertex[0])
-                overall_max['y'] = max(overall_max['y'], vertex[1])
-                overall_max['z'] = max(overall_max['z'], vertex[2])
-
-    def split_obj(self):
-        print("length objects:", len(self.objects))
-        for obj in self.objects:
-            model = SubScene(self.shader,
-                             obj['vertices'],
-                             obj['texcoords'],
-                             obj['normals'],
-                             self.materials[obj['material']],
-                             self.dir_path
-                             ).setup()
-            self.subObjs.append(model)
+        return vertices  # Return all collected vertices
 
     def load_materials(self, file_path):
         materials = {}

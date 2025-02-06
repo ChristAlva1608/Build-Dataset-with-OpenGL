@@ -11,3 +11,4 @@ test.txt
 .DS_Store
 .venv/
 .idea/
+imgui.ini

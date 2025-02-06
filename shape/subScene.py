@@ -46,17 +46,19 @@ class SubScene:
         self.specular = self.materials['Ks']
         self.ambient = self.materials['Ka']
 
-        if self.use_texture: # use texture
-            # Iterate through all possible texture maps defined in the enum
+        self.shininess = self.materials['Ns']
+
+        if self.use_texture:
             for texture in TextureMap:
                 map_key, uniform_name = texture.value
                 self.texture_flags[map_key] = False  # Initialize texture flag as False
-                if map_key in material and material[map_key]:
+                texture_path = self.materials.get(map_key)
+
+                if texture_path:
                     if map_key == 'map_bump':
-                        texture_path = material[map_key]['filename']
-                    else:
-                        texture_path = material[map_key]
+                        texture_path = texture_path['filename']
                     texture_path = os.path.join(dir_path, texture_path)
+
                     if os.path.exists(texture_path):
                         self.texture_flags[map_key] = True
                         self.texture_id[map_key] = self.uma.setup_texture(uniform_name, texture_path)
@@ -126,7 +128,7 @@ class SubScene:
         self.uma.upload_uniform_vector3fv(np.array(self.specular), 'specularStrength')
         self.uma.upload_uniform_vector3fv(np.array(self.ambient), 'ambientStrength')
 
-        self.shininess = self.materials['Ns']
+
         self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
 
         return self
@@ -155,7 +157,7 @@ class SubScene:
         self.uma.upload_uniform_matrix4fv(np.array(self.view), 'view', True)
         self.uma.upload_uniform_matrix4fv(np.array(self.projection), 'projection', True)
 
-        glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices)*3)
+        glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices))
 
         # Unbind all textures
         if self.use_texture:
