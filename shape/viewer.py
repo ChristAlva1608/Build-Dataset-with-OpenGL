@@ -632,9 +632,9 @@ class Viewer:
                 
                 if isinstance(drawable, Object):
                     x = random.uniform(x_min, x_max)
-                    y = random.uniform(y_min, y_max)
+                    # y = random.uniform(y_min, y_max)
                     z = random.uniform(z_min, z_max)
-                    self.translation = glm.vec3(x, y, z)
+                    self.translation = glm.vec3(x, 0, z)
                     self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
                     
                     translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
@@ -656,14 +656,66 @@ class Viewer:
                 # Normal rendering
                 drawable.draw(self.cameraPos)
 
-            
-            
+            # Viewport for Depth Scene
+            win_pos_width = self.scene_width + self.rgb_view_width
+            win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
+            GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+
+            for drawable in self.drawables:
+                drawable.set_mode(0) # mode for depth map
+
+                # update depth map color
+                drawable.update_colormap(self.selected_colormap)
+
+                # Initially set ideal camera pos for any scene
+                if self.initial_pos:
+                    z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
+                    self.cameraPos = glm.vec3(0.0, 0.0, z)
+
+                # Define model matrix
+                if self.selected_object == drawable and self.scale_changed:
+                    scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before apply new scale
+                    self.prev_scale_factor = self.scale_factor
+                    drawable.update_attribute('model_matrix', scale_matrix)
+
+                # Define view matrix
+                view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
+                
+                if self.move_camera_flag:
+                    # Call to create hemisphere of multi-cam
+                    self.multi_cam()
+
+                    current_time = glfw.get_time()
+                    if current_time - self.last_update_time >= 0.5:  # Check if 1 second has passed
+                        vcamera = random.choice(self.vcameras)
+                        self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
+                        view = vcamera.view
+                        self.last_update_time = current_time    
+
+                if self.selected_camera:
+                    view = self.selected_camera.view
+                drawable.update_attribute('view_matrix', view)
+
+                projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+                drawable.update_attribute('projection_matrix', projection)
+
+                # Depth map rendering
+                drawable.update_near_far(self.near, self.far)
+                
+                # Draw the full object
+                drawable.draw(self.cameraPos)
+
+                # Visualize with chosen colormap
+                if self.selected_colormap == 1:
+                    self.pass_magma_data(self.depth_texture_shader)
+
+            GL.glDisable(GL.GL_SCISSOR_TEST)
+        
             self.save_rgb(self.rgb_save_path)
             self.save_depth(self.depth_save_path)
             # self.render_rgb_viewport()
         
-        print('finish random')
-        self.save_all_flag = True
         self.autosave = not self.autosave
 
     def multi_cam(self):
@@ -717,6 +769,7 @@ class Viewer:
     def reset(self):
         # Remove all scenes and objects
         self.drawables.clear()
+        self.autosave = False
         self.multi_cam_flag = False
         self.load_config_flag = False
         self.move_camera_flag = False
@@ -1001,10 +1054,6 @@ class Viewer:
             if imgui.button("Confirm"):
                 self.random_combination(self.layout_opt)
 
-            if self.save_all_flag:
-                self.autosave = not self.autosave
-                imgui.text('Save Done !!!')
-
             # time_changed, self.time_save = imgui.input_float("Time Selection (s)", self.time_save)
             # if time_changed:
                 # self.time_count = time.time()  # Reset time count if time selection is changed
@@ -1246,8 +1295,6 @@ class Viewer:
                 win_pos_width = self.scene_width + self.rgb_view_width
                 win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
                 GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-                GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-                GL.glClearColor(*self.bg_colors, 1.0)
                 GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
                 for drawable in self.drawables:
