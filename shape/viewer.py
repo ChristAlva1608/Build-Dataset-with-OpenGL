@@ -714,6 +714,8 @@ class Viewer:
             
                 self.save_rgb(self.rgb_save_path)
                 self.save_depth(self.depth_save_path)
+
+                glfw.swap_buffers(self.win)
         
         self.autosave = not self.autosave # Toggle the flag
 
