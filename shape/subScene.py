@@ -3,6 +3,7 @@ from libs.buffer import *
 from libs import transform as T
 from shape.texture import *
 from enum import Enum
+import os
 
 import glm
 import numpy as np
@@ -16,7 +17,7 @@ class TextureMap(Enum):
     BUMP = ("map_bump", "texture_bump")
 
 class SubScene:
-    def __init__(self, shader, vert, teco, normals, material):
+    def __init__(self, shader, vert, teco, normals, material, dir_path):
         self.shader = shader
         self.vao = VAO()
         self.uma = UManager(self.shader)
@@ -27,7 +28,7 @@ class SubScene:
         self.vertices = np.array(vert, dtype=np.float32)
         self.textcoords = np.array(teco, dtype=np.float32)
         self.normals = np.array(normals, dtype=np.float32)
-        
+
         # init materials
         self.materials = material
 
@@ -45,16 +46,18 @@ class SubScene:
         self.specular = self.materials['Ks']
         self.ambient = self.materials['Ka']
 
-        if self.use_texture: # use texture
-            # Iterate through all possible texture maps defined in the enum
+        self.shininess = self.materials['Ns']
+
+        if self.use_texture:
             for texture in TextureMap:
                 map_key, uniform_name = texture.value
                 self.texture_flags[map_key] = False  # Initialize texture flag as False
-                if map_key in material and material[map_key]:
+                texture_path = self.materials.get(map_key)
+
+                if texture_path:
                     if map_key == 'map_bump':
-                        texture_path = material[map_key]['filename']
-                    else:
-                        texture_path = material[map_key]
+                        texture_path = texture_path['filename']
+                    texture_path = os.path.join(dir_path, texture_path)
 
                     if os.path.exists(texture_path):
                         self.texture_flags[map_key] = True
@@ -96,7 +99,7 @@ class SubScene:
             if not isinstance(self.projection, glm.mat4):
                 self.projection = glm.mat4(*self.projection.flatten())
             vertex_homogeneous = glm.vec4(vertex[0], vertex[1], vertex[2], 1.0)
-            
+
             # Apply model, view, and projection transformations
             vert_pos4 = self.projection * self.view * self.model * vertex_homogeneous
             # vert_pos = glm.vec3(vert_pos4) / vert_pos4.w  # Perspective divide
@@ -105,11 +108,11 @@ class SubScene:
             transformed_vertices.append(vert_pos4)
 
         return transformed_vertices
-    
+
     def setup(self):
         self.vao.add_vbo(0, self.vertices, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
         self.vao.add_vbo(1, self.normals, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
-        self.vao.add_vbo(2, self.textcoords, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
+        self.vao.add_vbo(2, self.textcoords, ncomponents=2, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
 
         light_pos = glm.vec3(250, 250, 300)
         light_color = glm.vec3(1.0, 1.0, 1.0) # only affect the current object, not the light source
@@ -125,8 +128,10 @@ class SubScene:
         self.uma.upload_uniform_vector3fv(np.array(self.specular), 'specularStrength')
         self.uma.upload_uniform_vector3fv(np.array(self.ambient), 'ambientStrength')
 
-        self.shininess = self.materials['Ns']
-        self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
+        if self.shininess is not None:
+            self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
+        else:
+            self.uma.upload_uniform_scalar1f(100, 'shininess')
 
         return self
 
@@ -154,7 +159,7 @@ class SubScene:
         self.uma.upload_uniform_matrix4fv(np.array(self.view), 'view', True)
         self.uma.upload_uniform_matrix4fv(np.array(self.projection), 'projection', True)
 
-        glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices)*3)
+        glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices))
 
         # Unbind all textures
         if self.use_texture:
