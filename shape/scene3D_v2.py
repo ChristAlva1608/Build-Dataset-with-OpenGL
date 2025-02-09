@@ -16,9 +16,7 @@ import os
 class Scene:
     def __init__(self, shader, file_path):
         self.shader = shader
-        self.vao = VAO()
         self.uma = UManager(self.shader)
-
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)

@@ -128,8 +128,10 @@ class SubScene:
         self.uma.upload_uniform_vector3fv(np.array(self.specular), 'specularStrength')
         self.uma.upload_uniform_vector3fv(np.array(self.ambient), 'ambientStrength')
 
-
-        self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
+        if self.shininess is not None:
+            self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
+        else:
+            self.uma.upload_uniform_scalar1f(100, 'shininess')
 
         return self
 
