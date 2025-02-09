@@ -10,3 +10,5 @@ materials.txt
 obj.txt
 test.txt
 .DS_Store
+*.ini
+.idea/
