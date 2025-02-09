@@ -12,3 +12,4 @@ test.txt
 .venv/
 .idea/
 imgui.ini
+obj/

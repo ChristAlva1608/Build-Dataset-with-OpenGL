@@ -1,10 +1,11 @@
 from .shader import *
 import OpenGL.GL as GL
 import cv2
+from PIL import Image
+
 
 class VAO(object):
     def __init__(self):
-
         self.vao = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(self.vao)
         GL.glBindVertexArray(0)
@@ -42,6 +43,7 @@ class VAO(object):
     def deactivate(self):
         GL.glBindVertexArray(0)  # activated
 
+
 class UManager(object):
     def __init__(self, shader):
         self.shader = shader
@@ -49,9 +51,20 @@ class UManager(object):
 
     @staticmethod
     def load_texture(filename):
-        texture = cv2.cvtColor(cv2.imread(filename, 1), cv2.COLOR_BGR2RGB)
-        texture = np.flipud(texture)
-        return texture
+        # texture = cv2.cvtColor(cv2.imread(filename, 1), cv2.COLOR_BGR2RGB)
+        # texture = np.flipud(texture)
+        # return texture
+        rgb_flag = True
+        image = Image.open(filename)
+        image = image.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image for OpenGL
+        if image.mode == "LA":
+            image = convert_LA_to_RGBA(image)
+        elif image.mode == "P":
+            image = image.convert("RGB")
+        elif image.mode == "RGBA":
+            rgb_flag = False
+        img_data = np.array(image, dtype=np.uint8)
+        return img_data, rgb_flag
 
     def _get_texture_loc(self):
         if not bool(self.textures):
@@ -70,29 +83,31 @@ class UManager(object):
     * second call to setup_texture: activate GL.GL_TEXTURE2
         > use GL.glUniform1i to associate the activated texture to the texture in shading program (see fragment shader)
     and so on
-    
+
     """
     def setup_texture(self, sampler_name, image_file):
-        if not isinstance(image_file, np.ndarray):
-            rgb_image = UManager.load_texture(image_file)
-        else:
-            rgb_image = image_file # pass an ndarray image
+        rgb_image, rgb_flag = UManager.load_texture(image_file)
 
-        GL.glUseProgram(self.shader.render_idx) # must call before calling to GL.glUniform1i
+        GL.glUseProgram(self.shader.render_idx)  # must call before calling to GL.glUniform1i
         texture_idx = GL.glGenTextures(1)
         binding_loc = self._get_texture_loc()
         self.textures[binding_loc] = {}
         self.textures[binding_loc]["id"] = texture_idx
         self.textures[binding_loc]["name"] = sampler_name
 
-        GL.glActiveTexture(GL.GL_TEXTURE0 + binding_loc) # activate texture GL.GL_TEXTURE0, GL.GL_TEXTURE1, ...
+        GL.glActiveTexture(GL.GL_TEXTURE0 + binding_loc)  # activate texture GL.GL_TEXTURE0, GL.GL_TEXTURE1, ...
         GL.glBindTexture(GL.GL_TEXTURE_2D, texture_idx)
         GL.glUniform1i(GL.glGetUniformLocation(self.shader.render_idx, sampler_name),
                        binding_loc)
 
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB,
-                        rgb_image.shape[1], rgb_image.shape[0],
-                        0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, rgb_image)
+        if rgb_flag: # RGB mode
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB,
+                            rgb_image.shape[1], rgb_image.shape[0],
+                            0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, rgb_image)
+        else: # RGBA mode
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA,
+                            rgb_image.shape[1], rgb_image.shape[0],
+                            0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, rgb_image)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
 
@@ -127,3 +142,13 @@ class UManager(object):
         GL.glUseProgram(self.shader.render_idx)
         location = GL.glGetUniformLocation(self.shader.render_idx, name)
         GL.glUniform1i(location, scalar)
+
+
+def convert_LA_to_RGBA(image):
+    if image.mode == "LA":
+        # Split the Luminance and Alpha channels
+        luminance, alpha = image.split()
+        rgba_image = Image.merge("RGBA", (luminance, luminance, luminance, alpha))
+        return rgba_image
+    else:
+        return image  # Return unchanged for non-LA images
