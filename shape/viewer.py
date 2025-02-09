@@ -195,104 +195,6 @@ class Viewer:
         self.depth_view_height = self.rgb_view_height
 
     ''' Supportive functions '''
-    def render_rgb_viewport(self):
-        GL.glClearColor(0.2, 0.2, 0.2, 1.0)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
-        # Viewport for RGB Scene
-        win_pos_width = self.scene_width
-        win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
-
-        GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-        GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-        GL.glEnable(GL.GL_SCISSOR_TEST)
-        GL.glClearColor(*self.bg_colors, 1.0)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-        GL.glUseProgram(self.depth_texture_shader.render_idx)   
-        for drawable in self.drawables:
-            drawable.set_mode(1) # mode for rgb image
-
-            # update light configuration
-            if self.lightPos_changed:
-                drawable.update_lightPos(self.lightPos)
-            
-            if self.lightColor_changed:
-                drawable.update_lightColor(self.lightColor)
-            
-            if self.shininess_changed:
-                drawable.update_shininess(self.shininess)
-
-            # Initially set ideal camera pos for any scene
-            if self.initial_pos:
-                x = drawable.max_x + 1/3 * (drawable.max_x - drawable.min_x)
-                z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
-                
-                # Set up static camera view A and B in initial position
-                self.cameraPos_A = glm.vec3(0.0, 0.0, z)
-                self.cameraPos_B = glm.vec3(x, 0.0, 0.0)
-
-                # Set up current camera pos
-                self.old_cameraPos = self.cameraPos
-                self.cameraPos = self.cameraPos_A
-
-            # Define model matrix
-            if self.selected_object == drawable and self.scale_changed:
-                scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before applying new scale
-                self.prev_scale_factor = self.scale_factor
-                self.obj_management[self.selected_object.name]['prev_scale_factor'] = self.prev_scale_factor # update info for obj
-
-                drawable.update_attribute('model_matrix', scale_matrix)
-            
-            x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
-            x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
-
-            if self.selected_object == drawable and self.drag_object_flag:
-                # x = random.uniform(x_min + abs(drawable.min_x), x_max - abs(drawable.max_x))
-                # y = random.uniform(y_min + abs(drawable.min_y), y_max - abs(drawable.max_y))
-                # z = random.uniform(z_min + abs(drawable.min_z), z_max - abs(drawable.max_z))
-                x = random.uniform(x_min, x_max)
-                y = random.uniform(y_min, y_max)
-                z = random.uniform(z_min, z_max)
-                self.translation = glm.vec3(x, y, z)
-                self.obj_management[self.selected_object.name]['translation'] = self.translation # update info for obj
-                
-                translation_matrix = glm.translate(glm.mat4(1.0), self.reverse_translation) * glm.translate(glm.mat4(1.0), self.translation) # reverse last translation before applying new one
-                
-                self.reverse_translation = - self.translation
-                self.obj_management[self.selected_object.name]['reverse_translation'] = self.reverse_translation # update info for obj
-                
-                # print(f'drawable_x_min, y_min, z_min: {drawable.min_x}, {drawable.min_y}, {drawable.min_z}')
-                # print(f'drawable_x_max, y_max, z_max: {drawable.max_x}, {drawable.max_y}, {drawable.max_z}')
-                # print(f'x_min, y_min, z_min: {x_min}, {y_min}, {z_min}')
-                # print(f'x_max, y_max, z_max: {x_max}, {y_max}, {z_max}')
-                # print(glm.translate(glm.mat4(1.0), self.translation))
-                # print('----')
-                drawable.update_attribute('model_matrix', translation_matrix)
-                self.drag_object_flag = False
-            # Define view matrix
-            view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
-
-            if self.move_camera_flag:
-                # Call to create hemisphere of multi-cam
-                self.multi_cam()
-
-                self.current_time = glfw.get_time()
-                if self.current_time - self.last_update_time >= 0.5:  # Check if 1 second has passed
-                    vcamera = random.choice(self.vcameras)
-                    self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
-                    view = vcamera.view
-                    self.last_update_time = self.current_time
-
-            if self.selected_camera:
-                view = self.selected_camera.view
-            drawable.update_attribute('view_matrix', view)
-
-            projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
-            drawable.update_attribute('projection_matrix', projection)
-
-            # Normal rendering
-            drawable.draw(self.cameraPos)
-
     def add(self, drawables):
         """ add objects to draw in this windows """
         self.drawables.extend(drawables)
@@ -404,7 +306,11 @@ class Viewer:
                 self.trackball.pan(old, self.mouse)
 
     def scroll_callback(self, window, xoffset, yoffset):
-        self.fov -= float(yoffset)
+        # self.fov -= float(yoffset)
+        # if self.fov < 1.0:
+        #     self.fov = 1.0
+        # if self.fov > 45.0:
+        #     self.fov = 45.0
         self.trackball.zoom(yoffset, glfw.get_window_size(window)[1])
 
     def mouse_button_callback(self, window, button, action, mods):
@@ -645,7 +551,7 @@ class Viewer:
         else:
             # Default view (self.cameras only have 1 item)
             vcamera = VCamera(self.phong_shader).setup()
-            vcamera.view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
+            vcamera.view = self.trackball.view_matrix()
             self.cameraPos_lst.append(self.cameraPos)
             self.vcameras.append(vcamera)
 
@@ -973,18 +879,18 @@ class Viewer:
                 # Set the hand cursor for the window
                 glfw.set_cursor(self.win, arrow_cursor)
 
-        if imgui.button('Rotate Object'):
-            self.rotate_obj_flag = not self.rotate_obj_flag # Toggle the flag
+        # if imgui.button('Rotate Object'):
+        #     self.rotate_obj_flag = not self.rotate_obj_flag # Toggle the flag
 
-            hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
-            arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+        #     hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
+        #     arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
 
-            if self.rotate_obj_flag:
-                # Set the hand cursor for the window
-                glfw.set_cursor(self.win, hand_cursor)
-            else:
-                # Set the hand cursor for the window
-                glfw.set_cursor(self.win, arrow_cursor)
+        #     if self.rotate_obj_flag:
+        #         # Set the hand cursor for the window
+        #         glfw.set_cursor(self.win, hand_cursor)
+        #     else:
+        #         # Set the hand cursor for the window
+        #         glfw.set_cursor(self.win, arrow_cursor)
 
         font_size = imgui.get_font_size()
         vertical_padding = 8
@@ -1013,9 +919,9 @@ class Viewer:
         imgui.text('Camera Operations')
         imgui.separator()
 
-        imgui.set_next_item_width(imgui.get_window_width())
-        if imgui.button("Use Trackball"):
-            self.use_trackball()
+        # imgui.set_next_item_width(imgui.get_window_width())
+        # if imgui.button("Use Trackball"):
+        #     self.use_trackball()
 
         imgui.set_next_item_width(imgui.get_window_width())
         if imgui.button("Reset"):
@@ -1119,14 +1025,7 @@ class Viewer:
         cam_speed_changed, self.cameraSpeed = imgui.input_float("Camera speed", self.cameraSpeed, format="%.2f")
 
         imgui.set_next_item_width(100)
-        radius_changed, radius_value = imgui.slider_float("Sphere Radius",
-                                          self.sphere_radius,
-                                          min_value=0.1,
-                                          max_value=500.0,
-                                          format="%.1f")
-        
-        if radius_changed:
-            self.sphere_radius = radius_value
+        radius_changed, self.sphere_radius = imgui.input_float("Sphere Radius", self.sphere_radius, step=0.1, format="%.2f")
         
         imgui.set_next_item_width(100)
         self.num_vcameras_changed, self.num_vcameras = imgui.input_int("Num of Cameras", self.num_vcameras)
@@ -1235,26 +1134,10 @@ class Viewer:
         imgui.same_line()
         if imgui.button('Magma', width=button_width):
             self.selected_colormap = 1
-
-        # imgui.set_next_item_width(100)
-        self.near_changed, near_value = imgui.slider_float("Near",
-                                          self.near,
-                                          min_value=0.1,
-                                          max_value=10,
-                                          format="%.1f"
-                                          )
-        if self.near_changed:
-            self.near = near_value
-
-        # Add far plane slider
-        # imgui.set_next_item_width(100)
-        self.far_changed, far_value = imgui.slider_int("Far",
-                                          int(self.far),
-                                          min_value=1,
-                                          max_value=5000
-                                          )
-        if self.far_changed:
-            self.far = far_value
+        
+        # Add near, far 
+        self.near_changed, self.near = imgui.input_float("Near", self.near, step=0.1, format="%.2f")
+        self.far_changed, self.far = imgui.input_float("Far", self.far, step=0.1, format="%.2f")
 
         imgui.end()
 
@@ -1321,7 +1204,8 @@ class Viewer:
                     
                     # Define view matrix
                     if not self.rotate_obj_flag: # to separate rotate specific obj
-                        view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
+                        # view = self.trackball.view_matrix() # Default view matrix
+                        view = self.trackball.view_matrix() # Default view matrix
 
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
@@ -1371,7 +1255,7 @@ class Viewer:
 
                     # Define view matrix
                     if not self.rotate_obj_flag: # to separate rotate specific obj
-                        view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
+                        view = self.trackball.view_matrix() # Default view matrix
                     
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
