@@ -708,33 +708,33 @@ class Viewer:
                     # Normal rendering
                     drawable.draw(self.cameraPos)
 
-                # # Viewport for Depth Scene
-                # win_pos_width = self.scene_width + self.rgb_view_width
-                # win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
-                # GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-                # GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-                # GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+                # Viewport for Depth Scene
+                win_pos_width = self.scene_width + self.rgb_view_width
+                win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
+                GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+                GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+                GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-                # for drawable in self.drawables:
-                #     drawable.set_mode(0) # mode for depth map
+                for drawable in self.drawables:
+                    drawable.set_mode(0) # mode for depth map
 
-                #     # update depth map color
-                #     drawable.update_colormap(self.selected_colormap)
+                    # update depth map color
+                    drawable.update_colormap(self.selected_colormap)
 
-                #     drawable.update_attribute('view_matrix', view)
+                    drawable.update_attribute('view_matrix', view)
 
-                #     projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
-                #     drawable.update_attribute('projection_matrix', projection)
+                    projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+                    drawable.update_attribute('projection_matrix', projection)
 
-                #     # Depth map rendering
-                #     drawable.update_near_far(self.near, self.far)
+                    # Depth map rendering
+                    drawable.update_near_far(self.near, self.far)
                     
-                #     # Draw the full object
-                #     drawable.draw(self.cameraPos)
+                    # Draw the full object
+                    drawable.draw(self.cameraPos)
 
-                    # # Visualize with chosen colormap
-                    # if self.selected_colormap == 1:
-                    #     self.pass_magma_data(self.depth_texture_shader)
+                    # Visualize with chosen colormap
+                    if self.selected_colormap == 1:
+                        self.pass_magma_data(self.depth_texture_shader)
 
                 GL.glDisable(GL.GL_SCISSOR_TEST)
             
