@@ -90,6 +90,7 @@ class Viewer:
         self.bg_changed = False
 
         # Initialize object config
+        self.rotate_obj_flag = False
         self.selected_obj_path = "No file selected"
         self.last_selected_object = None
         self.selected_object = None
@@ -353,6 +354,27 @@ class Viewer:
         """ Rotate on left-click & drag, pan on right-click & drag """
         old = self.mouse
         self.mouse = (xpos, glfw.get_window_size(window)[1] - ypos)
+
+        if self.rotate_obj_flag and glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT):
+            old, new = ((2 * np.asarray(pos) - glfw.get_window_size(window)) / glfw.get_window_size(window) for pos in (old, self.mouse))
+
+            # Calculate delta movement
+            delta_x = new[0] - old[0]
+            delta_y = old[1] - new[1]
+            
+            # Update angles based on mouse movement
+            sensitivity = 0.01  
+            self.yaw += delta_x * sensitivity
+            self.pitch += delta_y * sensitivity
+            
+            # Limit pitch to avoid gimbal lock
+            self.pitch = min(89.0, max(-89.0, self.pitch))
+
+            rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(self.yaw), glm.vec3(0.0, 1.0, 0.0))
+
+            # Uncomment this to rotate object but not successfully
+            # if self.selected_object:
+            #     self.selected_object.update_attribute('model_matrix', rotation_matrix)
 
         if self.drag_object_flag or self.move_cam_sys_flag:
             # Make sure that the left mouse is pressed when dragging the object
@@ -664,15 +686,19 @@ class Viewer:
                         x = random.uniform(x_min, x_max)
                         # y = random.uniform(y_min, y_max)
                         z = random.uniform(z_min, z_max)
+                        angle = random.uniform(0, 360)
+                        
                         self.translation = glm.vec3(x, 0, z)
                         self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
-                        
+
+                        rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
                         translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
                         
                         self.reverse_translation = - self.translation
                         self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
-                    
-                        drawable.update_attribute('model_matrix', translation_matrix)
+                        
+                        model_matrix = translation_matrix * rotation_matrix
+                        drawable.update_attribute('model_matrix', model_matrix)
 
                     drawable.update_attribute('view_matrix', view)
 
@@ -947,6 +973,18 @@ class Viewer:
                 # Set the hand cursor for the window
                 glfw.set_cursor(self.win, arrow_cursor)
 
+        if imgui.button('Rotate Object'):
+            self.rotate_obj_flag = not self.rotate_obj_flag # Toggle the flag
+
+            hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
+            arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+
+            if self.rotate_obj_flag:
+                # Set the hand cursor for the window
+                glfw.set_cursor(self.win, hand_cursor)
+            else:
+                # Set the hand cursor for the window
+                glfw.set_cursor(self.win, arrow_cursor)
 
         font_size = imgui.get_font_size()
         vertical_padding = 8
@@ -1282,7 +1320,8 @@ class Viewer:
                         drawable.update_attribute('model_matrix', scale_matrix)
                     
                     # Define view matrix
-                    view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
+                    if not self.rotate_obj_flag: # to separate rotate specific obj
+                        view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
 
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
@@ -1331,7 +1370,8 @@ class Viewer:
                         drawable.update_attribute('model_matrix', scale_matrix)
 
                     # Define view matrix
-                    view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
+                    if not self.rotate_obj_flag: # to separate rotate specific obj
+                        view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront, self.cameraUp) # Default view matrix
                     
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
