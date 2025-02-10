@@ -17,10 +17,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from .object3D import *
-from .scene3D import *
-# from .object3D_v2 import *
-# from .scene3D_v2 import *
+# from .object3D import *
+# from .scene3D import *
+from .object3D_v2 import *
+from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -66,13 +66,8 @@ class Viewer:
         GL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # Initialize shaders
-        self.depth_shader = Shader("shader/depth.vert", "shader/depth.frag")
         self.phong_shader = Shader("shader/phong.vert", "shader/phong.frag")
-        self.phongex_shader = Shader("shader/phongex.vert", "shader/phongex.frag")
-        self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
-        self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
-        self.good_shader = Shader('shader/good_shader.vert','shader/good_shader.frag')
 
         self.load_config_flag = False
 
