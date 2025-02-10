@@ -68,6 +68,7 @@ class Viewer:
         # Initialize shaders
         self.phong_shader = Shader("shader/phong.vert", "shader/phong.frag")
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
+        self.object_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
 
         self.load_config_flag = False
 
@@ -691,7 +692,7 @@ class Viewer:
         model = []
 
         if self.selected_obj_path != "No file selected":
-            self.selected_object = Object(self.depth_texture_shader, self.selected_obj_path)
+            self.selected_object = Object(self.object_shader, self.selected_obj_path)
             # translation_matrix = self.lay_object()
             # self.selected_object.update_attribute('model_matrix', translation_matrix)
             model.append(self.selected_object)
@@ -962,6 +963,7 @@ class Viewer:
             combo_changed, self.layout_opt = imgui.input_int("Layout Options", self.layout_opt)
             
             if imgui.button("Confirm"):
+                print("Numb layout", self.layout_opt)
                 self.random_combination(self.layout_opt)
 
             # time_changed, self.time_save = imgui.input_float("Time Selection (s)", self.time_save)
@@ -1111,7 +1113,6 @@ class Viewer:
             if self.selected_scene_path != "No file selected" and self.load_config_flag:
                 self.process_scene_config()
                 self.load_config_flag = False
-
             if not self.autosave:
                 GL.glClearColor(0.2, 0.2, 0.2, 1.0)
                 GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)

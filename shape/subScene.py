@@ -41,8 +41,6 @@ class SubScene:
         self.texture_id = {}
         self.texture_flags = {}
 
-        self.shininess = self.materials['Ns']
-
         if self.use_texture:
             for texture in TextureMap:
                 map_key, uniform_name = texture.value
@@ -72,7 +70,15 @@ class SubScene:
         self.uma.upload_uniform_scalar1f(shininess, 'shininess')
 
     def update_model_matrix(self, model):
+        # print("currnent", self.model)
+        # transform all matrix to glm mat4 to use * for matrix multiplication
+        if not isinstance(model, glm.mat4):
+            model = glm.mat4(*model.flatten())
+        if not isinstance(self.model, glm.mat4):
+            self.model = glm.mat4(*self.model.flatten())
+
         self.model = model * self.model
+        # print("update", self.model)
 
     def update_view_matrix(self, view):
         self.view = view
@@ -116,10 +122,21 @@ class SubScene:
         object_color = glm.vec3(1.0, 0.5, 0.31)
         self.uma.upload_uniform_vector3fv(np.array(object_color), "objectColor")
 
-        if self.shininess is not None:
-            self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
+        if self.materials:
+            self.diffuse = self.materials.get('Kd') if self.materials.get('Kd') is not None else [0.6, 0.4, 0.7]
+            self.specular = self.materials.get('Ks') if self.materials.get('Ks') is not None else [0.6, 0.4, 0.7]
+            self.ambient = self.materials.get('Ka') if self.materials.get('Ka') is not None else [0.6, 0.4, 0.7]
+            self.shininess = self.materials.get('Ns') if self.materials.get('Ns') is not None else 100.0
         else:
-            self.uma.upload_uniform_scalar1f(100, 'shininess')
+            self.diffuse = [0.6, 0.4, 0.7]
+            self.specular = [0.6, 0.4, 0.7]
+            self.ambient = [0.6, 0.4, 0.7]
+            self.shininess = 100.0
+
+        self.uma.upload_uniform_vector3fv(np.array(self.diffuse), 'diffuseStrength')
+        self.uma.upload_uniform_vector3fv(np.array(self.specular), 'specularStrength')
+        self.uma.upload_uniform_vector3fv(np.array(self.ambient), 'ambientStrength')
+        self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
 
         return self
 
