@@ -122,36 +122,6 @@ class Scene:
 
         return vertices_all, texcoords_all, normals_all, objects
 
-    def split_obj(self):
-        for obj in self.objects:
-            vertices = []
-            tecos = []
-            normals = []
-
-            for sublist in obj['vert_obj_id']: # [[1 2 3][2 3 4 ]]
-                for vert_id in sublist:
-                    vertices.append(self.vertices[int(vert_id)])
-
-            for sublist in obj['textcoords_obj_id']:
-                for teco_id in sublist:
-                    tecos.append(self.texcoords[int(teco_id)])
-
-            for sublist in obj['normal_obj_id']:
-                for normal_id in sublist:
-                    normals.append(self.normals[int(normal_id)])
-
-            # if (obj['texture_name']=='wire_115115115'):
-            model = SubScene( self.shader,
-                            vertices,
-                            tecos,
-                            normals,
-                            self.materials[obj['texture_name']],
-                            self.dir_path
-                            ).setup()
-            self.subobjs.append(model)
-        return self
-
-
     def load_materials(self, file_path):
         materials = {}
         current_material = None

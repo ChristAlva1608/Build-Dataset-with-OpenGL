@@ -41,11 +41,6 @@ class SubScene:
         self.texture_id = {}
         self.texture_flags = {}
 
-        # init K material
-        # self.diffuse = self.materials['Kd']
-        # self.specular = self.materials['Ks']
-        # self.ambient = self.materials['Ka']
-
         self.shininess = self.materials['Ns']
 
         if self.use_texture:
@@ -120,10 +115,6 @@ class SubScene:
 
         object_color = glm.vec3(1.0, 0.5, 0.31)
         self.uma.upload_uniform_vector3fv(np.array(object_color), "objectColor")
-
-        # self.uma.upload_uniform_vector3fv(np.array(self.diffuse), 'diffuseStrength')
-        # self.uma.upload_uniform_vector3fv(np.array(self.specular), 'specularStrength')
-        # self.uma.upload_uniform_vector3fv(np.array(self.ambient), 'ambientStrength')
 
         if self.shininess is not None:
             self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
