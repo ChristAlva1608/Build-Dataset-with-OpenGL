@@ -43,6 +43,7 @@ void main() {
         vec3 ambient = ambientStrength * lightColor;
 
         // diffuse
+        float diffuseStrength = 0.5;
         vec3 norm = normalize(normal_interp);
         vec3 lightDir = normalize(lightPos - vert_pos);
         float diff = max(dot(norm, lightDir), 0.0);
@@ -61,6 +62,9 @@ void main() {
         // Determine the final color based on use_texture
         vec4 finalColor;
         if (use_texture == 1) {
+            if (texture(texture_diffuse, texcoord_interp).a < 0.1) // discard for the RGBA
+               discard;
+
             // Use texture
             vec4 ambientColor = texture(texture_ambient, texcoord_interp);
             vec4 diffuseColor = texture(texture_diffuse, texcoord_interp);

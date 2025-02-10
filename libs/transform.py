@@ -267,3 +267,6 @@ class Trackball:
         old, new = (normalized(self._project3d(pos)) for pos in (old, new))
         phi = 2 * math.acos(np.clip(np.dot(old, new), -1, 1))
         return quaternion_from_axis_angle(np.cross(old, new), radians=phi)
+
+    def set_distance(self, new_distance):
+        self.distance = new_distance

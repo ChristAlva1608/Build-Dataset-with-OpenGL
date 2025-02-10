@@ -57,8 +57,10 @@ class UManager(object):
         rgb_flag = True
         image = Image.open(filename)
         image = image.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image for OpenGL
+        # print("Image mode", image.mode)
         if image.mode == "LA":
             image = convert_LA_to_RGBA(image)
+            rgb_flag = False
         elif image.mode == "P":
             image = image.convert("RGB")
         elif image.mode == "RGBA":

@@ -10,5 +10,7 @@ materials.txt
 obj.txt
 test.txt
 .DS_Store
-*.ini
+.venv/
 .idea/
+imgui.ini
+obj/

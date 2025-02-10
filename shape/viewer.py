@@ -62,6 +62,9 @@ class Viewer:
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glDepthFunc(GL.GL_LESS)
 
+        # bleding for RGBA
+        GL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
         # Initialize shaders
         self.depth_shader = Shader("shader/depth.vert", "shader/depth.frag")
         self.phong_shader = Shader("shader/phong.vert", "shader/phong.frag")
@@ -69,7 +72,7 @@ class Viewer:
         self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
         self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
-        self.obj_shader = Shader('shader/obj_shader.vert','shader/obj_shader.frag')
+        self.good_shader = Shader('shader/good_shader.vert','shader/good_shader.frag')
 
         self.load_config_flag = False
 
@@ -547,7 +550,7 @@ class Viewer:
     def random_combination(self, n):
         x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
         x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
-        
+
         if self.multi_cam_flag:
             self.multi_cam()
         else:
@@ -575,7 +578,7 @@ class Viewer:
                 GL.glEnable(GL.GL_SCISSOR_TEST)
                 GL.glClearColor(*self.bg_colors, 1.0)
                 GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-                GL.glUseProgram(self.depth_texture_shader.render_idx)   
+                GL.glUseProgram(self.depth_texture_shader.render_idx)
 
                 for drawable in self.drawables:
                     drawable.set_mode(1) # mode for rgb image
@@ -583,28 +586,28 @@ class Viewer:
                     # update light configuration
                     if self.lightPos_changed:
                         drawable.update_lightPos(self.lightPos)
-                    
+
                     if self.lightColor_changed:
                         drawable.update_lightColor(self.lightColor)
-                    
+
                     if self.shininess_changed:
                         drawable.update_shininess(self.shininess)
-                    
+
                     if isinstance(drawable, Object):
                         x = random.uniform(x_min, x_max)
                         # y = random.uniform(y_min, y_max)
                         z = random.uniform(z_min, z_max)
                         angle = random.uniform(0, 360)
-                        
+
                         self.translation = glm.vec3(x, 0, z)
                         self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
 
                         rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
                         translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
-                        
+
                         self.reverse_translation = - self.translation
                         self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
-                        
+
                         model_matrix = translation_matrix * rotation_matrix
                         drawable.update_attribute('model_matrix', model_matrix)
 
@@ -636,7 +639,7 @@ class Viewer:
 
                     # Depth map rendering
                     drawable.update_near_far(self.near, self.far)
-                    
+
                     # Draw the full object
                     drawable.draw(self.cameraPos)
 
@@ -645,12 +648,12 @@ class Viewer:
                         self.pass_magma_data(self.depth_texture_shader)
 
                 GL.glDisable(GL.GL_SCISSOR_TEST)
-            
+
                 self.save_rgb(self.rgb_save_path)
                 self.save_depth(self.depth_save_path)
 
                 glfw.swap_buffers(self.win)
-        
+
         self.autosave = not self.autosave # Toggle the flag
 
     def multi_cam(self):
@@ -756,7 +759,7 @@ class Viewer:
             drawable.projection = self.trackball.projection_matrix(win_size)
 
     # def move_camera_around(self):
-    #     ''' 
+    #     '''
     #     Set the master camera on the sphere cover the scene. The radius of the sphere is detemined by max of x / z values + offset
     #     '''
     #     sphere = Sphere(self.phong_shader).setup()
@@ -841,11 +844,11 @@ class Viewer:
 
         if imgui.begin_combo("List of Objects", current_item):
             for drawable in self.drawables:
-                if isinstance(drawable, Object):  
+                if isinstance(drawable, Object):
                     is_selected = self.selected_object == drawable
 
                     # Check if a new object is selected
-                    if imgui.selectable(drawable.name, is_selected)[0]:  
+                    if imgui.selectable(drawable.name, is_selected)[0]:
                         if self.selected_object != drawable:  # Only update if it's a new selection
                             self.selected_object = drawable
 
@@ -1058,7 +1061,7 @@ class Viewer:
                     if is_selected:
                         imgui.set_item_default_focus()
             imgui.end_combo()
-        
+
         if imgui.button("Move Camera System"):
             self.move_cam_sys_flag = not self.move_cam_sys_flag # Toggle the flag
 
@@ -1174,10 +1177,10 @@ class Viewer:
                     # update light configuration
                     if self.lightPos_changed:
                         drawable.update_lightPos(self.lightPos)
-                    
+
                     if self.lightColor_changed:
                         drawable.update_lightColor(self.lightColor)
-                    
+
                     if self.shininess_changed:
                         drawable.update_shininess(self.shininess)
 
@@ -1185,7 +1188,7 @@ class Viewer:
                     if self.initial_pos:
                         x = drawable.max_x + 1/3 * (drawable.max_x - drawable.min_x)
                         z = drawable.max_z + 1/3 * (drawable.max_z - drawable.min_z)
-                        
+
                         # Set up static camera view A and B in initial position
                         self.cameraPos_A = glm.vec3(0.0, 0.0, z)
                         self.cameraPos_B = glm.vec3(x, 0.0, 0.0)
@@ -1193,17 +1196,18 @@ class Viewer:
                         # Set up current camera pos
                         self.old_cameraPos = self.cameraPos
                         self.cameraPos = self.cameraPos_A
+                        self.trackball.set_distance(z)
 
                     # Define model matrix
                     if self.selected_object == drawable and self.scale_changed:
                         scale_matrix = scale(self.scale_factor) * scale(1/self.prev_scale_factor) # to scale back before applying new scale
                         self.prev_scale_factor = self.scale_factor
                         drawable.update_attribute('model_matrix', scale_matrix)
-                    
+
                     # Define view matrix
                     if not self.rotate_obj_flag: # to separate rotate specific obj
                         # view = self.trackball.view_matrix() # Default view matrix
-                        view = self.trackball.view_matrix() # Default view matrix
+                        view = self.trackball.view_matrix2(self.cameraPos)
 
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
@@ -1220,7 +1224,8 @@ class Viewer:
                         view = self.selected_camera.view
                     drawable.update_attribute('view_matrix', view)
 
-                    projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
+                    # projection = self.trackball.projection_matrix((self.rgb_view_width, self.rgb_view_height))
+                    projection = glm.perspective(self.fov, self.rgb_view_width/self.rgb_view_height, self.near, self.far)
                     drawable.update_attribute('projection_matrix', projection)
 
                     # Normal rendering
@@ -1253,8 +1258,9 @@ class Viewer:
 
                     # Define view matrix
                     if not self.rotate_obj_flag: # to separate rotate specific obj
-                        view = self.trackball.view_matrix() # Default view matrix
-                    
+                        # view = self.trackball.view_matrix() # Default view matrix
+                        view = self.trackball.view_matrix2(self.cameraPos)
+
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
                         self.multi_cam()
@@ -1264,18 +1270,19 @@ class Viewer:
                             vcamera = random.choice(self.vcameras)
                             self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
                             view = vcamera.view
-                            self.last_update_time = current_time    
+                            self.last_update_time = current_time
 
                     if self.selected_camera:
                         view = self.selected_camera.view
                     drawable.update_attribute('view_matrix', view)
 
-                    projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+                    # projection = self.trackball.projection_matrix((self.depth_view_width, self.depth_view_height))
+                    projection = glm.perspective(self.fov, self.depth_view_width/ self.depth_view_height, self.near, self.far)
                     drawable.update_attribute('projection_matrix', projection)
 
                     # Depth map rendering
                     drawable.update_near_far(self.near, self.far)
-                    
+
                     # Draw the full object
                     drawable.draw(self.cameraPos)
 
