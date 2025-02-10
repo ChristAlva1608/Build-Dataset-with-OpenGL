@@ -72,7 +72,7 @@ class Viewer:
         self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
         self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
-        self.good_shader = Shader('shader/good_shader.vert','shader/good_shader.frag')
+        self.object_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
 
         self.load_config_flag = False
 
@@ -555,8 +555,9 @@ class Viewer:
             self.multi_cam()
         else:
             # Default view (self.cameras only have 1 item)
+            self.vcameras = []
             vcamera = VCamera(self.phong_shader).setup()
-            vcamera.view = self.trackball.view_matrix()
+            vcamera.view = self.trackball.view_matrix2(self.cameraPos)
             self.cameraPos_lst.append(self.cameraPos)
             self.vcameras.append(vcamera)
 
