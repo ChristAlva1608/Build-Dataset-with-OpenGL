@@ -418,42 +418,6 @@ class Viewer:
         draw_list.add_text(text_pos_x, text_pos_y, imgui.get_color_u32_rgba(1, 1, 1, 1), button_text)
 
         return pressed
-    
-    def load_cubemap(faces):
-        """
-        Loads a cubemap texture from a list of file paths.
-
-        Parameters:
-            faces (list of str): List of 6 file paths, one for each face of the cubemap.
-
-        Returns:
-            int: The OpenGL texture ID of the cubemap.
-        """
-        texture_id = GL.glGenTextures(1)
-        GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, texture_id)
-
-        for i, face in enumerate(faces):
-            try:
-                # Open the image and ensure it is in RGB format
-                with Image.open(face) as img:
-                    img = img.convert("RGB")
-                    img_data = img.tobytes()
-                    width, height = img.size
-
-                    # Upload the image data to the cubemap
-                    GL.glTexImage2D(GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                                0, GL.GL_RGB, width, height, 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, img_data)
-            except Exception as e:
-                print(f"Cubemap texture failed to load at path: {face}\nError: {e}")
-
-        # Set cubemap texture parameters
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE)
-
-        return texture_id
 
     def setup_camA(self):
         self.cameraPos = self.cameraPos_A
