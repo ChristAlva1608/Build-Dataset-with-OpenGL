@@ -236,7 +236,8 @@ class Scene:
                             vertices,
                             tecos,
                             normals,
-                            self.materials[obj['texture_name']]
+                            self.materials[obj['texture_name']],
+                            self.dir_path
                             ).setup()
             self.subobjs.append(model)  
         return self

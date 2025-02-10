@@ -515,8 +515,9 @@ class Viewer:
             self.multi_cam()
         else:
             # Default view (self.cameras only have 1 item)
+            self.vcameras = []
             vcamera = VCamera(self.phong_shader).setup()
-            vcamera.view = self.trackball.view_matrix()
+            vcamera.view = self.trackball.view_matrix2(self.cameraPos)
             self.cameraPos_lst.append(self.cameraPos)
             self.vcameras.append(vcamera)
 
