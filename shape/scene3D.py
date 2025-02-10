@@ -18,6 +18,7 @@ class Scene:
         self.vao = VAO()
         self.uma = UManager(self.shader)
         
+        self.dir_path = os.path.dirname(file_path)
         self.subobjs = []
         self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
@@ -235,7 +236,8 @@ class Scene:
                             vertices,
                             tecos,
                             normals,
-                            self.materials[obj['texture_name']]
+                            self.materials[obj['texture_name']],
+                            self.dir_path
                             ).setup()
             self.subobjs.append(model)  
         return self

@@ -7,6 +7,7 @@ from itertools import cycle
 from PyQt6.QtWidgets import QApplication, QFileDialog
 import sys
 import time
+from datetime import datetime
 import imgui
 import random
 from imgui.integrations.glfw import GlfwRenderer
@@ -18,7 +19,8 @@ from libs.transform import *
 
 from .object3D import *
 from .scene3D import *
-# from scene3D_v2 import *
+# from .object3D_v2 import *
+# from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -67,7 +69,7 @@ class Viewer:
         self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
         self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
-        self.good_shader = Shader('shader/good_shader.vert','shader/good_shader.frag')
+        self.obj_shader = Shader('shader/obj_shader.vert','shader/obj_shader.frag')
 
         self.load_config_flag = False
 
@@ -500,7 +502,7 @@ class Viewer:
         rgb_image = Image.fromarray(rgb_image)
 
         # Create a unique file name using timestamp
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")  # Includes microseconds
         file_name = f"rgb_image_{timestamp}.png"
 
         # Save the image to the local directory
@@ -535,7 +537,7 @@ class Viewer:
         depth_image = Image.fromarray(depth_image)
         
         # Create a unique file name using timestamp
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")  # Includes microseconds
         file_name = f"depth_image_{timestamp}.png"
 
         # Save the image to the selected directory
@@ -743,7 +745,7 @@ class Viewer:
             # Set scale factor for new object
             self.prev_scale_factor = 1
             self.scale_factor = 1
-            
+
         self.add(model)
 
     def use_trackball(self):
@@ -1057,9 +1059,6 @@ class Viewer:
                         imgui.set_item_default_focus()
             imgui.end_combo()
         
-        if radius_changed:
-            self.radius = radius_value
-        
         if imgui.button("Move Camera System"):
             self.move_cam_sys_flag = not self.move_cam_sys_flag # Toggle the flag
 
@@ -1168,7 +1167,6 @@ class Viewer:
 
                 if self.multi_cam_flag:
                     self.multi_cam()
-                    # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL) # return back to normal mode
 
                 for drawable in self.drawables:
                     drawable.set_mode(1) # mode for rgb image

@@ -15,7 +15,6 @@ from shape.subObj import *
 class Object:
     def __init__(self, shader, file_path):
         self.shader = shader
-        self.vao = VAO()
         self.uma = UManager(self.shader)
 
         self.subobjs = []

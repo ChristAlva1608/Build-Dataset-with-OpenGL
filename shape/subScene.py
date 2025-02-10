@@ -77,10 +77,7 @@ class SubScene:
         self.uma.upload_uniform_scalar1f(shininess, 'shininess')
 
     def update_model_matrix(self, model):
-        print('current model matrix', self.model)
         self.model = model * self.model
-        print('model matrix after applied new', self.model)
-
 
     def update_view_matrix(self, view):
         self.view = view
