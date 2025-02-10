@@ -25,6 +25,9 @@ newmtl wire_115115115
 	Ka 0.4510 0.4510 0.4510
 	Kd 0.4510 0.4510 0.4510
 	Ks 0.3500 0.3500 0.3500
+	map_Ka gray.png
+	map_Kd gray.png
+	map_bump -bm 0.0100 gray.png
 
 newmtl texture_1
 	Ns 49.0000

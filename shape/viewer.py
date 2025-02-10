@@ -16,7 +16,7 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from .object3D import *
+from .object3D_v2 import *
 # from .scene3D import *
 from .scene3D_v2 import *
 from .quad import *
@@ -421,42 +421,6 @@ class Viewer:
         draw_list.add_text(text_pos_x, text_pos_y, imgui.get_color_u32_rgba(1, 1, 1, 1), button_text)
 
         return pressed
-    
-    def load_cubemap(faces):
-        """
-        Loads a cubemap texture from a list of file paths.
-
-        Parameters:
-            faces (list of str): List of 6 file paths, one for each face of the cubemap.
-
-        Returns:
-            int: The OpenGL texture ID of the cubemap.
-        """
-        texture_id = GL.glGenTextures(1)
-        GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, texture_id)
-
-        for i, face in enumerate(faces):
-            try:
-                # Open the image and ensure it is in RGB format
-                with Image.open(face) as img:
-                    img = img.convert("RGB")
-                    img_data = img.tobytes()
-                    width, height = img.size
-
-                    # Upload the image data to the cubemap
-                    GL.glTexImage2D(GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                                0, GL.GL_RGB, width, height, 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, img_data)
-            except Exception as e:
-                print(f"Cubemap texture failed to load at path: {face}\nError: {e}")
-
-        # Set cubemap texture parameters
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
-        GL.glTexParameteri(GL.GL_TEXTURE_CUBE_MAP, GL.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE)
-
-        return texture_id
 
     def setup_camA(self):
         self.cameraPos = self.cameraPos_A
@@ -1198,6 +1162,7 @@ class Viewer:
                         # Set up current camera pos
                         self.old_cameraPos = self.cameraPos
                         self.cameraPos = self.cameraPos_A
+                        self.trackball.set_distance(z)
 
                     # Define model matrix
                     if self.selected_object == drawable and self.scale_changed:
@@ -1208,7 +1173,7 @@ class Viewer:
                     # Define view matrix
                     if not self.rotate_obj_flag: # to separate rotate specific obj
                         # view = self.trackball.view_matrix() # Default view matrix
-                        view = self.trackball.view_matrix() # Default view matrix
+                        view = self.trackball.view_matrix2(self.cameraPos)
 
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
@@ -1225,7 +1190,8 @@ class Viewer:
                         view = self.selected_camera.view
                     drawable.update_attribute('view_matrix', view)
 
-                    projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
+                    # projection = self.trackball.projection_matrix((self.rgb_view_width, self.rgb_view_height))
+                    projection = glm.perspective(self.fov, self.rgb_view_width/self.rgb_view_height, self.near, self.far)
                     drawable.update_attribute('projection_matrix', projection)
 
                     # Normal rendering
@@ -1258,7 +1224,8 @@ class Viewer:
 
                     # Define view matrix
                     if not self.rotate_obj_flag: # to separate rotate specific obj
-                        view = self.trackball.view_matrix() # Default view matrix
+                        # view = self.trackball.view_matrix() # Default view matrix
+                        view = self.trackball.view_matrix2(self.cameraPos)
 
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
@@ -1275,7 +1242,8 @@ class Viewer:
                         view = self.selected_camera.view
                     drawable.update_attribute('view_matrix', view)
 
-                    projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+                    # projection = self.trackball.projection_matrix((self.depth_view_width, self.depth_view_height))
+                    projection = glm.perspective(self.fov, self.depth_view_width/ self.depth_view_height, self.near, self.far)
                     drawable.update_attribute('projection_matrix', projection)
 
                     # Depth map rendering

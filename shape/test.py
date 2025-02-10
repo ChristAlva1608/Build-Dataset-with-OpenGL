@@ -188,6 +188,7 @@ class Viewer:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             win_size = glfw.get_window_size(self.win)
+            print("Win size type", type(win_size))
 
             # draw our scene objects
             for drawable in self.drawables:

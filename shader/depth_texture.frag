@@ -43,6 +43,7 @@ void main() {
         vec3 ambient = ambientStrength * lightColor;
 
         // diffuse
+        float diffuseStrength = 0.5;
         vec3 norm = normalize(normal_interp);
         vec3 lightDir = normalize(lightPos - vert_pos);
         float diff = max(dot(norm, lightDir), 0.0);

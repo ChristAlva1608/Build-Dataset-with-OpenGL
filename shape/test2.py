@@ -54,13 +54,8 @@ class Viewer:
         GL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # Initialize shaders
-        self.depth_shader = Shader("shader/depth.vert", "shader/depth.frag")
         self.phong_shader = Shader("shader/phong.vert", "shader/phong.frag")
-        self.phongex_shader = Shader("shader/phongex.vert", "shader/phongex.frag")
-        self.texture_shader = Shader('shader/texture.vert', 'shader/texture.frag')
-        self.colormap_shader = Shader('shader/colormap.vert', 'shader/colormap.frag')
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
-        self.good_shader = Shader('shader/good_shader.vert', 'shader/good_shader.frag')
 
         self.load_config_flag = False
 
@@ -149,7 +144,6 @@ class Viewer:
 
         GL.glClearColor(1.0, 1.0, 1.0, 1.0)
         self.drawables = []
-
     def init_ui(self):
         self.font_size = 10
         self.load_font_size()
@@ -252,7 +246,8 @@ class Viewer:
                 view = self.selected_camera.view
             drawable.update_attribute('view_matrix', view)
 
-            projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+            # projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+            projection = self.trackball.projection_matrix((self.depth_view_width, self.depth_view_height))
             drawable.update_attribute('projection_matrix', projection)
 
             # Normal rendering
@@ -332,11 +327,6 @@ class Viewer:
                 self.trackball.pan(old, self.mouse)
 
     def scroll_callback(self, window, xoffset, yoffset):
-        # self.fov -= float(yoffset)
-        # if self.fov < 1.0:
-        #     self.fov = 1.0
-        # if self.fov > 45.0:
-        #     self.fov = 45.0
         self.trackball.zoom(yoffset, glfw.get_window_size(window)[1])
 
     def mouse_button_callback(self, window, button, action, mods):
@@ -1068,9 +1058,7 @@ class Viewer:
                     # drawable.model = scale_matrix * drawable.model
 
                 # Define view matrix
-                view = self.trackball.view_matrix3(self.cameraPos, self.cameraFront,
-                                                   self.cameraUp)  # Default view matrix
-
+                view = self.trackball.view_matrix()
 
                 if self.move_camera_flag:
                     # Call to create hemisphere of multi-cam
@@ -1087,9 +1075,10 @@ class Viewer:
                     view = self.selected_camera.view
                 drawable.update_attribute('view_matrix', view)
 
-                projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height,
-                                             self.near, self.far)
+                # projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height,
+                #                              self.near, self.far)
 
+                projection = self.trackball.projection_matrix((self.depth_view_width, self.depth_view_height))
                 drawable.update_attribute('projection_matrix', projection)
 
                 # Depth map rendering
