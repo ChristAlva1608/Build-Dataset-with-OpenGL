@@ -57,7 +57,16 @@ class SubScene:
                     if os.path.exists(texture_path):
                         self.texture_flags[map_key] = True
                         self.texture_id[map_key] = self.uma.setup_texture(uniform_name, texture_path)
+    
+    def get_model_matrix(self):
+        return self.model
 
+    def get_view_matrix(self):
+        return self.view
+    
+    def get_projection_matrix(self):
+        return self.projection
+    
     def update_shader(self, shader):
         self.shader = shader
         self.uma = UManager(self.shader)
@@ -115,7 +124,7 @@ class SubScene:
 
         object_color = glm.vec3(1.0, 0.5, 0.31)
         self.uma.upload_uniform_vector3fv(np.array(object_color), "objectColor")
-
+        
         if self.shininess is not None:
             self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
         else:
