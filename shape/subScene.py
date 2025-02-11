@@ -132,14 +132,14 @@ class SubScene:
         self.uma.upload_uniform_vector3fv(np.array(object_color), "objectColor")
 
         if self.materials:
-            self.diffuse = self.materials.get('Kd') if self.materials.get('Kd') is not None else [0.6, 0.4, 0.7]
-            self.specular = self.materials.get('Ks') if self.materials.get('Ks') is not None else [0.6, 0.4, 0.7]
-            self.ambient = self.materials.get('Ka') if self.materials.get('Ka') is not None else [0.6, 0.4, 0.7]
+            self.diffuse = self.materials.get('Kd') if self.materials.get('Kd') is not None else [0.5, 0.5, 0.5]
+            self.specular = self.materials.get('Ks') if self.materials.get('Ks') is not None else [0.5, 0.5, 0.5]
+            self.ambient = self.materials.get('Ka') if self.materials.get('Ka') is not None else [0.5, 0.5, 0.5]
             self.shininess = self.materials.get('Ns') if self.materials.get('Ns') is not None else 100.0
         else:
-            self.diffuse = [0.6, 0.4, 0.7]
-            self.specular = [0.6, 0.4, 0.7]
-            self.ambient = [0.6, 0.4, 0.7]
+            self.diffuse = [0.5, 0.5, 0.5]
+            self.specular = [0.5, 0.5, 0.5]
+            self.ambient = [0.5, 0.5, 0.5]
             self.shininess = 100.0
 
         self.uma.upload_uniform_vector3fv(np.array(self.diffuse), 'diffuseStrength')
