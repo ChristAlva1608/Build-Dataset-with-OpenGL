@@ -261,6 +261,15 @@ class Object:
         for subobj in self.subobjs:
             subobj.uma.upload_uniform_scalar1i(num, 'mode')
 
+    def get_model_matrix(self):
+        return self.subobjs[0].get_model_matrix()
+    
+    def get_view_matrix(self):
+        return self.subobjs[0].get_view_matrix()
+    
+    def get_projection_matrix(self):
+        return self.subobjs[0].get_projection_matrix()
+    
     def update_shader(self, shader):
         for subobj in self.subobjs:
             subobj.update_shader(shader)
@@ -286,12 +295,12 @@ class Object:
         for subobj in self.subobjs:
             subobj.update_shininess(shininess)
 
-    def update_attribute(self, attr, value):
+    def update_attribute(self, attr, *args):
         update_name = 'update_' + attr
         for subobj in self.subobjs:
             if hasattr(subobj, update_name):
                 method = getattr(subobj, update_name)
-                method(value)
+                method(*args)
 
     def get_transformed_vertices(self):
         transformed_vertices = []

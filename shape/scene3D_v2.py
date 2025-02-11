@@ -20,8 +20,6 @@ class Scene:
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)
-        mtl_path = file_path.replace(".obj", ".mtl")
-        self.materials = self.load_materials(mtl_path)
 
         overall_min, overall_max = self.parse_file_pywavefront(file_path)
         self.min_x, self.min_y, self.min_z = overall_min
@@ -30,6 +28,13 @@ class Scene:
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
         print("Finished Parsing PyWavefront")
+
+        if scene.mtllibs:
+            print(f"Material libraries: {scene.mtllibs}")
+            mtl_path =  os.path.join(self.dir_path, scene.mtllibs[0])
+        else:
+            mtl_path = obj_file.replace(".obj", ".mtl")
+        self.materials = self.load_materials(mtl_path)
 
         overall_min = np.array([float('inf'), float('inf'), float('inf')])
         overall_max = np.array([float('-inf'), float('-inf'), float('-inf')])

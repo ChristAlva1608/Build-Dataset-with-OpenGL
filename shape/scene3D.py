@@ -15,7 +15,6 @@ from shape.subScene import *
 class Scene:
     def __init__(self, shader, file_path):
         self.shader = shader
-        self.vao = VAO()
         self.uma = UManager(self.shader)
         
         self.dir_path = os.path.dirname(file_path)
@@ -245,7 +244,7 @@ class Scene:
     def set_mode(self, num):
         for subobj in self.subobjs:
             subobj.uma.upload_uniform_scalar1i(num, 'mode')
-
+    
     def update_shader(self, shader):
         for subobj in self.subobjs:
             subobj.update_shader(shader)

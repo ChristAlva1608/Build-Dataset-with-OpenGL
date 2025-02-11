@@ -54,6 +54,15 @@ class SubObj:
                         self.texture_flags[map_key] = True
                         self.texture_id[map_key] = self.uma.setup_texture(uniform_name, texture_path)
 
+    def get_model_matrix(self):
+        return self.model
+
+    def get_view_matrix(self):
+        return self.view
+    
+    def get_projection_matrix(self):
+        return self.projection
+    
     def update_shader(self, shader):
         self.shader = shader
         self.uma = UManager(self.shader)
@@ -68,14 +77,7 @@ class SubObj:
         self.uma.upload_uniform_scalar1f(shininess, 'shininess')
     
     def update_model_matrix(self, model):
-
-        # transform all matrix to glm mat4 to use * for matrix multiplication
-        if not isinstance(model, glm.mat4):
-            model = glm.mat4(*model.flatten())
-        if not isinstance(self.model, glm.mat4):
-            self.model = glm.mat4(*self.model.flatten())
-
-        self.model = model * self.model
+        self.model = model
 
     def update_view_matrix(self, view):
         self.view = view
