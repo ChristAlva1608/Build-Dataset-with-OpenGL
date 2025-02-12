@@ -80,7 +80,7 @@ class Viewer:
         self.first_mouse = True
         self.left_mouse_pressed = False
         self.right_mouse_pressed = False
-        self.yaw = -90.0
+        self.yaw = 0.0
         self.pitch = 0.0
         self.fov = 45.0
 
@@ -103,20 +103,25 @@ class Viewer:
         self.vcameras = []
         self.move_camera_flag = False
         self.multi_cam_flag = False
-        self.time_save = 0.0
-        self.time_count = 0.0
+        # self.time_save = 0.0
+        # self.time_count = 0.0
         self.rgb_save_path = ""
         self.depth_save_path = ""
         self.show_time_selection = False
         self.autosave = False
         self.layout_opt = 0
         self.save_all_flag = False
+        self.show_autosave_window = False
         self.current_time = 0.0
         self.last_update_time = 0.0
         self.drag_object_flag = False
         self.translation = glm.vec3(0.0, 0.0, 0.0)
         self.reverse_translation = glm.vec3(0.0, 0.0, 0.0)
-        self.skip_frames = 1
+        self.lightPos_option = False
+        self.shininess_option = False
+        self.obj_rotation_option = False
+        self.obj_location_option = False
+        self.obj_scale_option = False
 
         # Initialize camera config
         self.cam_sys = None
@@ -266,20 +271,25 @@ class Viewer:
             delta_y = old[1] - new[1]
             
             # Update angles based on mouse movement
-            sensitivity = 0.01  
-            self.yaw += delta_x * sensitivity
-            self.pitch += delta_y * sensitivity
+            sensitivity = 1  
+            self.yaw = delta_x * sensitivity
+            self.pitch = delta_y * sensitivity
             
             # Limit pitch to avoid gimbal lock
-            self.pitch = min(89.0, max(-89.0, self.pitch))
+            # self.yaw = min(89.0, max(-89.0, self.yaw))
 
-            rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(self.yaw), glm.vec3(0.0, 1.0, 0.0))
+            current_model = self.selected_object.get_model_matrix()
+
+            x_rotation_matrix = glm.rotate(glm.mat4(1.0), self.pitch, glm.vec3(1.0, 0.0, 0.0))
+            y_rotation_matrix = glm.rotate(glm.mat4(1.0), self.yaw, glm.vec3(0.0, 1.0, 0.0))
+            
+            model = current_model * x_rotation_matrix * y_rotation_matrix
 
             # Uncomment this to rotate object but not successfully
-            # if self.selected_object:
-            #     self.selected_object.update_attribute('model_matrix', rotation_matrix)
+            if self.selected_object:
+                self.selected_object.update_attribute('model_matrix', model)
 
-        if self.drag_object_flag or self.move_cam_sys_flag:
+        elif self.drag_object_flag or self.move_cam_sys_flag:
             # Make sure that the left mouse is pressed when dragging the object
             if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT):
                 delta_x = self.mouse[0] - old[0]  # Calculate the horizontal movement delta
@@ -665,11 +675,10 @@ class Viewer:
                 self.reverse_translation = - self.translation
                 self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
 
-                model_matrix = translation_matrix
                 
                 current_model = drawable.get_model_matrix()
-                model = current_model * glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
-
+                # model = current_model * glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
+                model = current_model * translation_matrix
                 drawable.update_attribute('model_matrix', model)
 
             # drawable.update_attribute('view_matrix', view)
@@ -795,7 +804,6 @@ class Viewer:
 
             # Add new object to object managament
             self.obj_management[self.selected_object.name] = {
-                'prev_scale_factor': 1,
                 'scale_factor': 1,
                 'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
                 'translation': glm.vec3(0.0, 0.0, 0.0)
@@ -909,7 +917,7 @@ class Viewer:
                             self.selected_object = drawable
 
                             # Reset scale factor only if a different object is selected
-                            self.prev_scale_factor = self.obj_management[self.selected_object.name]['prev_scale_factor']
+                            self.prev_scale_factor = self.obj_management[self.selected_object.name]['scale_factor']
                             self.scale_factor = self.obj_management[self.selected_object.name]['scale_factor']
 
                     if is_selected:
@@ -927,6 +935,11 @@ class Viewer:
         if self.selected_object:
             self.obj_management[self.selected_object.name]['scale_factor'] = self.scale_factor # update info for obj
 
+        if self.drag_object_flag:
+            imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
+        else:
+            imgui.push_style_color(imgui.COLOR_BUTTON, 1.0, 0.0, 0.0, 1.0)  # Red before clicking
+
         if imgui.button("Drag/Drop"):
             self.drag_object_flag = not self.drag_object_flag # Toggle the flag
 
@@ -940,18 +953,29 @@ class Viewer:
                 # Set the hand cursor for the window
                 glfw.set_cursor(self.win, arrow_cursor)
 
-        # if imgui.button('Rotate Object'):
-        #     self.rotate_obj_flag = not self.rotate_obj_flag # Toggle the flag
+        # Restore default button color
+        imgui.pop_style_color()
 
-        #     hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
-        #     arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+        if self.rotate_obj_flag:
+            imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
+        else:
+            imgui.push_style_color(imgui.COLOR_BUTTON, 1.0, 0.0, 0.0, 1.0)  # Red before clicking
 
-        #     if self.rotate_obj_flag:
-        #         # Set the hand cursor for the window
-        #         glfw.set_cursor(self.win, hand_cursor)
-        #     else:
-        #         # Set the hand cursor for the window
-        #         glfw.set_cursor(self.win, arrow_cursor)
+        if imgui.button('Rotate Object'):
+            self.rotate_obj_flag = not self.rotate_obj_flag # Toggle the flag
+
+            hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
+            arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+
+            if self.rotate_obj_flag:
+                # Set the hand cursor for the window
+                glfw.set_cursor(self.win, hand_cursor)
+            else:
+                # Set the hand cursor for the window
+                glfw.set_cursor(self.win, arrow_cursor)
+
+        # Restore default button color
+        imgui.pop_style_color()
 
         font_size = imgui.get_font_size()
         vertical_padding = 8
@@ -968,86 +992,91 @@ class Viewer:
         ########################################################################
         win_pos_width = 0
         win_pos_height = self.scene_height + self.object_height
-        imgui.set_next_window_position(win_pos_width, win_pos_height)
-        imgui.set_next_window_size(self.operation_width, self.operation_height)
-        imgui.begin("Operation")
 
-        # Section: Camera Operations
-        window_width = imgui.get_window_width()
-        text_width = imgui.calc_text_size("Camera Operations").x
-        text_pos = (window_width - text_width) / 2 
-        imgui.set_cursor_pos_x(text_pos)  
-        imgui.text('Camera Operations')
-        imgui.separator()
+        if not self.show_autosave_window:
+            # ==========================
+            # MAIN OPERATION WINDOW
+            # ==========================
+            imgui.set_next_window_position(win_pos_width, win_pos_height)
+            imgui.set_next_window_size(self.operation_width, self.operation_height)
+            imgui.begin("Operation")
 
-        # imgui.set_next_item_width(imgui.get_window_width())
-        # if imgui.button("Use Trackball"):
-        #     self.use_trackball()
+            # Section: Camera Operations
+            window_width = imgui.get_window_width()
+            text_width = imgui.calc_text_size("Camera Operations").x
+            text_pos = (window_width - text_width) / 2
+            imgui.set_cursor_pos_x(text_pos)
+            imgui.text('Camera Operations')
+            imgui.separator()
 
-        imgui.set_next_item_width(imgui.get_window_width())
-        if imgui.button("Reset"):
-            self.random_location()
-            # self.reset()
+            imgui.set_next_item_width(imgui.get_window_width())
+            if imgui.button("Reset"):
+                self.reset()
 
-        # Set button color based on whether it has been clicked or not
-        if self.multi_cam_flag:
-            imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
+            if self.multi_cam_flag:
+                imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
+            else:
+                imgui.push_style_color(imgui.COLOR_BUTTON, 1.0, 0.0, 0.0, 1.0)  # Red before clicking
+
+            if imgui.button("Multi Camera"):
+                self.multi_cam_flag = not self.multi_cam_flag
+
+            imgui.pop_style_color()
+
+            imgui.set_next_item_width(imgui.get_window_width())
+            if imgui.button("Move Camera Around"):
+                self.move_camera_flag = True
+
+            # Section: Save Options
+            imgui.spacing()
+            window_width = imgui.get_window_width()
+            text_width = imgui.calc_text_size("Save Options").x
+            text_pos = (window_width - text_width) / 2
+            imgui.set_cursor_pos_x(text_pos)
+            imgui.text('Save Options')
+            imgui.separator()
+
+            imgui.get_style().colors[imgui.COLOR_BUTTON_HOVERED] = imgui.Vec4(0.6, 0.8, 0.6, 1.0)  # Green hover color
+
+            # Save RGB Button with Icon
+            imgui.set_next_item_width(100)
+            save_rgb = self.button_with_icon('icons/save.png', 'Save RGB')
+            if save_rgb:
+                self.rgb_save_path = self.select_folder()
+                self.save_rgb(self.rgb_save_path)
+
+            imgui.same_line()
+
+            # Save Depth Button with Icon
+            imgui.set_next_item_width(100)
+            save_depth = self.button_with_icon('icons/save.png', 'Save Depth')
+            if save_depth:
+                self.depth_save_path = self.select_folder()
+                self.save_depth(self.depth_save_path)
+
+            # ============== AutoSave Button ==============
+            imgui.set_next_item_width(100)
+            if imgui.button("AutoSave"):
+                self.show_autosave_window = True  # Switch to AutoSave window
+
+            imgui.end()
+
         else:
-            imgui.push_style_color(imgui.COLOR_BUTTON, 1.0, 0.0, 0.0, 1.0)  # Red before clicking
+            # ==========================
+            # AUTOSAVE CONFIG WINDOW
+            # ==========================
+            imgui.set_next_window_position(win_pos_width, win_pos_height)
+            imgui.set_next_window_size(self.operation_width, self.operation_height)
+            imgui.begin("AutoSave Config")
 
-        # Create the button
-        if imgui.button("Multi Camera"):
-            self.multi_cam_flag = not self.multi_cam_flag  # Toggle the flag
-
-        # Restore default button color
-        imgui.pop_style_color()
-
-        imgui.set_next_item_width(imgui.get_window_width())
-        if imgui.button("Move Camera Around"):
-            self.move_camera_flag = True
-
-        # Section: Save Options
-        imgui.spacing()
-        window_width = imgui.get_window_width()
-        text_width = imgui.calc_text_size("Save Options").x
-        text_pos = (window_width - text_width) / 2 
-        imgui.set_cursor_pos_x(text_pos)  
-        imgui.text('Save Options')
-        imgui.separator()
-
-        # Create hover effect for button
-        imgui.get_style().colors[imgui.COLOR_BUTTON_HOVERED] = imgui.Vec4(0.6, 0.8, 0.6, 1.0)  # Green hover color
-
-        # Save RGB Button with Icon
-        imgui.set_next_item_width(100)
-        save_rgb = self.button_with_icon('icons/save.png', 'Save RGB')
-        if save_rgb:
-            self.rgb_save_path = self.select_folder()
-            self.save_rgb(self.rgb_save_path)
-
-        imgui.same_line()
-
-        # Save Depth Button with Icon
-        imgui.set_next_item_width(100)
-        save_depth = self.button_with_icon('icons/save.png', 'Save Depth')
-        if save_depth:
-            self.depth_save_path = self.select_folder()
-            self.save_depth(self.depth_save_path)
-
-        # AutoSave Button
-        imgui.set_next_item_width(100)
-        if imgui.button("AutoSave"):
-            self.autosave = not self.autosave
-
-        elif self.autosave:
             imgui.spacing()
             window_width = imgui.get_window_width()
             text_width = imgui.calc_text_size("AutoSave Configs").x
-            text_pos = (window_width - text_width) / 2 
-            imgui.set_cursor_pos_x(text_pos)  
+            text_pos = (window_width - text_width) / 2
+            imgui.set_cursor_pos_x(text_pos)
             imgui.text('AutoSave Configs')
             imgui.separator()
-            
+
             imgui.push_item_width(50)
             if imgui.button("RGB Path"):
                 self.rgb_save_path = self.select_folder()
@@ -1057,23 +1086,30 @@ class Viewer:
                 self.depth_save_path = self.select_folder()
 
             imgui.set_next_item_width(100)
-            combo_changed, self.layout_opt = imgui.input_int("Layout Options", self.layout_opt)
-            
+            combo_changed, self.layout_opt = imgui.input_int("Layout Opts", self.layout_opt)
+
+            imgui.set_next_item_width(100)
+            if imgui.begin_combo("Select Random Options", "Options"):
+                # Add checkboxes inside the combo
+                _, self.lightPos_option = imgui.checkbox("Light Position", self.lightPos_option)
+                _, self.shininess_option = imgui.checkbox("Shininess", self.shininess_option)
+                _, self.obj_location_option = imgui.checkbox("Object Location", self.obj_location_option)
+                _, self.obj_rotation_option = imgui.checkbox("Object Rotation", self.obj_rotation_option)
+                _, self.obj_scale_option = imgui.checkbox("Object Scaling", self.obj_scale_option)
+                imgui.end_combo()
+
             if imgui.button("Confirm"):
                 print("Numb layout", self.layout_opt)
                 self.random_combination(self.layout_opt)
 
-            # time_changed, self.time_save = imgui.input_float("Time Selection (s)", self.time_save)
-            # if time_changed:
-                # self.time_count = time.time()  # Reset time count if time selection is changed
+            imgui.spacing()
+            
+            # ======= RETURN TO MAIN WINDOW BUTTON ========
+            imgui.separator()
+            if imgui.button("Back"):
+                self.show_autosave_window = False  # Return to main window
 
-        # AutoSave Logic
-        if ((time.time() - self.time_count >= self.time_save) and (self.time_save != 0)):
-            self.save_rgb(self.rgb_save_path)
-            self.save_depth(self.depth_save_path)
-            self.time_count = time.time()
-
-        imgui.end()
+            imgui.end()
 
         ########################################################################
         #                          Camera Configuration                        #
@@ -1271,13 +1307,10 @@ class Viewer:
                         model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
                         
                         self.prev_scale_factor = self.scale_factor
-                        self.obj_management[self.selected_object.name]['prev_scale_factor'] = self.prev_scale_factor
                         drawable.update_attribute('model_matrix', model)
 
                     # Define view matrix
-                    if not self.rotate_obj_flag: # to separate rotate specific obj
-                        # view = self.trackball.view_matrix() # Default view matrix
-                        view = self.trackball.view_matrix2(self.cameraPos)
+                    view = self.trackball.view_matrix2(self.cameraPos)
 
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
@@ -1330,13 +1363,10 @@ class Viewer:
                         model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
                         
                         self.prev_scale_factor = self.scale_factor
-                        self.obj_management[self.selected_object.name]['prev_scale_factor'] = self.prev_scale_factor
                         drawable.update_attribute('model_matrix', model)
 
                     # Define view matrix
-                    if not self.rotate_obj_flag: # to separate rotate specific obj
-                        # view = self.trackball.view_matrix() # Default view matrix
-                        view = self.trackball.view_matrix2(self.cameraPos)
+                    view = self.trackball.view_matrix2(self.cameraPos)
 
                     if self.move_camera_flag:
                         # Call to create hemisphere of multi-cam
