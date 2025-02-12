@@ -87,6 +87,7 @@ class Viewer:
         # Initialize scene config
         self.selected_scene_path = "No file selected"
         self.selected_scene = None
+        self.scene_view = False
         self.bg_colors = [0.2, 0.2, 0.2]
         self.bg_changed = False
 
@@ -764,8 +765,11 @@ class Viewer:
         if os.path.exists(file_path):
             content = read_yaml_file(file_path)
             for key, value in content.items():
-                if hasattr(self, key):  
+                if key == "cameraPos" and isinstance(value, list):  
+                    setattr(self, key, glm.vec3(*value))  # Convert list to glm.vec3
+                elif hasattr(self, key):  
                     setattr(self, key, value)
+
         else:
             print(f'{file_path} is not found. Use default!')
 
@@ -859,8 +863,10 @@ class Viewer:
         if select_scene_flag:
             self.selected_scene_path = self.select_file('./scene')
             
-        imgui.text(f"Selected File: {self.selected_scene_path}")
-
+        imgui.text(f"{self.selected_scene_path}")
+        
+        if imgui.button('Scene View'):
+            self.scene_view = not self.scene_view
         imgui.set_next_item_width(imgui.get_window_width())
         camera1 = self.button_with_icon('icons/camera.png', 'Camera A')
         camera2 = self.button_with_icon('icons/camera.png', 'Camera B')
@@ -899,7 +905,7 @@ class Viewer:
         select_obj_flag = self.button_with_icon('icons/load.png', 'Select Obj')
         if select_obj_flag:
             self.selected_obj_path = self.select_file('./object')
-        imgui.text(f"Selected File: {self.selected_obj_path}")
+        imgui.text(f"{self.selected_obj_path}")
 
         imgui.set_next_item_width(100)
 
@@ -1252,6 +1258,8 @@ class Viewer:
             if self.selected_scene_path != "No file selected" and self.load_config_flag:
                 self.process_scene_config()
                 self.load_config_flag = False
+
+            print(f'cameraPos: {self.cameraPos}')
             if not self.autosave:
                 GL.glClearColor(0.2, 0.2, 0.2, 1.0)
                 GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
