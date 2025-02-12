@@ -179,13 +179,13 @@ class Object:
             subobj.uma.upload_uniform_scalar1i(num, 'mode')
 
     def get_model_matrix(self):
-        return self.subobjs[0].get_model_matrix()
+        return self.subObjs[0].get_model_matrix()
     
     def get_view_matrix(self):
-        return self.subobjs[0].get_view_matrix()
+        return self.subObjs[0].get_view_matrix()
     
     def get_projection_matrix(self):
-        return self.subobjs[0].get_projection_matrix()
+        return self.subObjs[0].get_projection_matrix()
     
     def update_colormap(self, selected_colormap):
         for subobj in self.subObjs:
