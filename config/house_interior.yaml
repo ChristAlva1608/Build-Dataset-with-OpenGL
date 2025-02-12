@@ -1,3 +1,8 @@
 scene_name: 'house_interior'
-scale_factor: 5 # Scale factor used to resize objects to fit proportionally within the scene size.
-sphere_radius: 100
+near: 0.1
+far: 1000
+sphere_radius: 20
+view_range: [-90, 0] # angle view
+cameraPos: [0, 0, 100]
+# cameraFront: 
+# cameraUp: 
