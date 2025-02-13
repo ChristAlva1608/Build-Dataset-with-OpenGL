@@ -268,5 +268,16 @@ class Trackball:
         phi = 2 * math.acos(np.clip(np.dot(old, new), -1, 1))
         return quaternion_from_axis_angle(np.cross(old, new), radians=phi)
 
-    def set_distance(self, new_distance):
-        self.distance = new_distance
+    def set_default(self):
+        self.distance = 10
+        self.pos2d = vec(0.0, 0.0)
+    
+    def update_cameraPos(self, cameraPos):
+        print(f'distance: {self.distance}')
+        self.pos2d[0] += cameraPos.x
+        self.pos2d[1] += cameraPos.y
+        self.distance += cameraPos.z
+
+    def get_cameraPos(self):
+        import glm
+        return glm.vec3(self.pos2d[0], self.pos2d[1], self.distance)
