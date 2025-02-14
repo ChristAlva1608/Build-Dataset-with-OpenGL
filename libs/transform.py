@@ -177,7 +177,7 @@ def quaternion_slerp(q0, q1, fraction):
 class Trackball:
     """Virtual trackball for 3D scene viewing. Independent of windows system."""
 
-    def __init__(self, yaw=0., roll=0., pitch=0., distance=10., radians=None):
+    def __init__(self, yaw=0., roll=0., pitch=0., distance=0., radians=None):
         """ Build a new trackball with specified view, angles in degrees """
         self.rotation = quaternion_from_euler(yaw, roll, pitch, radians)
         self.distance = max(distance, 0.001)
@@ -266,7 +266,7 @@ class Trackball:
         return quaternion_from_axis_angle(np.cross(old, new), radians=phi)
 
     def set_default(self):
-        self.distance = 10
+        self.distance = 0
         self.pos2d = vec(0.0, 0.0)
     
     def update_cameraPos(self, cameraPos, old_cameraPos=glm.vec3(0, 0, 0)):
