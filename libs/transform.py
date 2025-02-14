@@ -10,7 +10,7 @@ from numbers import Number  # useful to check type of arg: scalar or vector?
 
 # external module
 import numpy as np          # matrices, vectors & quaternions are numpy arrays
-
+import glm
 
 # Some useful functions on vectors -------------------------------------------
 def vec(*iterable):
@@ -196,7 +196,7 @@ class Trackball:
         # Calculate delta movement
         delta_x = new[0] - old[0]
         delta_y = old[1] - new[1]
-        
+
         # Update angles based on mouse movement
         sensitivity = 0.1  
         self.yaw += delta_x * sensitivity
@@ -219,32 +219,29 @@ class Trackball:
         """ View matrix transformation, including distance to target point """
         return translate(*self.pos2d, -self.distance) @ self.matrix()
 
-    def view_matrix2(self, cameraPos):
-        import glm
-        # Create a translation matrix with cameraPos affecting x, y, and z.
-        translation_matrix = glm.translate(
-            glm.mat4(1.0), 
-            glm.vec3(self.pos2d[0] + cameraPos.x, self.pos2d[1] + cameraPos.y, -self.distance + cameraPos.z)
-        )
+    # def view_matrix2(self, cameraPos):
+    #     # Create a translation matrix with cameraPos affecting x, y, and z.
+    #     translation_matrix = glm.translate(
+    #         glm.mat4(1.0), 
+    #         glm.vec3(self.pos2d[0] + cameraPos.x, self.pos2d[1] + cameraPos.y, -self.distance + cameraPos.z)
+    #     )
 
-        # Apply rotation and translation together for the final view matrix.
-        return translation_matrix @ self.matrix()
+    #     # Apply rotation and translation together for the final view matrix.
+    #     return translation_matrix @ self.matrix()
 
-    def view_matrix3(self, eye, at, up):
-        # return rotation_matrix @ translation_matrix @ self.matrix()
-        return lookat(eye, at, up) @ self.matrix()
+    # def view_matrix3(self, eye, at, up):
+    #     # return rotation_matrix @ translation_matrix @ self.matrix()
+    #     return lookat(eye, at, up) @ self.matrix()
 
-    def view_matrix4(self):
-        import glm
+    # def view_matrix4(self):
+    #     # Create a translation matrix with the desired camera position
+    #     translation_matrix = glm.translate(
+    #         glm.mat4(1.0),
+    #         glm.vec3(0, 0, -self.distance)
+    #     )
 
-        # Create a translation matrix with the desired camera position
-        translation_matrix = glm.translate(
-            glm.mat4(1.0),
-            glm.vec3(0, 0, -self.distance)
-        )
-
-        # Apply rotation and translation together for the final view matrix
-        return translation_matrix @ self.matrix()
+    #     # Apply rotation and translation together for the final view matrix
+    #     return translation_matrix @ self.matrix()
 
 
     def projection_matrix(self, winsize):
@@ -272,12 +269,16 @@ class Trackball:
         self.distance = 10
         self.pos2d = vec(0.0, 0.0)
     
-    def update_cameraPos(self, cameraPos):
-        print(f'distance: {self.distance}')
+    def update_cameraPos(self, cameraPos, old_cameraPos=glm.vec3(0, 0, 0)):
+        # Reset cameraPos
+        self.pos2d[0] -= old_cameraPos.x
+        self.pos2d[1] -= old_cameraPos.y
+        self.distance -= old_cameraPos.z
+
+        # Set up new cameraPos
         self.pos2d[0] += cameraPos.x
         self.pos2d[1] += cameraPos.y
         self.distance += cameraPos.z
 
     def get_cameraPos(self):
-        import glm
         return glm.vec3(self.pos2d[0], self.pos2d[1], self.distance)
