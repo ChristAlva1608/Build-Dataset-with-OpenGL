@@ -79,15 +79,7 @@ class SubScene:
         self.uma.upload_uniform_scalar1f(shininess, 'shininess')
 
     def update_model_matrix(self, model):
-        # print("currnent", self.model)
-        # transform all matrix to glm mat4 to use * for matrix multiplication
-        if not isinstance(model, glm.mat4):
-            model = glm.mat4(*model.flatten())
-        if not isinstance(self.model, glm.mat4):
-            self.model = glm.mat4(*self.model.flatten())
-
-        self.model = model * self.model
-        # print("update", self.model)
+        self.model = model
 
     def update_view_matrix(self, view):
         self.view = view
