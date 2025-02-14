@@ -1,0 +1,8 @@
+scene_name: 'dumbledore3'
+near: 0.001
+far: 0.1
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [  0.000257739,   -0.0137006,        0.001 ]

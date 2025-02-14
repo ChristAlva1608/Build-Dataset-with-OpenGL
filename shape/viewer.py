@@ -17,10 +17,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from .object3D import *
-from .scene3D import *
-# from .object3D_v2 import *
-# from .scene3D_v2 import *
+# from .object3D import *
+# from .scene3D import *
+from .object3D_v2 import *
+from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -1109,9 +1109,14 @@ class Viewer:
     ''' User Interface '''
     def imgui_menu(self):
 
-        self.rgb_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/rgb_images'
-        self.depth_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/depth_images'
-        
+        # self.rgb_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/rgb_images'
+        # self.depth_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/depth_images'
+        # self.rgb_save_path = 'obj/rgb/warehouse'
+        # self.depth_save_path = 'obj/depth/warehouse'
+        # self.rgb_save_path = 'obj/rgb/wizard_class'
+        # self.depth_save_path = 'obj/depth/wizard_class'
+        self.rgb_save_path = 'obj/rgb/dumbledore'
+        self.depth_save_path = 'obj/depth/dumbledore'
         # Create a new frame
         imgui.new_frame()
 
