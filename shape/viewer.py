@@ -70,9 +70,12 @@ class Viewer:
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
         self.object_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
 
-        self.load_config_flag = False
 
         self.obj_management = {}
+        
+        # Initialize yaml file attributes
+        self.view_range = []
+        self.center_translation_vec = glm.vec3(0.0, 0.0, 0.0)
 
         # Initialize mouse parameters
         self.last_x = width / 2
@@ -133,7 +136,6 @@ class Viewer:
         self.sphere_radius = 0.1
         self.cameraSpeed = 1
         self.old_cameraPos = glm.vec3(0.0, 0.0, 10.0)
-        self.view_range = []
         self.cameraPos_lst = []
         self.cameraPos = glm.vec3(0.0, 0.0, 10.0)
         self.cameraFront = glm.vec3(0.0, 0.0, 1.0)
@@ -225,7 +227,9 @@ class Viewer:
                     if self.selected_object:
                         self.selected_object.update_attribute("model_matrix", translation_matrix)
                 else:
+                    self.old_cameraPos = self.cameraPos
                     self.cameraPos += delta_z
+                    self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
 
             if key == glfw.KEY_S:
                 delta_z = self.cameraSpeed * self.cameraFront
@@ -238,21 +242,28 @@ class Viewer:
                     if self.selected_object:
                         self.selected_object.update_attribute("model_matrix", translation_matrix)
                 else:
+                    self.old_cameraPos = self.cameraPos
                     self.cameraPos -= delta_z
+                    self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
 
             if key == glfw.KEY_A:
                 delta_x = glm.normalize(glm.cross(self.cameraFront, self.cameraUp)) * self.cameraSpeed
                 if self.move_cam_sys_flag:
                     self.cam_sys.update_model_matrix(glm.translate(glm.mat4(1.0), -delta_x))
                 
+                self.old_cameraPos = self.cameraPos
                 self.cameraPos -= delta_x
+                self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
+
 
             if key == glfw.KEY_D:
                 delta_x = glm.normalize(glm.cross(self.cameraFront, self.cameraUp)) * self.cameraSpeed
                 if self.move_cam_sys_flag:
                     self.cam_sys.update_model_matrix(glm.translate(glm.mat4(1.0), delta_x))
                 
+                self.old_cameraPos = self.cameraPos
                 self.cameraPos += delta_x
+                self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
 
             for drawable in self.drawables:
                 if hasattr(drawable, 'key_handler'):
@@ -520,7 +531,7 @@ class Viewer:
             # Default view (self.cameras only have 1 item)
             self.vcameras = []
             vcamera = VCamera(self.phong_shader).setup()
-            vcamera.view = self.trackball.view_matrix2(self.cameraPos)
+            vcamera.view = self.trackball.view_matrix()
             self.cameraPos_lst.append(self.cameraPos)
             self.vcameras.append(vcamera)
 
@@ -827,29 +838,65 @@ class Viewer:
             self.cameraPos_lst.append(eye) # to update cameraPos
             self.vcameras.append(vcamera) # list contains all virtual cameras
 
+    def multi_cam_inward(self):
+        # Define the hemisphere of multi-camera
+        self.cam_sys = Sphere(self.phong_shader).setup()
+        self.cam_sys.radius = self.sphere_radius
+        self.cam_sys.generate_sphere() # update vertices with new radius
+
+        self.vcameras = []
+        golden_ratio = (1 + np.sqrt(5)) / 2
+        for i in range(self.num_vcameras):
+            vcamera = VCamera(self.phong_shader).setup()
+            vcamera.update_label(i)
+
+            # Generate points using Fibonacci sphere algorithm
+            y = 1 - (i / float(self.num_vcameras - 1)) # Only use top half (y >= 0)
+            y = max(0.001, y)  # Ensure we stay in top hemisphere
+            
+            radius_at_y = np.sqrt(1 - y * y)
+            theta = 2 * np.pi * i / golden_ratio
+            
+            # Convert to Cartesian coordinates
+            x = self.cam_sys.radius * radius_at_y * np.cos(theta)
+            z = self.cam_sys.radius * radius_at_y * np.sin(theta)
+            y = self.cam_sys.radius * y
+            
+            P = glm.vec3(x, y, z)
+
+            # Set up view matrix for camera
+            eye = P
+            at = glm.vec3(0,0,0) # Point in the direction of the outward ray
+            up = glm.normalize(glm.vec3(vcamera.model[1]))
+
+            vcamera.view = glm.lookAt(eye, at, up)
+            vcamera.projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, 0.1, 100.0)
+
+            self.cameraPos_lst.append(eye) # to update cameraPos
+            self.vcameras.append(vcamera) # list contains all virtual cameras
+
     def process_scene_config(self):
         dir_path = './config/'
         file_path = dir_path + os.path.basename(self.selected_scene_path)[:-3] + 'yaml'
         if os.path.exists(file_path):
             content = read_yaml_file(file_path)
             for key, value in content.items():
-                if key in "cameraPos" and isinstance(value, list):  
+                if key == "cameraPos" and isinstance(value, list):  
                     setattr(self, key, glm.vec3(*value))  # Convert list to glm.vec3
                     self.trackball.update_cameraPos(self.cameraPos) # Update trackball cameraPos
+                elif key == "center_translation_vec" and isinstance(value, list): 
+                    setattr(self, key, glm.vec3(*value)) # Convert list to glm.vec3
                 elif hasattr(self, key):  
                     setattr(self, key, value)
 
         else:
             print(f'{file_path} is not found. Use default!')
-        
-        self.load_config_flag = False
 
     def reset(self):
         # Remove all scenes and objects
         self.drawables.clear()
         self.autosave_flag = False
         self.multi_cam_flag = False
-        self.load_config_flag = False
         self.move_camera_flag = False
         self.drag_object_flag = False
         self.move_cam_sys_flag = False
@@ -863,6 +910,13 @@ class Viewer:
         # Add chosen object or scene
         if self.selected_scene_path != "No file selected":
             self.selected_scene = Scene(self.depth_texture_shader, self.selected_scene_path)
+
+            # Translate the scene for better view
+            current_model = self.selected_scene.get_model_matrix()
+            translation_matrix = glm.translate(glm.mat4(1.0), self.center_translation_vec)
+            model_matrix = current_model * translation_matrix
+            self.selected_scene.update_attribute("model_matrix", model_matrix)
+
             model.append(self.selected_scene)
 
         self.add(model)
@@ -931,7 +985,8 @@ class Viewer:
         GL.glUseProgram(self.depth_texture_shader.render_idx)   
 
         if self.multi_cam_flag:
-            self.multi_cam()
+            # self.multi_cam()
+            self.multi_cam_inward()
 
         for drawable in self.drawables:
             drawable.set_mode(1) # mode for rgb image
@@ -1093,8 +1148,8 @@ class Viewer:
         imgui.set_cursor_pos((imgui.get_window_width()//4, imgui.get_window_height() - button_height))
         imgui.set_next_item_width(imgui.get_window_width()//2)
         if imgui.button("Load Scene"):
-            self.load_config_flag = True
             self.trackball.set_default()
+            self.process_scene_config()
             self.load_scene()
 
         imgui.end()
@@ -1352,13 +1407,13 @@ class Viewer:
             self.selected_camera = None
 
         if not self.multi_cam_flag:
-            imgui.text(f'Multi-camera is not been chosen')
+            imgui.text(f'Multi-camera is not chosen')
         else: 
-            imgui.text(f'Please choose a virtual camera')
+            imgui.text(f'Choose a virtual camera')
 
         imgui.set_next_item_width(100)
         current_item = "" if self.selected_camera is None else self.selected_camera.label
-        if imgui.begin_combo("List of Cameras", current_item):
+        if imgui.begin_combo("List Cameras", current_item):
             # Iterate through all vcamera
             for i, vcamera in enumerate(self.vcameras):
                 if isinstance(vcamera, VCamera):  
@@ -1370,25 +1425,35 @@ class Viewer:
                     if is_selected:
                         imgui.set_item_default_focus()
             imgui.end_combo()
-            
-        if imgui.button("Move Camera System"):
-            if self.multi_cam_flag:
-                self.move_cam_sys_flag = not self.move_cam_sys_flag # Toggle the flag
+        
+        imgui.set_next_item_width(imgui.get_window_width()//1.5)
+        imgui.text('Camera Position')
+        self.cameraPos_changed, new_camera_pos = imgui.input_float3('', self.cameraPos.x, self.cameraPos.y, self.cameraPos.z, format='%.2f')
 
-                hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
-                arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+        # Convert tuple to glm.vec3
+        if self.cameraPos_changed:
+            self.old_cameraPos = self.cameraPos
+            self.cameraPos = glm.vec3(*new_camera_pos)
+            self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
 
-                if self.move_cam_sys_flag:
-                    # Set the hand cursor for the window
-                    glfw.set_cursor(self.win, hand_cursor)
-                else:
-                    # Set the hand cursor for the window
-                    glfw.set_cursor(self.win, arrow_cursor)
-            else:
-                self.move_cam_sys_flag = False
+        # if imgui.button("Move Camera System"):
+        #     if self.multi_cam_flag:
+        #         self.move_cam_sys_flag = not self.move_cam_sys_flag # Toggle the flag
 
-        if not self.move_cam_sys_flag:
-            imgui.text(f'Please turn on multi cam')
+        #         hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
+        #         arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+
+        #         if self.move_cam_sys_flag:
+        #             # Set the hand cursor for the window
+        #             glfw.set_cursor(self.win, hand_cursor)
+        #         else:
+        #             # Set the hand cursor for the window
+        #             glfw.set_cursor(self.win, arrow_cursor)
+        #     else:
+        #         self.move_cam_sys_flag = False
+
+        # if not self.move_cam_sys_flag:
+        #     imgui.text(f'Please turn on multi cam')
 
         imgui.end()
 
@@ -1464,9 +1529,6 @@ class Viewer:
     ''' Main Loop'''
     def run(self):
         while not glfw.window_should_close(self.win):
-            if self.selected_scene_path != "No file selected" and self.load_config_flag:
-                self.process_scene_config()
-
             if self.scene_view_flag:
                 self.scene_view()
             elif not self.autosave_flag:
