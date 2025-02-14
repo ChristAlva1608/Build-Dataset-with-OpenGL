@@ -212,3 +212,6 @@ class Scene:
     def draw(self, cameraPos):
         for subobj in self.subObjs:
             subobj.draw(cameraPos)
+
+    def get_model_matrix(self):
+        return self.subObjs[0].get_model_matrix()
