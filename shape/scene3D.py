@@ -241,6 +241,15 @@ class Scene:
             self.subobjs.append(model)  
         return self
 
+    def get_model_matrix(self):
+        return self.subobjs[0].get_model_matrix()
+    
+    def get_view_matrix(self):
+        return self.subobjs[0].get_view_matrix()
+    
+    def get_projection_matrix(self):
+        return self.subobjs[0].get_projection_matrix()
+    
     def set_mode(self, num):
         for subobj in self.subobjs:
             subobj.uma.upload_uniform_scalar1i(num, 'mode')
