@@ -225,7 +225,9 @@ class Viewer:
                     if self.selected_object:
                         self.selected_object.update_attribute("model_matrix", translation_matrix)
                 else:
+                    self.old_cameraPos = self.cameraPos
                     self.cameraPos += delta_z
+                    self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
 
             if key == glfw.KEY_S:
                 delta_z = self.cameraSpeed * self.cameraFront
@@ -238,21 +240,29 @@ class Viewer:
                     if self.selected_object:
                         self.selected_object.update_attribute("model_matrix", translation_matrix)
                 else:
+                    self.old_cameraPos = self.cameraPos
                     self.cameraPos -= delta_z
+                    self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
 
             if key == glfw.KEY_A:
                 delta_x = glm.normalize(glm.cross(self.cameraFront, self.cameraUp)) * self.cameraSpeed
                 if self.move_cam_sys_flag:
                     self.cam_sys.update_model_matrix(glm.translate(glm.mat4(1.0), -delta_x))
                 
+                self.old_cameraPos = self.cameraPos
                 self.cameraPos -= delta_x
+                self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
+
 
             if key == glfw.KEY_D:
                 delta_x = glm.normalize(glm.cross(self.cameraFront, self.cameraUp)) * self.cameraSpeed
                 if self.move_cam_sys_flag:
                     self.cam_sys.update_model_matrix(glm.translate(glm.mat4(1.0), delta_x))
                 
+                self.old_cameraPos = self.cameraPos
                 self.cameraPos += delta_x
+                self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
+                print('press key D')
 
             for drawable in self.drawables:
                 if hasattr(drawable, 'key_handler'):
@@ -1352,13 +1362,13 @@ class Viewer:
             self.selected_camera = None
 
         if not self.multi_cam_flag:
-            imgui.text(f'Multi-camera is not been chosen')
+            imgui.text(f'Multi-camera is not chosen')
         else: 
-            imgui.text(f'Please choose a virtual camera')
+            imgui.text(f'Choose a virtual camera')
 
         imgui.set_next_item_width(100)
         current_item = "" if self.selected_camera is None else self.selected_camera.label
-        if imgui.begin_combo("List of Cameras", current_item):
+        if imgui.begin_combo("List Cameras", current_item):
             # Iterate through all vcamera
             for i, vcamera in enumerate(self.vcameras):
                 if isinstance(vcamera, VCamera):  
@@ -1370,25 +1380,35 @@ class Viewer:
                     if is_selected:
                         imgui.set_item_default_focus()
             imgui.end_combo()
-            
-        if imgui.button("Move Camera System"):
-            if self.multi_cam_flag:
-                self.move_cam_sys_flag = not self.move_cam_sys_flag # Toggle the flag
+        
+        imgui.set_next_item_width(imgui.get_window_width()//1.5)
+        imgui.text('Camera Position')
+        self.cameraPos_changed, new_camera_pos = imgui.input_float3('', self.cameraPos.x, self.cameraPos.y, self.cameraPos.z, format='%.2f')
 
-                hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
-                arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+        # Convert tuple to glm.vec3
+        if self.cameraPos_changed:
+            self.old_cameraPos = self.cameraPos
+            self.cameraPos = glm.vec3(*new_camera_pos)
+            self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
 
-                if self.move_cam_sys_flag:
-                    # Set the hand cursor for the window
-                    glfw.set_cursor(self.win, hand_cursor)
-                else:
-                    # Set the hand cursor for the window
-                    glfw.set_cursor(self.win, arrow_cursor)
-            else:
-                self.move_cam_sys_flag = False
+        # if imgui.button("Move Camera System"):
+        #     if self.multi_cam_flag:
+        #         self.move_cam_sys_flag = not self.move_cam_sys_flag # Toggle the flag
 
-        if not self.move_cam_sys_flag:
-            imgui.text(f'Please turn on multi cam')
+        #         hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
+        #         arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+
+        #         if self.move_cam_sys_flag:
+        #             # Set the hand cursor for the window
+        #             glfw.set_cursor(self.win, hand_cursor)
+        #         else:
+        #             # Set the hand cursor for the window
+        #             glfw.set_cursor(self.win, arrow_cursor)
+        #     else:
+        #         self.move_cam_sys_flag = False
+
+        # if not self.move_cam_sys_flag:
+        #     imgui.text(f'Please turn on multi cam')
 
         imgui.end()
 
@@ -1466,6 +1486,7 @@ class Viewer:
         while not glfw.window_should_close(self.win):
             if self.selected_scene_path != "No file selected" and self.load_config_flag:
                 self.process_scene_config()
+                self.load_config_flag = False
 
             if self.scene_view_flag:
                 self.scene_view()
