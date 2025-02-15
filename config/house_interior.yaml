@@ -2,6 +2,11 @@ scene_name: 'house_interior'
 near: 0.1
 far: 1000
 sphere_radius: 100
-view_range: [0, 90] # angle view
-cameraPos: [0.226251, -4.42832, 322.986]
-center_translation_vec: [0, -100, 0]
+shininess: 3.5
+yaw_range: [0, 90]
+pitch_range: [-30, 30]
+# cameraPos: [0.226251, -4.42832, 322.986]
+center_translation_vec: [-53.7476, -36.7846, -225.457]
+x_range: [-108.656, -19.0866]
+y_range: [-10.8511, 66.3281]
+z_range: [234,163, 400.378]

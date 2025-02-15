@@ -17,10 +17,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-# from .object3D import *
-# from .scene3D import *
-from .object3D_v2 import *
-from .scene3D_v2 import *
+from .object3D import *
+from .scene3D import *
+# from .object3D_v2 import *
+# from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -41,7 +41,7 @@ class Viewer:
         glfw.window_hint(glfw.RESIZABLE, False)
         glfw.window_hint(glfw.DEPTH_BITS, 16)
         glfw.window_hint(glfw.DOUBLEBUFFER, True)
-        # glfw.window_hint(glfw.COCOA_RETINA_FRAMEBUFFER, False) # Turn off Retina scaling in MacOS
+        glfw.window_hint(glfw.COCOA_RETINA_FRAMEBUFFER, False) # Turn off Retina scaling in MacOS
 
         self.win = glfw.create_window(width, height, 'Viewer', None, None)
         if not self.win:
@@ -74,8 +74,12 @@ class Viewer:
         self.obj_management = {}
         
         # Initialize yaml file attributes
-        self.view_range = []
+        self.yaw_range = []
+        self.pitch_range = []
         self.center_translation_vec = glm.vec3(0.0, 0.0, 0.0)
+        self.x_range = []
+        self.y_range = []
+        self.z_range = []
 
         # Initialize mouse parameters
         self.last_x = width / 2
@@ -565,8 +569,7 @@ class Viewer:
                     if self.lightColor_changed:
                         drawable.update_lightColor(self.lightColor)
 
-                    if self.shininess_changed:
-                        drawable.update_shininess(self.shininess)
+                    drawable.update_shininess(self.shininess)
 
                     if isinstance(drawable, Object):
                         x = random.uniform(x_min, x_max)
@@ -633,11 +636,26 @@ class Viewer:
     
     def scene_view(self):
         steps = 100
-        # self.trackball.drag(self.old_view, self.new_view, glfw.get_window_size(self.win))
         for i in range(steps):
-            yaw = (self.view_range[1]-self.view_range[0])/steps
-            x_rotation_matrix = glm.rotate(glm.mat4(1.0), self.pitch, glm.vec3(1.0, 0.0, 0.0))
-            y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
+            self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
+            self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
+            self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
+
+            yaw = random.choice(np.linspace(self.yaw_range[1],self.yaw_range[0], 20))
+            pitch = random.choice(np.linspace(self.pitch_range[1],self.pitch_range[0], 20))
+            direction = glm.vec3(
+                glm.cos(glm.radians(yaw)) * glm.cos(glm.radians(pitch)),  # x
+                glm.sin(glm.radians(pitch)),  # y
+                glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch))   # z
+            )
+            
+            self.cameraFront = glm.normalize(direction)
+            view = glm.lookAt(self.cameraPos, self.cameraFront, self.cameraUp)
+            
+            # yaw = (self.yaw_range[1]-self.yaw_range[0])/steps
+            # pitch = (self.pitch_range[1]-self.pitch_range[0])/steps
+            # x_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-pitch), glm.vec3(1.0, 0.0, 0.0)) # add - angle because object rotation not camera
+            # y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
             
             # view = self.trackball.view_matrix()
             GL.glClearColor(0.2, 0.2, 0.2, 1.0)
@@ -664,13 +682,12 @@ class Viewer:
                 if self.lightColor_changed:
                     drawable.update_lightColor(self.lightColor)
 
-                if self.shininess_changed:
-                    drawable.update_shininess(self.shininess)
+                drawable.update_shininess(self.shininess)
 
-                current_model = drawable.get_model_matrix()
-                model = current_model * x_rotation_matrix * y_rotation_matrix
-                drawable.update_attribute('model_matrix', model)
-                # drawable.update_attribute('view_matrix', view)
+                # current_model = drawable.get_model_matrix()
+                # model = current_model * x_rotation_matrix 
+                # drawable.update_attribute('model_matrix', model)
+                drawable.update_attribute('view_matrix', view)
 
                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
                 drawable.update_attribute('projection_matrix', projection)
@@ -738,8 +755,7 @@ class Viewer:
             if self.lightColor_changed:
                 drawable.update_lightColor(self.lightColor)
 
-            if self.shininess_changed:
-                drawable.update_shininess(self.shininess)
+            drawable.update_shininess(self.shininess)
 
             if isinstance(drawable, Object):
                 x = random.uniform(x_min, x_max)
@@ -998,8 +1014,7 @@ class Viewer:
             if self.lightColor_changed:
                 drawable.update_lightColor(self.lightColor)
 
-            if self.shininess_changed:
-                drawable.update_shininess(self.shininess)
+            drawable.update_shininess(self.shininess)
 
             # Define model matrix
             if self.selected_object == drawable and self.scale_changed:
@@ -1109,14 +1124,14 @@ class Viewer:
     ''' User Interface '''
     def imgui_menu(self):
 
-        # self.rgb_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/rgb_images'
-        # self.depth_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/depth_images'
+        self.rgb_save_path = 'rgb_images'
+        self.depth_save_path = 'depth_images'
         # self.rgb_save_path = 'obj/rgb/warehouse'
         # self.depth_save_path = 'obj/depth/warehouse'
         # self.rgb_save_path = 'obj/rgb/wizard_class'
         # self.depth_save_path = 'obj/depth/wizard_class'
-        self.rgb_save_path = 'obj/rgb/dumbledore'
-        self.depth_save_path = 'obj/depth/dumbledore'
+        # self.rgb_save_path = 'obj/rgb/dumbledore'
+        # self.depth_save_path = 'obj/depth/dumbledore'
         # Create a new frame
         imgui.new_frame()
 
