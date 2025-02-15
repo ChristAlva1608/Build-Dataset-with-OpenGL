@@ -17,10 +17,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-# from .object3D import *
-# from .scene3D import *
-from .object3D_v2 import *
-from .scene3D_v2 import *
+from .object3D import *
+from .scene3D import *
+# from .object3D_v2 import *
+# from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -76,6 +76,9 @@ class Viewer:
         # Initialize yaml file attributes
         self.view_range = []
         self.center_translation_vec = glm.vec3(0.0, 0.0, 0.0)
+        self.x_range = []
+        self.y_range = []
+        self.z_range = []
 
         # Initialize mouse parameters
         self.last_x = width / 2
@@ -565,8 +568,7 @@ class Viewer:
                     if self.lightColor_changed:
                         drawable.update_lightColor(self.lightColor)
 
-                    if self.shininess_changed:
-                        drawable.update_shininess(self.shininess)
+                    drawable.update_shininess(self.shininess)
 
                     if isinstance(drawable, Object):
                         x = random.uniform(x_min, x_max)
@@ -664,8 +666,7 @@ class Viewer:
                 if self.lightColor_changed:
                     drawable.update_lightColor(self.lightColor)
 
-                if self.shininess_changed:
-                    drawable.update_shininess(self.shininess)
+                drawable.update_shininess(self.shininess)
 
                 current_model = drawable.get_model_matrix()
                 model = current_model * x_rotation_matrix * y_rotation_matrix
@@ -738,8 +739,7 @@ class Viewer:
             if self.lightColor_changed:
                 drawable.update_lightColor(self.lightColor)
 
-            if self.shininess_changed:
-                drawable.update_shininess(self.shininess)
+            drawable.update_shininess(self.shininess)
 
             if isinstance(drawable, Object):
                 x = random.uniform(x_min, x_max)
@@ -998,8 +998,7 @@ class Viewer:
             if self.lightColor_changed:
                 drawable.update_lightColor(self.lightColor)
 
-            if self.shininess_changed:
-                drawable.update_shininess(self.shininess)
+            drawable.update_shininess(self.shininess)
 
             # Define model matrix
             if self.selected_object == drawable and self.scale_changed:
@@ -1109,14 +1108,14 @@ class Viewer:
     ''' User Interface '''
     def imgui_menu(self):
 
-        # self.rgb_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/rgb_images'
-        # self.depth_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/depth_images'
+        self.rgb_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/rgb_images'
+        self.depth_save_path = '/Users/christalva/Desktop/HK241/Specialized_Project/Build-Dataset-with-OpenGL/depth_images'
         # self.rgb_save_path = 'obj/rgb/warehouse'
         # self.depth_save_path = 'obj/depth/warehouse'
         # self.rgb_save_path = 'obj/rgb/wizard_class'
         # self.depth_save_path = 'obj/depth/wizard_class'
-        self.rgb_save_path = 'obj/rgb/dumbledore'
-        self.depth_save_path = 'obj/depth/dumbledore'
+        # self.rgb_save_path = 'obj/rgb/dumbledore'
+        # self.depth_save_path = 'obj/depth/dumbledore'
         # Create a new frame
         imgui.new_frame()
 
@@ -1480,14 +1479,9 @@ class Viewer:
         self.lightColor_changed, self.lightColor = imgui.input_float3('Color', self.lightColor[0], self.lightColor[1], self.lightColor[2], format='%.2f')
 
         # Add shininess slider
-        imgui.set_next_item_width(imgui.get_window_width()//2)
-        self.shininess_changed, shininess_value = imgui.slider_float("Shininess",
-                                          self.shininess,
-                                          min_value=0.00,
-                                          max_value=100.00,
-                                          format="%.2f")
-        if self.shininess_changed:
-            self.shininess = shininess_value
+        # imgui.set_next_item_width(imgui.get_window_width()//2)
+        imgui.set_next_item_width(100)
+        self.shininess_changed, self.shininess = imgui.input_float("Shininess", self.shininess, step=0.1, format="%.2f")
 
         imgui.end()
 

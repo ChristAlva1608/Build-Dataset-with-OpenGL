@@ -270,15 +270,18 @@ class Trackball:
         self.pos2d = vec(0.0, 0.0)
     
     def update_cameraPos(self, cameraPos, old_cameraPos=glm.vec3(0, 0, 0)):
+        '''
+            Update cameraPos in trackball. Pos2d is changed followed the object, not follow the master camera. Therefore, update inversely
+        '''
         # Reset cameraPos
-        self.pos2d[0] -= old_cameraPos.x
-        self.pos2d[1] -= old_cameraPos.y
+        self.pos2d[0] += old_cameraPos.x
+        self.pos2d[1] += old_cameraPos.y
         self.distance -= old_cameraPos.z
 
         # Set up new cameraPos
-        self.pos2d[0] += cameraPos.x
-        self.pos2d[1] += cameraPos.y
+        self.pos2d[0] -= cameraPos.x
+        self.pos2d[1] -= cameraPos.y
         self.distance += cameraPos.z
 
     def get_cameraPos(self):
-        return glm.vec3(self.pos2d[0], self.pos2d[1], self.distance)
+        return glm.vec3(-self.pos2d[0], -self.pos2d[1], self.distance)
