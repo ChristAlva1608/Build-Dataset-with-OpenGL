@@ -97,6 +97,12 @@ class UManager(object):
         self.textures[binding_loc]["id"] = texture_idx
         self.textures[binding_loc]["name"] = sampler_name
 
+        # Determine optimal unpack alignment (default width should divided by 4)
+        _, width, num_channels = rgb_image.shape
+        row_size = width * num_channels
+        alignment = 4 if (row_size % 4 == 0) else 1
+        GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, alignment)
+
         GL.glActiveTexture(GL.GL_TEXTURE0 + binding_loc)  # activate texture GL.GL_TEXTURE0, GL.GL_TEXTURE1, ...
         GL.glBindTexture(GL.GL_TEXTURE_2D, texture_idx)
         GL.glUniform1i(GL.glGetUniformLocation(self.shader.render_idx, sampler_name),
