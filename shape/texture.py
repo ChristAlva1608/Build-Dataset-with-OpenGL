@@ -17,18 +17,18 @@ class Texture:
             image = Image.open(self.path)
             img_data = np.array(image)
 
-            print(f"Texture data shape: {img_data.shape}, dtype: {img_data.dtype}")
+            # print(f"Texture data shape: {img_data.shape}, dtype: {img_data.dtype}")
 
             # Convert to float32 and normalize if needed
             if img_data.dtype != np.float32:
                 img_data = img_data.astype(np.float32) / 255.0
-                print(img_data)
+                # print(img_data)
 
             # Determine format based on image channels
             if len(img_data.shape) == 2:  # Grayscale
                 interformat = GL.GL_RED
                 format = GL.GL_RED
-            elif len(img_data.shape) == 3:  # RGB or RGBA
+            elif len(img_data.shape) == 3:  
                 if img_data.shape[2] == 3:  # RGB
                     interformat = GL.GL_RGB32F
                     format = GL.GL_RGB
@@ -38,7 +38,7 @@ class Texture:
 
             # Bind the texture
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture_id)
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, interformat, image.width, image.height,
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, interformat, image.shape[1], image.shape[0],
                            0, format, GL.GL_FLOAT, img_data)
             GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
 

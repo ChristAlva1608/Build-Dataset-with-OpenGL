@@ -54,9 +54,13 @@ class VCamera:
         self.vao = VAO()
         self.shader = shader
         self.uma = UManager(self.shader)
+        self.label = None
 
     def load_texture(self, texture):
         self.uma.setup_texture('texture1', texture)
+
+    def update_label(self, label):
+        self.label = "Camera " + str(label)
 
     def setup(self):
         # Setup VAO with VBOs for vertices, normals, and colors if needed

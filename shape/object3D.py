@@ -1,160 +1,318 @@
-import pywavefront.material
-import pywavefront.wavefront
-from libs.shader import *
-from libs.buffer import *
-from libs import transform as T
-import glm
+import glfw
 import numpy as np
-import trimesh
-import pywavefront
-from mesh import *
+from OpenGL.GL import *
+import ctypes
+from PIL import Image
 
-class Obj:
+from libs.shader import *
+from libs.transform import *
+from libs.buffer import *
+from libs.camera import *
+import glm
+from itertools import cycle
+from shape.subObj import *
+
+class Object:
     def __init__(self, shader, file_path):
-        self.vao = VAO()
         self.shader = shader
         self.uma = UManager(self.shader)
-        self.materials = {}
-        self.meshes = {}
-        self.load_materials(file_path)
-        self.parse_obj_file(file_path)
 
-    def parse_obj_file(self, file_path):
-        current_mesh = None
-        vertices = []
-        normals = []
-        texcoords = []
-        faces = []
-        material = None
+        self.subobjs = []
+        self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
+        self.materials = self.load_materials(file_path)
+        self.name = os.path.basename(file_path)[:-4]
+
+        self.split_obj()
+
+    def parse_obj_file(self,file_path):
+        vertices_all = []
+        texcoords_all = []
+        normals_all = []
+
+        # read the first time for vertices and texcoords only
+        with open(file_path, 'r') as f:  # Use 'r' for text files
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):  # Skip empty lines and comments
+                    continue
+
+                parts = line.split()
+                if parts[0] == 'v':  # Vertex definition
+                    # Parse the vertex coordinates (x, y, z)
+                    vertices_all.append([float(parts[1]), float(parts[2]), float(parts[3])])
+
+                if parts[0] == 'vn':  # Normal definition
+                    # Parse the normal coordinates (x, y, z)
+                    normals_all.append([float(parts[1]), float(parts[2]), float(parts[3])])
+
+                elif parts[0] == 'vt':  # Texture coordinate definition
+                    # Parse the texture coordinates (u, v, [w])
+                    u = float(parts[1])
+                    v = float(parts[2])
+                    w = float(parts[3]) if len(parts) > 3 else 0.0  # Default w to 0.0 if not provided
+                    texcoords_all.append([u, v, w])
+
+        x_list = [x[0] for x in vertices_all]
+        self.min_x = min(x_list) # Smallest x value in vertices
+        self.max_x = max(x_list) # Largest x value in vertices
+
+        y_list = [y[1] for y in vertices_all]
+        self.min_y = min(y_list) # Smallest y value in vertices
+        self.max_y = max(y_list) # Largest y value in vertices
+
+        z_list = [z[2] for z in vertices_all]
+        self.min_z = min(z_list) # Smallest z value in vertices
+        self.max_z = max(z_list) # Largest z value in vertices
+
+        objects = []  # Store objects
+        current_obj = None  # Store the current object
+        last_obj_name = None  # Track last object name (to prevent duplication)
+        
+        # Second pass for parsing objects and faces
+        with open(file_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+
+                parts = line.split()
+
+                # If we encounter a new object/group, ensure we only create a new one when necessary
+                if parts[0] in ('o', 'g'):
+                    obj_name = parts[1]
+
+                    # Avoid creating duplicate objects if "o" and "g" appear consecutively
+                    if last_obj_name == obj_name:
+                        continue  # Skip redundant declarations of the same object
+
+                    # If there's an existing object, save it before starting a new one
+                    if current_obj:
+                        objects.append(current_obj)
+
+                    # Create a new object
+                    current_obj = {
+                        'obj_name': obj_name,
+                        'vert_obj_id': [],
+                        'textcoords_obj_id': [],
+                        'normal_obj_id': [],
+                        'texture_name': None,
+                    }
+
+                    last_obj_name = obj_name  # Update last known object name
+
+                # Process texture material assignment
+                elif parts[0] == 'usemtl':
+                    if current_obj:
+                        current_obj['texture_name'] = parts[1]
+
+                # Process face definitions
+                elif parts[0] == 'f':
+                    vert_id = [int(part.split('/')[0]) - 1 for part in parts[1:]]
+                    text_id = [int(part.split('/')[1]) - 1 if '/' in part and part.split('/')[1] else -1 for part in parts[1:]]
+                    normal_id = [int(part.split('/')[2]) - 1 if '/' in part and len(part.split('/')) > 2 else -1 for part in parts[1:]]
+
+                    if len(vert_id) == 3:
+                        current_obj['vert_obj_id'].append(vert_id)
+                        current_obj['textcoords_obj_id'].append(text_id)
+                        current_obj['normal_obj_id'].append(normal_id)
+                    elif len(vert_id) == 4:  # Handle quads by splitting into two triangles
+                        current_obj['vert_obj_id'].extend([[vert_id[0], vert_id[1], vert_id[2]], [vert_id[0], vert_id[2], vert_id[3]]])
+                        current_obj['textcoords_obj_id'].extend([[text_id[0], text_id[1], text_id[2]], [text_id[0], text_id[2], text_id[3]]])
+                        current_obj['normal_obj_id'].extend([[normal_id[0], normal_id[1], normal_id[2]], [normal_id[0], normal_id[2], normal_id[3]]])
+
+        # Append the last object if it exists
+        if current_obj:
+            objects.append(current_obj)
+
+        return vertices_all, texcoords_all, normals_all, objects
+
+    def load_materials(self, file_path):
+        materials = {}
+        current_material = None
+
+        file_path = file_path[:-3] + 'mtl'
+
+        if not os.path.exists(file_path):
+            return None
+
+        def parse_vector(values):
+            # Convert space-separated string of numbers into list of floats
+            return [float(x) for x in values.strip().split()]
 
         with open(file_path, 'r') as file:
             for line in file:
                 line = line.strip()
-                parts = line.split()
-
-                if not line or (line.startswith('#') and len(parts)==1):  # Ignore comments and empty lines
+                if not line or line.startswith('#'):
                     continue
 
-                if line.startswith('#') and len(parts)>1:
-                    if parts[1] == 'object' and current_mesh:  # Store the previous mesh
-                        self.meshes[current_mesh] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(faces), self.materials[material]).setup()
-                        vertices = []
-                        normals = []
-                        texcoords = []
-                        faces = []
-                        material = None
-                    else: continue
+                parts = line.strip().split(maxsplit=1)
+                if len(parts) < 2:
+                    continue
 
-                prefix = parts[0]
+                keyword, value = parts
 
-                if prefix == 'o':  # New object/group
-                    current_mesh = parts[1]
+                if keyword == 'newmtl':
+                    current_material = value
+                    materials[current_material] = {
+                        'Ns': None,  # Specular exponent
+                        'Ni': None,  # Optical density
+                        'd': None,  # Dissolve
+                        'Tr': None,  # Transparency
+                        'Tf': None,  # Transmission filter
+                        'illum': None,  # Illumination model
+                        'Ka': None,  # Ambient color
+                        'Kd': None,  # Diffuse color
+                        'Ks': None,  # Specular color
+                        'Ke': None,  # Emissive color
+                        'map_Ka': None,  # Ambient texture
+                        'map_Kd': None,  # Diffuse texture
+                        'map_bump': None  # Bump map
+                    }
 
-                elif prefix == 'v':  # Vertex
-                    vertices.append(list(map(float, parts[1:])))
+                elif current_material is not None:
+                    mat = materials[current_material]
 
+                    if keyword == 'Ns':
+                        mat['Ns'] = float(value)
+                    elif keyword == 'Ni':
+                        mat['Ni'] = float(value)
+                    elif keyword == 'd':
+                        mat['d'] = float(value)
+                    elif keyword == 'Tr':
+                        mat['Tr'] = float(value)
+                    elif keyword == 'Tf':
+                        mat['Tf'] = parse_vector(value)
+                    elif keyword == 'illum':
+                        mat['illum'] = int(value)
+                    elif keyword == 'Ka':
+                        mat['Ka'] = parse_vector(value)
+                    elif keyword == 'Kd':
+                        mat['Kd'] = parse_vector(value)
+                    elif keyword == 'Ks':
+                        mat['Ks'] = parse_vector(value)
+                    elif keyword == 'Ke':
+                        mat['Ke'] = parse_vector(value)
+                    elif keyword == 'map_Ka':
+                        # Handle potential bump map parameters
+                        parts = value.split()
+                        mat['map_Ka'] = parts[-1]
+                    elif keyword == 'map_Kd':
+                        parts = value.split()
+                        mat['map_Kd'] = parts[-1]
+                    elif keyword == 'map_Ks':
+                        parts = value.split()
+                        mat['map_Ks'] = parts[-1]
+                    elif keyword == 'map_refl':
+                        parts = value.split()
+                        mat['map_refl'] = parts[-1]
+                    elif keyword == 'map_bump':
+                        # Handle bump map with potential -bm parameter
+                        parts = value.split()
+                        if '-bm' in parts:
+                            bm_index = parts.index('-bm')
+                            # Store both the bump multiplier and filename
+                            mat['map_bump'] = {
+                                'multiplier': float(parts[bm_index + 1]),
+                                'filename': parts[-1]
+                            }
+                        else:
+                            mat['map_bump'] = {'filename': parts[-1], 'multiplier': 1.0}
 
-                elif prefix == 'vn':  # Vertex normal
-                    normals.append(list(map(float, parts[1:])))
+        return materials
 
-                elif prefix == 'vt':  # Texture coordinate
-                    texcoords.append(list(map(float, parts[1:])))
+    def split_obj(self):
+        for obj in self.objects:
+            vertices = []
+            tecos = []
+            normals = []
 
+            for sublist in obj['vert_obj_id']: # [[1 2 3][2 3 4 ]]
+                for vert_id in sublist:
+                    vertices.append(self.vertices[int(vert_id)])
 
-                elif prefix == 'usemtl':  # Material
-                    material = parts[1]
+            for sublist in obj['textcoords_obj_id']:
+                for teco_id in sublist:
+                    tecos.append(self.texcoords[int(teco_id)])
 
-                elif prefix == 'f':  # Face
-                    face = []
-                    for vertex in parts[1:]:
-                        # Take only the vertex index (before first slash)
-                        index = int(vertex.split('/')[0])
-                        face.append(index)
+            for sublist in obj['normal_obj_id']:
+                for normal_id in sublist:
+                    normals.append(self.normals[int(normal_id)])
 
+            if self.materials:
+                model = SubObj( self.shader,
+                                vertices,
+                                tecos,
+                                normals,
+                                self.materials[obj['texture_name']]
+                                ).setup()
+                self.subobjs.append(model)
+            else:
+                model = SubObj( self.shader,
+                                vertices,
+                                tecos,
+                                normals,
+                                None
+                                ).setup()
+                self.subobjs.append(model)
 
-                    # If it's a triangle, add directly
-                    if len(face) == 3:
-                        faces.extend(face)
+        return self
 
-                    # If it's a quad, triangulate it into two triangles
-                    elif len(face) == 4:
-                        # First triangle: vertices 0,1,2
-                        faces.extend([face[0], face[1], face[2]])
-                        # Second triangle: vertices 0,2,3
-                        faces.extend([face[0], face[2], face[3]])
+    def set_mode(self, num):
+        for subobj in self.subobjs:
+            subobj.uma.upload_uniform_scalar1i(num, 'mode')
 
-        # Store the last mesh
-        if current_mesh:
-            self.meshes[current_mesh] = Mesh(self.shader, np.array(vertices), np.array(normals), np.array(texcoords), np.array(faces), self.materials[material]).setup()
-
-        with open('obj.txt', 'w') as file:
-            for mesh_name, mesh_data in self.meshes.items():
-                file.write(f"# object {mesh_name}\n")
-
-                # Save vertices
-                file.write("# vertices\n")
-                for vertex in mesh_data.vertices:
-                    file.write(f"v {' '.join(map(str, vertex))}\n")
-
-                # Save normals
-                file.write("# vertex normals\n")
-                for normal in mesh_data.normals:
-                    file.write(f"vn {' '.join(map(str, normal))}\n")
-
-                # Save texture coordinates
-                file.write("# texture coordinates\n")
-                for texcoord in mesh_data.texcoords:
-                    file.write(f"vt {' '.join(map(str, texcoord))}\n")
-
-                for i in range(0, len(mesh_data.indices), 3):
-                    # Get 3 indices for this triangle
-                    v1 = mesh_data.indices[i]
-                    v2 = mesh_data.indices[i + 1]
-                    v3 = mesh_data.indices[i + 2]
-                    # Add 1 to convert from 0-based to 1-based indexing for OBJ format
-                    file.write(f"f {v1+1} {v2+1} {v3+1}\n")
-
-                # Save material
-                file.write(f"usemtl {mesh_data.material}\n")
-                file.write("\n")
-
-    def load_materials(self, file_path):
-        obj_file = pywavefront.Wavefront(file_path, create_materials=True)
-
-        # Access materials
-        self.materials = {}
-        for name, material in obj_file.materials.items():
-            def trim_list(lst):
-                return lst[:-1] if isinstance(lst, list) and len(lst) == 4 else lst
-
-            self.materials[name] = {
-                'Ns': getattr(material, 'shininess', None),                                 # Specular exponent
-                'Ni': getattr(material, 'optical_density', None),                           # Optical density
-                'd': getattr(material, 'transparency', None),                               # Dissolve
-                'Tr': 1 - getattr(material, 'transparency', 1.0),                           # Transparency (inverse dissolve)
-                'Tf': getattr(material, 'transmission_filter', [1, 1, 1]),                  # Transmission filter
-                'illum': getattr(material, 'illumination_model', None),                     # Illumination model
-                'Ka': trim_list(getattr(material, 'ambient', [0, 0, 0])),                   # Ambient color
-                'Kd': trim_list(getattr(material, 'diffuse', [0, 0, 0])),                   # Diffuse color
-                'Ks': trim_list(getattr(material, 'specular', [0, 0, 0])),                  # Specular color
-                'Ke': trim_list(getattr(material, 'emissive', [0, 0, 0])),                  # Emissive color
-                'map_Ka': getattr(material, 'texture_ambient', None),                       # Ambient texture
-                'map_Kd': getattr(material, 'texture', None),                               # Diffuse texture
-                'map_bump': getattr(material, 'texture_bump', None)                         # Bump map
-            }
-
-        output_file = 'materials.txt'
-        with open(output_file, 'w') as f:
-            for material_name, properties in self.materials.items():
-                f.write(f"Material: {material_name}\n")
-                for key, value in properties.items():
-                    f.write(f"  {key}: {value}\n")
-                f.write("\n")
-
+    def get_model_matrix(self):
+        return self.subobjs[0].get_model_matrix()
+    
+    def get_view_matrix(self):
+        return self.subobjs[0].get_view_matrix()
+    
+    def get_projection_matrix(self):
+        return self.subobjs[0].get_projection_matrix()
+    
     def update_shader(self, shader):
-        self.shader = shader
-        self.uma = UManager(self.shader)
+        for subobj in self.subobjs:
+            subobj.update_shader(shader)
 
-    def draw(self):
-        for mesh_name, mesh in self.meshes.items():
-            mesh.draw()
+    def update_colormap(self, selected_colormap):
+        for subobj in self.subobjs:
+            subobj.uma.upload_uniform_scalar1i(selected_colormap, 'colormap_selection')
+
+    def update_near_far(self, near, far):
+        for subobj in self.subobjs:
+            subobj.uma.upload_uniform_scalar1f(near, 'near')
+            subobj.uma.upload_uniform_scalar1f(far, 'far')
+
+    def update_lightPos(self, lightPos):
+        for subobj in self.subobjs:
+            subobj.update_lightPos(lightPos)
+
+    def update_lightColor(self, lightColor):
+        for subobj in self.subobjs:
+            subobj.update_lightColor(lightColor)
+
+    def update_shininess(self, shininess):
+        for subobj in self.subobjs:
+            subobj.update_shininess(shininess)
+
+    def update_attribute(self, attr, *args):
+        update_name = 'update_' + attr
+        for subobj in self.subobjs:
+            if hasattr(subobj, update_name):
+                method = getattr(subobj, update_name)
+                method(*args)
+
+    def get_transformed_vertices(self):
+        transformed_vertices = []
+        for subobj in self.subobjs:
+            transformed_vertices.extend(subobj.transform_vertices())
+        np.savetxt('y1.txt', np.array(transformed_vertices))
+        return transformed_vertices
+
+    def setup(self):
+        for subobj in self.subobjs:
+            subobj.setup()
+
+    def draw(self, cameraPos):
+        for subobj in self.subobjs:
+            subobj.draw(cameraPos)

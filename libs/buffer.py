@@ -1,10 +1,11 @@
 from .shader import *
 import OpenGL.GL as GL
 import cv2
+from PIL import Image
+
 
 class VAO(object):
     def __init__(self):
-
         self.vao = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(self.vao)
         GL.glBindVertexArray(0)
@@ -42,6 +43,7 @@ class VAO(object):
     def deactivate(self):
         GL.glBindVertexArray(0)  # activated
 
+
 class UManager(object):
     def __init__(self, shader):
         self.shader = shader
@@ -49,8 +51,17 @@ class UManager(object):
 
     @staticmethod
     def load_texture(filename):
-        texture = cv2.cvtColor(cv2.imread(filename, 1), cv2.COLOR_BGR2RGB)
-        return texture
+        # texture = cv2.cvtColor(cv2.imread(filename, 1), cv2.COLOR_BGR2RGB)
+        # texture = np.flipud(texture)
+        # return texture
+        image = Image.open(filename)
+        image = image.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image for OpenGL
+        img_mode = image.mode
+        if img_mode == "P": # handle "palettised" mode up here due to openGl not support
+            image = image.convert("RGB")
+            img_mode = "RGB"
+        img_data = np.array(image, dtype=np.uint8)
+        return img_data, img_mode
 
     def _get_texture_loc(self):
         if not bool(self.textures):
@@ -69,28 +80,51 @@ class UManager(object):
     * second call to setup_texture: activate GL.GL_TEXTURE2
         > use GL.glUniform1i to associate the activated texture to the texture in shading program (see fragment shader)
     and so on
-    
+
     """
     def setup_texture(self, sampler_name, image_file):
-        rgb_image = UManager.load_texture(image_file)
+        img_data, img_mode = UManager.load_texture(image_file)
 
-        GL.glUseProgram(self.shader.render_idx) # must call before calling to GL.glUniform1i
+        GL.glUseProgram(self.shader.render_idx)  # must call before calling to GL.glUniform1i
         texture_idx = GL.glGenTextures(1)
         binding_loc = self._get_texture_loc()
         self.textures[binding_loc] = {}
         self.textures[binding_loc]["id"] = texture_idx
         self.textures[binding_loc]["name"] = sampler_name
 
-        GL.glActiveTexture(GL.GL_TEXTURE0 + binding_loc) # activate texture GL.GL_TEXTURE0, GL.GL_TEXTURE1, ...
+        # Determine optimal unpack alignment (default width should divided by 4)
+        _, width, num_channels = img_data.shape
+        row_size = width * num_channels
+        alignment = 4 if (row_size % 4 == 0) else 1
+        GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, alignment)
+
+        GL.glActiveTexture(GL.GL_TEXTURE0 + binding_loc)  # activate texture GL.GL_TEXTURE0, GL.GL_TEXTURE1, ...
         GL.glBindTexture(GL.GL_TEXTURE_2D, texture_idx)
         GL.glUniform1i(GL.glGetUniformLocation(self.shader.render_idx, sampler_name),
                        binding_loc)
 
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB,
-                        rgb_image.shape[1], rgb_image.shape[0],
-                        0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, rgb_image)
+        if img_mode == 'RGB':
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB,
+                            img_data.shape[1], img_data.shape[0],
+                            0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, img_data)
+        elif img_mode == 'RGBA':
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA,
+                            img_data.shape[1], img_data.shape[0],
+                            0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, img_data)
+        elif img_mode == 'LA':
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_R, GL.GL_RED)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_G, GL.GL_RED)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_B, GL.GL_RED)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_A, GL.GL_GREEN)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RG, img_data.shape[1],
+                            img_data.shape[0], 0, GL.GL_RG, GL.GL_UNSIGNED_BYTE, img_data)
+        else:
+            print("Problem with new image mode", img_mode)
+
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+
+        return texture_idx
 
     def upload_uniform_matrix4fv(self, matrix, name, transpose=True):
         GL.glUseProgram(self.shader.render_idx)

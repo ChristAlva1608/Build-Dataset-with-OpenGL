@@ -59,6 +59,9 @@ class Sphere:
         # Generate random colors for each vertex
         self.colors = np.tile([1.0, 1.0, 0.0], (len(vertices), 1)).astype(np.float32) # yellow
 
+    def update_model_matrix(self, model):
+        self.model = model
+        
     def setup(self):
         self.vao.add_vbo(0, self.vertices, ncomponents=3, stride=0, offset=None)
         self.vao.add_vbo(1, self.colors, ncomponents=3, stride=0, offset=None)
