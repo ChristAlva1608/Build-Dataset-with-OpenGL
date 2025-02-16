@@ -120,7 +120,7 @@ class Viewer:
         self.depth_save_path = ""
         self.show_time_selection = False
         self.autosave_flag = False
-        self.layout_opt = 0
+        self.layout_opts = 0
         self.save_all_flag = False
         self.show_autosave_window = False
         self.current_time = 0.0
@@ -133,6 +133,7 @@ class Viewer:
         self.obj_rotation_option = False
         self.obj_location_option = False
         self.obj_scale_option = False
+        self.camera_pos_option = False
 
         # Initialize camera config
         self.cam_sys = None
@@ -205,8 +206,6 @@ class Viewer:
 
         self.depth_view_width = self.rgb_view_width
         self.depth_view_height = self.rgb_view_height
-
-        print(self.rgb_view_width, self.rgb_view_height)
 
     ''' Supportive functions '''
     def add(self, drawables):
@@ -541,7 +540,7 @@ class Viewer:
             self.cameraPos_lst.append(self.cameraPos)
             self.vcameras.append(vcamera)
 
-        for i in range(self.layout_opt):
+        for i in range(self.layout_opts):
             print(f'Layout: {i}')
             GL.glClearColor(0, 0, 0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -635,13 +634,16 @@ class Viewer:
                 glfw.swap_buffers(self.win)
 
         self.autosave_flag = not self.autosave_flag # Toggle the flag
-    
-    def scene_view(self):
-        steps = 200
-        for i in range(steps):
-            self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
-            self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
-            self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
+
+    def scene_view(self, lay_opts):
+        for i in range(lay_opts):
+            if self.camera_pos_option:
+                self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
+                self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
+                self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
+
+            if self.shininess_option:
+                self.shininess = random.uniform(0.1, 100)
 
             yaw = random.choice(np.linspace(self.yaw_range[1],self.yaw_range[0], 20))
             pitch = random.choice(np.linspace(self.pitch_range[1],self.pitch_range[0], 20))
@@ -675,6 +677,48 @@ class Viewer:
             GL.glUseProgram(self.depth_texture_shader.render_idx)
 
             for drawable in self.drawables:
+                if self.obj_location_option:
+                    x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
+                    x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
+
+                    x = random.uniform(x_min, x_max)
+                    z = random.uniform(z_min, z_max)
+                    self.translation = glm.vec3(x, 0, z)
+
+                    self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
+
+                    translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
+
+                    self.reverse_translation = - self.translation
+                    self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
+
+
+                    current_model = drawable.get_model_matrix()
+                    # model = current_model * glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
+                    model = current_model * translation_matrix
+                    drawable.update_attribute('model_matrix', model)
+
+                if self.obj_rotation_option:
+                    yaw = random.choice(np.linspace(0,360, 360))
+                    pitch = random.choice(np.linspace(0,360, 360))
+                    x_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-pitch), glm.vec3(1.0, 0.0, 0.0)) # add - angle because object rotation not camera
+                    y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
+                    current_model = drawable.get_model_matrix()
+                    model = current_model * x_rotation_matrix * y_rotation_matrix
+                    drawable.update_attribute('model_matrix', model)
+
+                if self.obj_scale_option and isinstance(drawable, Object):
+                    scale_factor = random.uniform(20, 100)
+                    prev_scale_factor = self.obj_management[drawable.name]['scale_factor']
+                    self.obj_management[drawable.name]['scale_factor'] = scale_factor
+
+                    current_model = drawable.get_model_matrix()
+                    prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/prev_scale_factor))
+                    scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(scale_factor))
+                    model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
+
+                    drawable.update_attribute('model_matrix', model)
+
                 drawable.set_mode(1) # mode for rgb image
 
                 # update light configuration
@@ -1379,7 +1423,7 @@ class Viewer:
                 self.depth_save_path = self.select_folder()
 
             imgui.set_next_item_width(100)
-            combo_changed, self.layout_opt = imgui.input_int("Layout Opts", self.layout_opt)
+            combo_changed, self.layout_opts = imgui.input_int("Layout Opts", self.layout_opts)
 
             imgui.set_next_item_width(100)
             if imgui.begin_combo("Select Random Options", "Options"):
@@ -1389,11 +1433,12 @@ class Viewer:
                 _, self.obj_location_option = imgui.checkbox("Object Location", self.obj_location_option)
                 _, self.obj_rotation_option = imgui.checkbox("Object Rotation", self.obj_rotation_option)
                 _, self.obj_scale_option = imgui.checkbox("Object Scaling", self.obj_scale_option)
+                _, self.camera_pos_option = imgui.checkbox("Camera Position", self.camera_pos_option)
                 imgui.end_combo()
 
             if imgui.button("Confirm"):
-                print("Numb layout", self.layout_opt)
-                self.autosave()
+                print("Numb layout", self.layout_opts)
+                self.scene_view (self.layout_opts)
 
             imgui.spacing()
             
@@ -1559,7 +1604,7 @@ class Viewer:
                 self.render()
 
             # Use to debug and find good view for each scene
-            # print('track ball cameraPos: ', self.trackball.get_cameraPos())
+            print('track ball cameraPos: ', self.trackball.get_cameraPos()) 
             self.imgui_menu()
 
             glfw.swap_buffers(self.win)
