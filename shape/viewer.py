@@ -1543,15 +1543,9 @@ class Viewer:
         imgui.set_next_item_width(imgui.get_window_width()//1.5)
         self.lightColor_changed, self.lightColor = imgui.input_float3('Color', self.lightColor[0], self.lightColor[1], self.lightColor[2], format='%.2f')
 
-        # Add shininess slider
-        imgui.set_next_item_width(imgui.get_window_width()//2)
-        self.shininess_changed, shininess_value = imgui.slider_float("Shininess",
-                                          self.shininess,
-                                          min_value=0.00,
-                                          max_value=100.00,
-                                          format="%.2f")
-        if self.shininess_changed:
-            self.shininess = shininess_value
+        # Add shininess input
+        imgui.set_next_item_width(100)
+        self.shininess_changed, self.shininess = imgui.input_float("Shininess", self.shininess, step=0.1, format="%.2f")
 
         imgui.end()
 
