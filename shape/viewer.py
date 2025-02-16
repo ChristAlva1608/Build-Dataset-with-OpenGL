@@ -17,10 +17,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from .object3D import *
-from .scene3D import *
-# from .object3D_v2 import *
-# from .scene3D_v2 import *
+# from .object3D import *
+# from .scene3D import *
+from .object3D_v2 import *
+from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -95,7 +95,7 @@ class Viewer:
         self.selected_scene_path = "No file selected"
         self.selected_scene = None
         self.scene_view_flag = False
-        self.bg_colors = [0.2, 0.2, 0.2]
+        self.bg_colors = [0.0, 0.0, 0.0]
         self.bg_changed = False
         self.warning_selected_path = True
         self.old_view = (0.0, 0.0)
@@ -205,6 +205,8 @@ class Viewer:
 
         self.depth_view_width = self.rgb_view_width
         self.depth_view_height = self.rgb_view_height
+
+        print(self.rgb_view_width, self.rgb_view_height)
 
     ''' Supportive functions '''
     def add(self, drawables):
@@ -468,7 +470,7 @@ class Viewer:
         io.font_global_scale = 1
 
     ''' Specialized Functions '''
-    def save_rgb(self, save_path):
+    def save_rgb(self, save_path, numb):
         # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width
         pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
@@ -483,14 +485,14 @@ class Viewer:
         rgb_image = Image.fromarray(rgb_image)
 
         # Create a unique file name using timestamp
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")  # Includes microseconds
-        file_name = f"rgb_image_{timestamp}.png"
+        # timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")  # Includes microseconds
+        file_name = f"rgb_image_{numb}.png"
 
         # Save the image to the local directory
         rgb_image.save(save_path + '/' + file_name)
         print(f"Saved rgb image as {file_name}")
 
-    def save_depth(self, save_path):
+    def save_depth(self, save_path, numb):
         # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width + self.rgb_view_width
 
@@ -518,8 +520,8 @@ class Viewer:
         depth_image = Image.fromarray(depth_image)
         
         # Create a unique file name using timestamp
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")  # Includes microseconds
-        file_name = f"depth_image_{timestamp}.png"
+        # timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")  # Includes microseconds
+        file_name = f"depth_image_{numb}.png"
 
         # Save the image to the selected directory
         depth_image.save(save_path + '/' + file_name)
@@ -541,7 +543,7 @@ class Viewer:
 
         for i in range(self.layout_opt):
             print(f'Layout: {i}')
-            GL.glClearColor(0.2, 0.2, 0.2, 1.0)
+            GL.glClearColor(0, 0, 0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             for vcamera in self.vcameras:
@@ -627,15 +629,15 @@ class Viewer:
 
                 GL.glDisable(GL.GL_SCISSOR_TEST)
 
-                self.save_rgb(self.rgb_save_path)
-                self.save_depth(self.depth_save_path)
+                self.save_rgb(self.rgb_save_path, i)
+                self.save_depth(self.depth_save_path, i)
 
                 glfw.swap_buffers(self.win)
 
         self.autosave_flag = not self.autosave_flag # Toggle the flag
     
     def scene_view(self):
-        steps = 100
+        steps = 200
         for i in range(steps):
             self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
             self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
@@ -658,7 +660,7 @@ class Viewer:
             # y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
             
             # view = self.trackball.view_matrix()
-            GL.glClearColor(0.2, 0.2, 0.2, 1.0)
+            GL.glClearColor(0, 0, 0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             # Viewport for RGB Scene
@@ -720,8 +722,8 @@ class Viewer:
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
-            self.save_rgb(self.rgb_save_path)
-            self.save_depth(self.depth_save_path)
+            self.save_rgb(self.rgb_save_path, i)
+            self.save_depth(self.depth_save_path, i)
             glfw.swap_buffers(self.win)
         self.scene_view_flag = False
 
@@ -731,7 +733,7 @@ class Viewer:
 
         print(f'x min: {x_min}, y min: {y_min}, z min: {z_min}')
         print(f'x max: {x_max}, y max: {y_max}, z max: {z_max}')
-        GL.glClearColor(0.2, 0.2, 0.2, 1.0)
+        GL.glClearColor(0, 0, 0, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         # Viewport for RGB Scene
@@ -985,7 +987,7 @@ class Viewer:
     #     return random.choice(sphere.vertices)
 
     def render(self):
-        GL.glClearColor(0.2, 0.2, 0.2, 1.0)
+        GL.glClearColor(0, 0, 0, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         # Viewport for RGB Scene
@@ -1124,14 +1126,16 @@ class Viewer:
     ''' User Interface '''
     def imgui_menu(self):
 
-        self.rgb_save_path = 'rgb_images'
-        self.depth_save_path = 'depth_images'
+        # self.rgb_save_path = 'rgb_images'
+        # self.depth_save_path = 'depth_images'
+        # self.rgb_save_path = 'obj/rgb/house_interior'
+        # self.depth_save_path = 'obj/depth/house_interior'
         # self.rgb_save_path = 'obj/rgb/warehouse'
         # self.depth_save_path = 'obj/depth/warehouse'
         # self.rgb_save_path = 'obj/rgb/wizard_class'
         # self.depth_save_path = 'obj/depth/wizard_class'
-        # self.rgb_save_path = 'obj/rgb/dumbledore'
-        # self.depth_save_path = 'obj/depth/dumbledore'
+        self.rgb_save_path = 'obj/rgb/dumbledore'
+        self.depth_save_path = 'obj/depth/dumbledore'
         # Create a new frame
         imgui.new_frame()
 
@@ -1555,7 +1559,7 @@ class Viewer:
                 self.render()
 
             # Use to debug and find good view for each scene
-            print('track ball cameraPos: ', self.trackball.get_cameraPos()) 
+            # print('track ball cameraPos: ', self.trackball.get_cameraPos())
             self.imgui_menu()
 
             glfw.swap_buffers(self.win)
