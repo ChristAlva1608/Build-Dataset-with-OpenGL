@@ -120,7 +120,7 @@ class SubScene:
         self.uma.upload_uniform_vector3fv(np.array(light_pos), "lightPos")
         self.uma.upload_uniform_vector3fv(np.array(light_color), "lightColor")
 
-        object_color = glm.vec3(1.0, 0.5, 0.31)
+        object_color = glm.vec3(0.5, 0.5, 0.5)
         self.uma.upload_uniform_vector3fv(np.array(object_color), "objectColor")
 
         if self.materials:

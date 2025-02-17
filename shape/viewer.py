@@ -1172,14 +1172,14 @@ class Viewer:
 
         # self.rgb_save_path = 'rgb_images'
         # self.depth_save_path = 'depth_images'
-        # self.rgb_save_path = 'obj/rgb/house_interior'
-        # self.depth_save_path = 'obj/depth/house_interior'
+        self.rgb_save_path = 'obj/rgb/house_interior'
+        self.depth_save_path = 'obj/depth/house_interior'
         # self.rgb_save_path = 'obj/rgb/warehouse'
         # self.depth_save_path = 'obj/depth/warehouse'
         # self.rgb_save_path = 'obj/rgb/wizard_class'
         # self.depth_save_path = 'obj/depth/wizard_class'
-        self.rgb_save_path = 'obj/rgb/dumbledore'
-        self.depth_save_path = 'obj/depth/dumbledore'
+        # self.rgb_save_path = 'obj/rgb/dumbledore'
+        # self.depth_save_path = 'obj/depth/dumbledore'
         # Create a new frame
         imgui.new_frame()
 
@@ -1599,7 +1599,7 @@ class Viewer:
     def run(self):
         while not glfw.window_should_close(self.win):
             if self.scene_view_flag:
-                self.scene_view()
+                self.scene_view(20)
             elif not self.autosave_flag:
                 self.render()
 
