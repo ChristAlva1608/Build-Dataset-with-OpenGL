@@ -661,11 +661,6 @@ class Viewer:
             self.cameraFront = glm.normalize(direction)
             view = glm.lookAt(self.cameraPos, self.cameraFront, self.cameraUp)
             
-            # yaw = (self.yaw_range[1]-self.yaw_range[0])/steps
-            # pitch = (self.pitch_range[1]-self.pitch_range[0])/steps
-            # x_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-pitch), glm.vec3(1.0, 0.0, 0.0)) # add - angle because object rotation not camera
-            # y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
-            
             # view = self.trackball.view_matrix()
             GL.glClearColor(0, 0, 0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -683,36 +678,34 @@ class Viewer:
 
             for drawable in self.drawables:
                 if self.obj_location_option and isinstance(drawable, Object):
+                    # Instead of creating a translation matrix and multiply with current model, 
+                    # I add the translation vector directly to the last column of current model 
+                    # (avoid effect of scaling factor and rotation to the translation vector)
                     x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
                     x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
-
                     x = random.uniform(x_min, x_max)
                     z = random.uniform(z_min, z_max)
                     
-                    # Normalized by scale factor for better translation
-                    scale_factor = self.obj_management[drawable.name]['scale_factor']
-                    scale_normalized_delta_x = x / scale_factor
-                    scale_normalized_delta_z = z / scale_factor
-                    self.translation = glm.vec3(scale_normalized_delta_x, 0, scale_normalized_delta_z)
-
-                    self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
-
-                    translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
-
-                    self.reverse_translation = - self.translation
-                    self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
-
+                    self.reverse_translation = self.obj_management[drawable.name]['reverse_translation']
+                    self.translation = glm.vec3(x,0,z)
+                    
                     current_model = drawable.get_model_matrix()
-                    model = current_model * translation_matrix
-                    drawable.update_attribute('model_matrix', model)
+                    current_model[3] = current_model[3] + glm.vec4(self.reverse_translation, 0.0) + glm.vec4(self.translation, 0.0)
+                    
+                    self.obj_management[drawable.name]['reverse_translation'] = - self.translation
+                    
+                    drawable.update_attribute('model_matrix', current_model)
 
                 if self.obj_rotation_option and isinstance(drawable, Object):
                     yaw = random.choice(np.linspace(0,360, 360))
                     pitch = random.choice(np.linspace(0,360, 360))
+                    
                     x_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-pitch), glm.vec3(1.0, 0.0, 0.0)) # add - angle because object rotation not camera
                     y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
+                    
                     current_model = drawable.get_model_matrix()
                     model = current_model * x_rotation_matrix * y_rotation_matrix
+
                     drawable.update_attribute('model_matrix', model)
 
                 if self.obj_scale_option and isinstance(drawable, Object):
@@ -817,25 +810,25 @@ class Viewer:
 
             if isinstance(drawable, Object):
                 x = random.uniform(x_min, x_max)
-                # y = random.uniform(y_min, y_max)
                 z = random.uniform(z_min, z_max)
-                print(f'x: {x} and z: {z}')
-                angle = random.uniform(0, 360)
-
-                scale_factor = self.obj_management[drawable.name]['scale_factor']
-                scale_normalized_delta_x = x / scale_factor
-                scale_normalized_delta_z = z / scale_factor
-                self.translation = glm.vec3(scale_normalized_delta_x, 0, scale_normalized_delta_z)
-
-                self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
-
-                translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
-
-                self.reverse_translation = - self.translation
-                self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
 
                 current_model = drawable.get_model_matrix()
-                model = current_model * translation_matrix
+
+                # Instead of creating a translation matrix and multiply with current model, 
+                # I add the translation vector directly to the last column of current model 
+                # (avoid effect of scaling factor and rotation to the translation vector)
+                self.reverse_translation = self.obj_management[drawable.name]['reverse_translation']
+                self.translation = glm.vec3(x,0,z)
+                current_model[3] = current_model[3] + glm.vec4(self.reverse_translation, 0.0) + glm.vec4(self.translation, 0.0)
+                self.obj_management[drawable.name]['reverse_translation'] = - self.translation
+
+                yaw = random.choice(np.linspace(0, 360, 360))
+                pitch = random.choice(np.linspace(0, 360, 360))
+                x_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-pitch), glm.vec3(1.0, 0.0, 0.0)) # add - angle because object rotation not camera
+                y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
+
+                model = current_model * x_rotation_matrix * y_rotation_matrix
+
                 drawable.update_attribute('model_matrix', model)
 
             # drawable.update_attribute('view_matrix', view)
@@ -971,14 +964,13 @@ class Viewer:
 
     def reset(self):
         self.obj_location_option = True
-        self.random_location()
-        # # Remove all scenes and objects
-        # self.drawables.clear()
-        # self.autosave_flag = False
-        # self.multi_cam_flag = False
-        # self.move_camera_flag = False
-        # self.drag_object_flag = False
-        # self.move_cam_sys_flag = False
+        # Remove all scenes and objects
+        self.drawables.clear()
+        self.autosave_flag = False
+        self.multi_cam_flag = False
+        self.move_camera_flag = False
+        self.drag_object_flag = False
+        self.move_cam_sys_flag = False
 
     def load_scene(self):
         model = []
@@ -1115,10 +1107,6 @@ class Viewer:
             projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width/self.rgb_view_height, self.near, self.far)
             drawable.update_attribute('projection_matrix', projection)
 
-            # print(f'model: {drawable.get_model_matrix()}')
-            # print(f'view: {drawable.get_view_matrix()}')
-            # print(f'projection: {drawable.get_projection_matrix()}')
-
             # Normal rendering
             drawable.draw(self.cameraPos)
 
@@ -1169,10 +1157,6 @@ class Viewer:
             # projection = self.trackball.projection_matrix((self.depth_view_width, self.depth_view_height))
             projection = glm.perspective(glm.radians(self.fov), self.depth_view_width/ self.depth_view_height, self.near, self.far)
             drawable.update_attribute('projection_matrix', projection)
-
-            # print(f'model: {drawable.get_model_matrix()}')
-            # print(f'view: {drawable.get_view_matrix()}')
-            # print(f'projection: {drawable.get_projection_matrix()}')
 
             # Depth map rendering
             drawable.update_near_far(self.near, self.far)
@@ -1455,7 +1439,6 @@ class Viewer:
                 imgui.end_combo()
 
             if imgui.button("Confirm"):
-                print("Numb layout", self.layout_opts)
                 self.scene_view(self.layout_opts)
 
             imgui.spacing()
