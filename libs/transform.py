@@ -214,6 +214,7 @@ class Trackball:
     def pan(self, old, new):
         """ Pan in camera's reference by a 2d vector factor of (new - old) """
         self.pos2d += (vec(new) - old) * 0.001 * self.distance
+        print("pan: ", self.pos2d)
 
     def view_matrix(self):
         """ View matrix transformation, including distance to target point """
@@ -266,7 +267,7 @@ class Trackball:
         return quaternion_from_axis_angle(np.cross(old, new), radians=phi)
 
     def set_default(self):
-        self.distance = 0
+        self.distance = 10
         self.pos2d = vec(0.0, 0.0)
     
     def update_cameraPos(self, cameraPos, old_cameraPos=glm.vec3(0, 0, 0)):

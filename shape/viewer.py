@@ -17,10 +17,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-# from .object3D import *
-# from .scene3D import *
-from .object3D_v2 import *
-from .scene3D_v2 import *
+from .object3D import *
+from .scene3D import *
+# from .object3D_v2 import *
+# from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -232,9 +232,9 @@ class Viewer:
                     if self.selected_object:
                         self.selected_object.update_attribute("model_matrix", translation_matrix)
                 else:
-                    self.old_cameraPos = self.cameraPos
+                    self.old_cameraPos = glm.vec3(self.cameraPos)
                     self.cameraPos += delta_z
-                    self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
+                    self.trackball.update_cameraPos(-self.cameraPos, -self.old_cameraPos)
 
             if key == glfw.KEY_S:
                 delta_z = self.cameraSpeed * self.cameraFront
@@ -247,28 +247,27 @@ class Viewer:
                     if self.selected_object:
                         self.selected_object.update_attribute("model_matrix", translation_matrix)
                 else:
-                    self.old_cameraPos = self.cameraPos
+                    self.old_cameraPos = glm.vec3(self.cameraPos)
                     self.cameraPos -= delta_z
-                    self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
+                    self.trackball.update_cameraPos(-self.cameraPos, -self.old_cameraPos)
 
             if key == glfw.KEY_A:
                 delta_x = glm.normalize(glm.cross(self.cameraFront, self.cameraUp)) * self.cameraSpeed
                 if self.move_cam_sys_flag:
                     self.cam_sys.update_model_matrix(glm.translate(glm.mat4(1.0), -delta_x))
                 
-                self.old_cameraPos = self.cameraPos
+                self.old_cameraPos = glm.vec3(self.cameraPos)
                 self.cameraPos -= delta_x
-                self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
-
+                self.trackball.update_cameraPos(-self.cameraPos, -self.old_cameraPos)
 
             if key == glfw.KEY_D:
                 delta_x = glm.normalize(glm.cross(self.cameraFront, self.cameraUp)) * self.cameraSpeed
                 if self.move_cam_sys_flag:
                     self.cam_sys.update_model_matrix(glm.translate(glm.mat4(1.0), delta_x))
                 
-                self.old_cameraPos = self.cameraPos
+                self.old_cameraPos = glm.vec3(self.cameraPos)
                 self.cameraPos += delta_x
-                self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
+                self.trackball.update_cameraPos(-self.cameraPos, -self.old_cameraPos)
 
             for drawable in self.drawables:
                 if hasattr(drawable, 'key_handler'):
@@ -641,6 +640,8 @@ class Viewer:
                 self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
                 self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
                 self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
+
+                print(f'cameraPos: {self.cameraPos}')
 
             if self.shininess_option:
                 self.shininess = random.uniform(0.1, 100)
@@ -1035,7 +1036,6 @@ class Viewer:
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         # Viewport for RGB Scene
-        # print('SCENE')
         win_pos_width = self.scene_width
         win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
 
@@ -1104,7 +1104,6 @@ class Viewer:
             drawable.draw(self.cameraPos)
 
         # Viewport for Depth Scene
-        # print('DEPTH')
         win_pos_width = self.scene_width + self.rgb_view_width
         win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
         GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
@@ -1170,10 +1169,10 @@ class Viewer:
     ''' User Interface '''
     def imgui_menu(self):
 
-        # self.rgb_save_path = 'rgb_images'
-        # self.depth_save_path = 'depth_images'
-        self.rgb_save_path = 'obj/rgb/house_interior'
-        self.depth_save_path = 'obj/depth/house_interior'
+        self.rgb_save_path = 'rgb_images'
+        self.depth_save_path = 'depth_images'
+        # self.rgb_save_path = 'obj/rgb/house_interior'
+        # self.depth_save_path = 'obj/depth/house_interior'
         # self.rgb_save_path = 'obj/rgb/warehouse'
         # self.depth_save_path = 'obj/depth/warehouse'
         # self.rgb_save_path = 'obj/rgb/wizard_class'
@@ -1202,7 +1201,8 @@ class Viewer:
         if imgui.button('Scene View'):
             if self.rgb_save_path != "" and self.depth_save_path != "":
                 self.scene_view_flag = not self.scene_view_flag
-        
+                print('click')
+
         # Warning if not select
         if self.rgb_save_path == "" or self.depth_save_path == "":
             imgui.text('Please select save path')
@@ -1438,7 +1438,7 @@ class Viewer:
 
             if imgui.button("Confirm"):
                 print("Numb layout", self.layout_opts)
-                self.scene_view (self.layout_opts)
+                self.scene_view(self.layout_opts)
 
             imgui.spacing()
             
@@ -1501,7 +1501,7 @@ class Viewer:
 
         # Convert tuple to glm.vec3
         if self.cameraPos_changed:
-            self.old_cameraPos = self.cameraPos
+            self.old_cameraPos = glm.vec3(self.cameraPos)
             self.cameraPos = glm.vec3(*new_camera_pos)
             self.trackball.update_cameraPos(self.cameraPos, self.old_cameraPos)
 
@@ -1543,15 +1543,9 @@ class Viewer:
         imgui.set_next_item_width(imgui.get_window_width()//1.5)
         self.lightColor_changed, self.lightColor = imgui.input_float3('Color', self.lightColor[0], self.lightColor[1], self.lightColor[2], format='%.2f')
 
-        # Add shininess slider
-        imgui.set_next_item_width(imgui.get_window_width()//2)
-        self.shininess_changed, shininess_value = imgui.slider_float("Shininess",
-                                          self.shininess,
-                                          min_value=0.00,
-                                          max_value=100.00,
-                                          format="%.2f")
-        if self.shininess_changed:
-            self.shininess = shininess_value
+        # Add shininess input
+        imgui.set_next_item_width(100)
+        self.shininess_changed, self.shininess = imgui.input_float("Shininess", self.shininess, step=0.1, format="%.2f")
 
         imgui.end()
 
@@ -1599,7 +1593,7 @@ class Viewer:
     def run(self):
         while not glfw.window_should_close(self.win):
             if self.scene_view_flag:
-                self.scene_view(20)
+                self.scene_view(50)
             elif not self.autosave_flag:
                 self.render()
 
