@@ -9,6 +9,7 @@ import sys
 import time
 from datetime import datetime
 import imgui
+from pathlib import Path
 import random
 from imgui.integrations.glfw import GlfwRenderer
 
@@ -493,7 +494,7 @@ class Viewer:
         file_name = f"rgb_image_{numb}.png"
 
         # Save the image to the local directory
-        rgb_image.save(save_path + '/' + file_name)
+        rgb_image.save(str(save_path / file_name))
         print(f"Saved rgb image as {file_name}")
 
     def save_depth(self, save_path, numb):
@@ -528,119 +529,10 @@ class Viewer:
         file_name = f"depth_image_{numb}.png"
 
         # Save the image to the selected directory
-        depth_image.save(save_path + '/' + file_name)
+        depth_image.save(str(save_path / file_name))
         print(f"Saved depth image as {file_name}")
 
-    # def autosave(self):
-    #     x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
-    #     x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
-
-    #     if self.multi_cam_flag:
-    #         self.multi_cam()
-    #     else:
-    #         # Default view (self.cameras only have 1 item)
-    #         self.vcameras = []
-    #         vcamera = VCamera(self.phong_shader).setup()
-    #         vcamera.view = self.trackball.view_matrix()
-    #         self.cameraPos_lst.append(self.cameraPos)
-    #         self.vcameras.append(vcamera)
-
-    #     for i in range(self.layout_opts):
-    #         print(f'Layout: {i}')
-    #         GL.glClearColor(0, 0, 0, 1.0)
-    #         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
-    #         for vcamera in self.vcameras:
-    #             self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
-    #             view = vcamera.view
-
-    #             # Viewport for RGB Scene
-    #             win_pos_width = self.scene_width
-    #             win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
-
-    #             GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-    #             GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-    #             GL.glEnable(GL.GL_SCISSOR_TEST)
-    #             GL.glClearColor(*self.bg_colors, 1.0)
-    #             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-    #             GL.glUseProgram(self.depth_texture_shader.render_idx)
-
-    #             for drawable in self.drawables:
-    #                 drawable.set_mode(1) # mode for rgb image
-
-    #                 # update light configuration
-    #                 if self.lightPos_changed:
-    #                     drawable.update_lightPos(self.lightPos)
-
-    #                 if self.lightColor_changed:
-    #                     drawable.update_lightColor(self.lightColor)
-
-    #                 drawable.update_shininess(self.shininess)
-
-    #                 if isinstance(drawable, Object):
-    #                     x = random.uniform(x_min, x_max)
-    #                     # y = random.uniform(y_min, y_max)
-    #                     z = random.uniform(z_min, z_max)
-    #                     angle = random.uniform(0, 360)
-
-    #                     self.translation = glm.vec3(x, 0, z)
-    #                     self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
-
-    #                     rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
-    #                     translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
-
-    #                     self.reverse_translation = - self.translation
-    #                     self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
-
-    #                     model_matrix = translation_matrix * rotation_matrix
-    #                     drawable.update_attribute('model_matrix', model_matrix)
-
-    #                 drawable.update_attribute('view_matrix', view)
-
-    #                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
-    #                 drawable.update_attribute('projection_matrix', projection)
-
-    #                 # Normal rendering
-    #                 drawable.draw(self.cameraPos)
-
-    #             # Viewport for Depth Scene
-    #             win_pos_width = self.scene_width + self.rgb_view_width
-    #             win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
-    #             GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-    #             GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-    #             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-
-    #             for drawable in self.drawables:
-    #                 drawable.set_mode(0) # mode for depth map
-
-    #                 # update depth map color
-    #                 drawable.update_colormap(self.selected_colormap)
-
-    #                 drawable.update_attribute('view_matrix', view)
-
-    #                 projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
-    #                 drawable.update_attribute('projection_matrix', projection)
-
-    #                 # Depth map rendering
-    #                 drawable.update_near_far(self.near, self.far)
-
-    #                 # Draw the full object
-    #                 drawable.draw(self.cameraPos)
-
-    #                 # Visualize with chosen colormap
-    #                 if self.selected_colormap == 1:
-    #                     self.pass_magma_data(self.depth_texture_shader)
-
-    #             GL.glDisable(GL.GL_SCISSOR_TEST)
-
-    #             self.save_rgb(self.rgb_save_path, i)
-    #             self.save_depth(self.depth_save_path, i)
-
-    #             glfw.swap_buffers(self.win)
-
-    #     self.autosave_flag = not self.autosave_flag # Toggle the flag
-
-    def scene_view(self, lay_opts):
+    def autosave(self, lay_opts):
         for i in range(lay_opts):
             if self.camera_pos_option:
                 self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
@@ -731,9 +623,6 @@ class Viewer:
 
                 drawable.update_shininess(self.shininess)
 
-                # current_model = drawable.get_model_matrix()
-                # model = current_model * x_rotation_matrix 
-                # drawable.update_attribute('model_matrix', model)
                 drawable.update_attribute('view_matrix', view)
 
                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
@@ -770,8 +659,11 @@ class Viewer:
             self.save_rgb(self.rgb_save_path, i)
             self.save_depth(self.depth_save_path, i)
             glfw.swap_buffers(self.win)
-        self.scene_view_flag = False
+        self.autosave_flag = False
 
+    '''
+    This function is used to debug
+    '''
     def random_location(self):
         # x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
         # x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
@@ -1169,24 +1061,9 @@ class Viewer:
                 self.pass_magma_data(self.depth_texture_shader)
 
         GL.glDisable(GL.GL_SCISSOR_TEST)
+
     ''' User Interface '''
     def imgui_menu(self):
-
-        # self.rgb_save_path = 'rgb_images'
-        # self.depth_save_path = 'depth_images'
-        self.rgb_save_path = 'obj/rgb/test'
-        self.depth_save_path = 'obj/depth/test'
-        # self.rgb_save_path = 'obj/rgb/house_interior'
-        # self.depth_save_path = 'obj/depth/house_interior'
-        # self.rgb_save_path = 'obj/rgb/warehouse'
-        # self.depth_save_path = 'obj/depth/warehouse'
-        # self.rgb_save_path = 'obj/rgb/wizard_class'
-        # self.depth_save_path = 'obj/depth/wizard_class'
-        # self.rgb_save_path = 'obj/rgb/dumbledore'
-        # self.depth_save_path = 'obj/depth/dumbledore'
-        # self.rgb_save_path = 'obj/rgb/classroom-sculpted'
-        # self.depth_save_path = 'obj/depth/classroom-sculpted'
-
         # Create a new frame
         imgui.new_frame()
 
@@ -1203,13 +1080,20 @@ class Viewer:
         select_scene_flag = self.button_with_icon('icons/load.png', 'Select Scene')
         if select_scene_flag:
             self.selected_scene_path = self.select_file('./scene')
-            
+
         imgui.text(f"{self.selected_scene_path}")
-        
-        if imgui.button('Scene View'):
-            if self.rgb_save_path != "" and self.depth_save_path != "":
-                self.scene_view_flag = not self.scene_view_flag
-        
+
+        # if imgui.button('Scene View'):
+        #     scene_name = self.selected_scene.name
+        #     self.rgb_save_path = Path("./rgb") / scene_name
+        #     self.depth_save_path = Path("./depth") / scene_name
+
+        #     # Create directories if they don't exist
+        #     self.rgb_save_path.mkdir(parents=True, exist_ok=True)
+        #     self.depth_save_path.mkdir(parents=True, exist_ok=True)
+
+        #     self.scene_view_flag = not self.scene_view_flag
+
         # Warning if not select
         if self.rgb_save_path == "" or self.depth_save_path == "":
             imgui.text('Please select save path')
@@ -1387,7 +1271,8 @@ class Viewer:
             save_rgb = self.button_with_icon('icons/save.png', 'Save RGB')
             if save_rgb:
                 self.rgb_save_path = self.select_folder()
-                self.save_rgb(self.rgb_save_path)
+                if self.rgb_save_path:
+                    self.save_rgb(self.rgb_save_path)
 
             imgui.same_line()
 
@@ -1396,7 +1281,8 @@ class Viewer:
             save_depth = self.button_with_icon('icons/save.png', 'Save Depth')
             if save_depth:
                 self.depth_save_path = self.select_folder()
-                self.save_depth(self.depth_save_path)
+                if self.depth_save_path:
+                    self.save_depth(self.depth_save_path)
 
             # ============== AutoSave Button ==============
             imgui.set_next_item_width(100)
@@ -1444,7 +1330,16 @@ class Viewer:
                 imgui.end_combo()
 
             if imgui.button("Confirm"):
-                self.scene_view(self.layout_opts)
+                if not self.rgb_save_path or not self.depth_save_path:
+                    scene_name = self.selected_scene.name
+                    self.rgb_save_path = Path("./rgb") / scene_name
+                    self.depth_save_path = Path("./depth") / scene_name
+
+                    # Create directories if they don't exist
+                    self.rgb_save_path.mkdir(parents=True, exist_ok=True)
+                    self.depth_save_path.mkdir(parents=True, exist_ok=True)
+
+                self.autosave(self.layout_opts)
 
             imgui.spacing()
             
@@ -1598,9 +1493,7 @@ class Viewer:
     ''' Main Loop'''
     def run(self):
         while not glfw.window_should_close(self.win):
-            if self.scene_view_flag:
-                self.scene_view(50)
-            elif not self.autosave_flag:
+            if not self.autosave_flag:
                 self.render()
 
             # Use to debug and find good view for each scene
