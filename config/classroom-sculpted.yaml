@@ -1,0 +1,13 @@
+scene_name: 'classroom-sculpted'
+near: 0.1
+far: 27
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0, 0, 0]
+center_translation_vec: [ 0,  0,  0]
+x_range : [-11, 11]
+y_range : [0.05, 7]
+z_range : [-8, 8]
+yaw_range : [0, 360]
+pitch_range: [0, 360]

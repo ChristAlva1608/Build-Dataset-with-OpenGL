@@ -1,0 +1,13 @@
+scene_name: 'restaurant'
+near: 0.1
+far: 9
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0,  0.5,  1.6]
+x_range : [-4, 5]
+y_range : [-0.2, 1.3]
+z_range : [-1.3, 1.3]
+yaw_range : [0, 360]
+pitch_range: [0, 360]

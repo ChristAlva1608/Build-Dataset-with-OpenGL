@@ -496,15 +496,15 @@ class Viewer:
 
         ### Extract depth value ###
         # Read Pixel using GL_RGB
-        pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
-        depth_info = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_view_height, self.depth_view_width, 3))
-
-        # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
-        depth_info = np.flipud(depth_info)
-
-        # Get metric depth value for image
-        depth_info = depth_info[:,:,0] # get only 1 channel (gray image)
-        np.savetxt('depth.txt',depth_info)
+        # pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
+        # depth_info = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_view_height, self.depth_view_width, 3))
+        #
+        # # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
+        # depth_info = np.flipud(depth_info)
+        #
+        # # Get metric depth value for image
+        # depth_info = depth_info[:,:,0] # get only 1 channel (gray image)
+        # np.savetxt('depth.txt',depth_info)
 
         ### Save depth image ###
         # Read Pixel using GL_RGB
@@ -1169,8 +1169,10 @@ class Viewer:
     ''' User Interface '''
     def imgui_menu(self):
 
-        self.rgb_save_path = 'rgb_images'
-        self.depth_save_path = 'depth_images'
+        # self.rgb_save_path = 'rgb_images'
+        # self.depth_save_path = 'depth_images'
+        self.rgb_save_path = 'obj/rgb/test'
+        self.depth_save_path = 'obj/depth/test'
         # self.rgb_save_path = 'obj/rgb/house_interior'
         # self.depth_save_path = 'obj/depth/house_interior'
         # self.rgb_save_path = 'obj/rgb/warehouse'
@@ -1179,6 +1181,9 @@ class Viewer:
         # self.depth_save_path = 'obj/depth/wizard_class'
         # self.rgb_save_path = 'obj/rgb/dumbledore'
         # self.depth_save_path = 'obj/depth/dumbledore'
+        # self.rgb_save_path = 'obj/rgb/classroom-sculpted'
+        # self.depth_save_path = 'obj/depth/classroom-sculpted'
+
         # Create a new frame
         imgui.new_frame()
 

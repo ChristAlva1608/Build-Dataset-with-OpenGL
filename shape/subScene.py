@@ -22,7 +22,7 @@ class SubScene:
         self.vao = VAO()
         self.uma = UManager(self.shader)
 
-        self.use_texture = True if (len(teco) > 0 and material['map_Kd'] is not None) else False
+        self.use_texture = True if (len(teco) > 0 and teco[0] != -1 and material is not None) else False
 
         # init vertex attributes
         self.vertices = np.array(vert, dtype=np.float32)
@@ -41,6 +41,7 @@ class SubScene:
         self.texture_id = {}
         self.texture_flags = {}
 
+        texture_found = False
         if self.use_texture:
             for texture in TextureMap:
                 map_key, uniform_name = texture.value
@@ -55,6 +56,11 @@ class SubScene:
                     if os.path.exists(texture_path):
                         self.texture_flags[map_key] = True
                         self.texture_id[map_key] = self.uma.setup_texture(uniform_name, texture_path)
+                        texture_found = True
+
+        if not texture_found:
+            self.use_texture = False
+
     
     def get_model_matrix(self):
         return self.model
