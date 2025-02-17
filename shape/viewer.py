@@ -230,7 +230,9 @@ class Viewer:
                 if self.drag_object_flag:
                     translation_matrix = glm.translate(glm.mat4(1.0), -delta_z)
                     if self.selected_object:
-                        self.selected_object.update_attribute("model_matrix", translation_matrix)
+                        current_model = self.selected_object.get_model_matrix()
+                        model = current_model * translation_matrix
+                        self.selected_object.update_attribute("model_matrix", model)
                 else:
                     self.old_cameraPos = glm.vec3(self.cameraPos)
                     self.cameraPos += delta_z
@@ -245,7 +247,9 @@ class Viewer:
                 if self.drag_object_flag:
                     translation_matrix = glm.translate(glm.mat4(1.0), delta_z)
                     if self.selected_object:
-                        self.selected_object.update_attribute("model_matrix", translation_matrix)
+                        current_model = self.selected_object.get_model_matrix()
+                        model = current_model * translation_matrix
+                        self.selected_object.update_attribute("model_matrix", model)
                 else:
                     self.old_cameraPos = glm.vec3(self.cameraPos)
                     self.cameraPos -= delta_z
@@ -451,6 +455,8 @@ class Viewer:
             return glm.mat4(1.0)
         object_bottom = self.selected_object.min_y
         scene_bottom = self.selected_scene.min_y
+        print(f'selected scene min y: {scene_bottom}')
+        print(f'selected object min y: {object_bottom}')
 
         if object_bottom > scene_bottom and scene_bottom < 0:
             translation_matrix = translate(0, (scene_bottom - object_bottom), 0)
@@ -525,114 +531,114 @@ class Viewer:
         depth_image.save(save_path + '/' + file_name)
         print(f"Saved depth image as {file_name}")
 
-    def autosave(self):
-        x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
-        x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
+    # def autosave(self):
+    #     x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
+    #     x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
 
-        if self.multi_cam_flag:
-            self.multi_cam()
-        else:
-            # Default view (self.cameras only have 1 item)
-            self.vcameras = []
-            vcamera = VCamera(self.phong_shader).setup()
-            vcamera.view = self.trackball.view_matrix()
-            self.cameraPos_lst.append(self.cameraPos)
-            self.vcameras.append(vcamera)
+    #     if self.multi_cam_flag:
+    #         self.multi_cam()
+    #     else:
+    #         # Default view (self.cameras only have 1 item)
+    #         self.vcameras = []
+    #         vcamera = VCamera(self.phong_shader).setup()
+    #         vcamera.view = self.trackball.view_matrix()
+    #         self.cameraPos_lst.append(self.cameraPos)
+    #         self.vcameras.append(vcamera)
 
-        for i in range(self.layout_opts):
-            print(f'Layout: {i}')
-            GL.glClearColor(0, 0, 0, 1.0)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+    #     for i in range(self.layout_opts):
+    #         print(f'Layout: {i}')
+    #         GL.glClearColor(0, 0, 0, 1.0)
+    #         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-            for vcamera in self.vcameras:
-                self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
-                view = vcamera.view
+    #         for vcamera in self.vcameras:
+    #             self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
+    #             view = vcamera.view
 
-                # Viewport for RGB Scene
-                win_pos_width = self.scene_width
-                win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
+    #             # Viewport for RGB Scene
+    #             win_pos_width = self.scene_width
+    #             win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
 
-                GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-                GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-                GL.glEnable(GL.GL_SCISSOR_TEST)
-                GL.glClearColor(*self.bg_colors, 1.0)
-                GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-                GL.glUseProgram(self.depth_texture_shader.render_idx)
+    #             GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
+    #             GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
+    #             GL.glEnable(GL.GL_SCISSOR_TEST)
+    #             GL.glClearColor(*self.bg_colors, 1.0)
+    #             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+    #             GL.glUseProgram(self.depth_texture_shader.render_idx)
 
-                for drawable in self.drawables:
-                    drawable.set_mode(1) # mode for rgb image
+    #             for drawable in self.drawables:
+    #                 drawable.set_mode(1) # mode for rgb image
 
-                    # update light configuration
-                    if self.lightPos_changed:
-                        drawable.update_lightPos(self.lightPos)
+    #                 # update light configuration
+    #                 if self.lightPos_changed:
+    #                     drawable.update_lightPos(self.lightPos)
 
-                    if self.lightColor_changed:
-                        drawable.update_lightColor(self.lightColor)
+    #                 if self.lightColor_changed:
+    #                     drawable.update_lightColor(self.lightColor)
 
-                    drawable.update_shininess(self.shininess)
+    #                 drawable.update_shininess(self.shininess)
 
-                    if isinstance(drawable, Object):
-                        x = random.uniform(x_min, x_max)
-                        # y = random.uniform(y_min, y_max)
-                        z = random.uniform(z_min, z_max)
-                        angle = random.uniform(0, 360)
+    #                 if isinstance(drawable, Object):
+    #                     x = random.uniform(x_min, x_max)
+    #                     # y = random.uniform(y_min, y_max)
+    #                     z = random.uniform(z_min, z_max)
+    #                     angle = random.uniform(0, 360)
 
-                        self.translation = glm.vec3(x, 0, z)
-                        self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
+    #                     self.translation = glm.vec3(x, 0, z)
+    #                     self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
 
-                        rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
-                        translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
+    #                     rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
+    #                     translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
 
-                        self.reverse_translation = - self.translation
-                        self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
+    #                     self.reverse_translation = - self.translation
+    #                     self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
 
-                        model_matrix = translation_matrix * rotation_matrix
-                        drawable.update_attribute('model_matrix', model_matrix)
+    #                     model_matrix = translation_matrix * rotation_matrix
+    #                     drawable.update_attribute('model_matrix', model_matrix)
 
-                    drawable.update_attribute('view_matrix', view)
+    #                 drawable.update_attribute('view_matrix', view)
 
-                    projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
-                    drawable.update_attribute('projection_matrix', projection)
+    #                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
+    #                 drawable.update_attribute('projection_matrix', projection)
 
-                    # Normal rendering
-                    drawable.draw(self.cameraPos)
+    #                 # Normal rendering
+    #                 drawable.draw(self.cameraPos)
 
-                # Viewport for Depth Scene
-                win_pos_width = self.scene_width + self.rgb_view_width
-                win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
-                GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-                GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-                GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+    #             # Viewport for Depth Scene
+    #             win_pos_width = self.scene_width + self.rgb_view_width
+    #             win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
+    #             GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+    #             GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+    #             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-                for drawable in self.drawables:
-                    drawable.set_mode(0) # mode for depth map
+    #             for drawable in self.drawables:
+    #                 drawable.set_mode(0) # mode for depth map
 
-                    # update depth map color
-                    drawable.update_colormap(self.selected_colormap)
+    #                 # update depth map color
+    #                 drawable.update_colormap(self.selected_colormap)
 
-                    drawable.update_attribute('view_matrix', view)
+    #                 drawable.update_attribute('view_matrix', view)
 
-                    projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
-                    drawable.update_attribute('projection_matrix', projection)
+    #                 projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
+    #                 drawable.update_attribute('projection_matrix', projection)
 
-                    # Depth map rendering
-                    drawable.update_near_far(self.near, self.far)
+    #                 # Depth map rendering
+    #                 drawable.update_near_far(self.near, self.far)
 
-                    # Draw the full object
-                    drawable.draw(self.cameraPos)
+    #                 # Draw the full object
+    #                 drawable.draw(self.cameraPos)
 
-                    # Visualize with chosen colormap
-                    if self.selected_colormap == 1:
-                        self.pass_magma_data(self.depth_texture_shader)
+    #                 # Visualize with chosen colormap
+    #                 if self.selected_colormap == 1:
+    #                     self.pass_magma_data(self.depth_texture_shader)
 
-                GL.glDisable(GL.GL_SCISSOR_TEST)
+    #             GL.glDisable(GL.GL_SCISSOR_TEST)
 
-                self.save_rgb(self.rgb_save_path, i)
-                self.save_depth(self.depth_save_path, i)
+    #             self.save_rgb(self.rgb_save_path, i)
+    #             self.save_depth(self.depth_save_path, i)
 
-                glfw.swap_buffers(self.win)
+    #             glfw.swap_buffers(self.win)
 
-        self.autosave_flag = not self.autosave_flag # Toggle the flag
+    #     self.autosave_flag = not self.autosave_flag # Toggle the flag
 
     def scene_view(self, lay_opts):
         for i in range(lay_opts):
@@ -640,8 +646,6 @@ class Viewer:
                 self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
                 self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
                 self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
-
-                print(f'cameraPos: {self.cameraPos}')
 
             if self.shininess_option:
                 self.shininess = random.uniform(0.1, 100)
@@ -678,13 +682,18 @@ class Viewer:
             GL.glUseProgram(self.depth_texture_shader.render_idx)
 
             for drawable in self.drawables:
-                if self.obj_location_option:
+                if self.obj_location_option and isinstance(drawable, Object):
                     x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
                     x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
 
                     x = random.uniform(x_min, x_max)
                     z = random.uniform(z_min, z_max)
-                    self.translation = glm.vec3(x, 0, z)
+                    
+                    # Normalized by scale factor for better translation
+                    scale_factor = self.obj_management[drawable.name]['scale_factor']
+                    scale_normalized_delta_x = x / scale_factor
+                    scale_normalized_delta_z = z / scale_factor
+                    self.translation = glm.vec3(scale_normalized_delta_x, 0, scale_normalized_delta_z)
 
                     self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
 
@@ -693,13 +702,11 @@ class Viewer:
                     self.reverse_translation = - self.translation
                     self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
 
-
                     current_model = drawable.get_model_matrix()
-                    # model = current_model * glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
                     model = current_model * translation_matrix
                     drawable.update_attribute('model_matrix', model)
 
-                if self.obj_rotation_option:
+                if self.obj_rotation_option and isinstance(drawable, Object):
                     yaw = random.choice(np.linspace(0,360, 360))
                     pitch = random.choice(np.linspace(0,360, 360))
                     x_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-pitch), glm.vec3(1.0, 0.0, 0.0)) # add - angle because object rotation not camera
@@ -773,8 +780,12 @@ class Viewer:
         self.scene_view_flag = False
 
     def random_location(self):
-        x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
-        x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
+        # x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
+        # x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
+
+        x_min, x_max = self.x_range[0], self.x_range[1]
+        y_min, y_max = self.y_range[0], self.y_range[1]
+        z_min, z_max = self.z_range[0], self.z_range[1]
 
         print(f'x min: {x_min}, y min: {y_min}, z min: {z_min}')
         print(f'x max: {x_max}, y max: {y_max}, z max: {z_max}')
@@ -808,9 +819,14 @@ class Viewer:
                 x = random.uniform(x_min, x_max)
                 # y = random.uniform(y_min, y_max)
                 z = random.uniform(z_min, z_max)
+                print(f'x: {x} and z: {z}')
                 angle = random.uniform(0, 360)
 
-                self.translation = glm.vec3(x, 0, z)
+                scale_factor = self.obj_management[drawable.name]['scale_factor']
+                scale_normalized_delta_x = x / scale_factor
+                scale_normalized_delta_z = z / scale_factor
+                self.translation = glm.vec3(scale_normalized_delta_x, 0, scale_normalized_delta_z)
+
                 self.obj_management[drawable.name]['translation'] = self.translation # update info for obj
 
                 translation_matrix = glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['reverse_translation']) * glm.translate(glm.mat4(1.0), self.obj_management[drawable.name]['translation']) # reverse last translation before applying new one
@@ -818,9 +834,7 @@ class Viewer:
                 self.reverse_translation = - self.translation
                 self.obj_management[drawable.name]['reverse_translation'] = self.reverse_translation # update info for obj
 
-                
                 current_model = drawable.get_model_matrix()
-                # model = current_model * glm.rotate(glm.mat4(1.0), glm.radians(angle), glm.vec3(0.0, 1.0, 0.0))
                 model = current_model * translation_matrix
                 drawable.update_attribute('model_matrix', model)
 
@@ -956,13 +970,15 @@ class Viewer:
             print(f'{file_path} is not found. Use default!')
 
     def reset(self):
-        # Remove all scenes and objects
-        self.drawables.clear()
-        self.autosave_flag = False
-        self.multi_cam_flag = False
-        self.move_camera_flag = False
-        self.drag_object_flag = False
-        self.move_cam_sys_flag = False
+        self.obj_location_option = True
+        self.random_location()
+        # # Remove all scenes and objects
+        # self.drawables.clear()
+        # self.autosave_flag = False
+        # self.multi_cam_flag = False
+        # self.move_camera_flag = False
+        # self.drag_object_flag = False
+        # self.move_cam_sys_flag = False
 
     def load_scene(self):
         model = []
@@ -989,8 +1005,11 @@ class Viewer:
 
         if self.selected_obj_path != "No file selected":
             self.selected_object = Object(self.object_shader, self.selected_obj_path)
-            # translation_matrix = self.lay_object()
-            # self.selected_object.update_attribute('model_matrix', translation_matrix)
+            current_model = self.selected_object.get_model_matrix()
+            translation_matrix = self.lay_object()
+            model_matrix = current_model * translation_matrix
+            self.selected_object.update_attribute('model_matrix', model_matrix)
+
             model.append(self.selected_object)
 
             # Add new object to object managament
@@ -1201,7 +1220,6 @@ class Viewer:
         if imgui.button('Scene View'):
             if self.rgb_save_path != "" and self.depth_save_path != "":
                 self.scene_view_flag = not self.scene_view_flag
-                print('click')
         
         # Warning if not select
         if self.rgb_save_path == "" or self.depth_save_path == "":
@@ -1598,7 +1616,7 @@ class Viewer:
                 self.render()
 
             # Use to debug and find good view for each scene
-            print('track ball cameraPos: ', self.trackball.get_cameraPos()) 
+            # print('track ball cameraPos: ', self.trackball.get_cameraPos()) 
             self.imgui_menu()
 
             glfw.swap_buffers(self.win)
