@@ -1,4 +1,4 @@
-scene_name: 'warehouse'
+scene_name: 'restaurant'
 near: 0.1
 far: 9
 sphere_radius: 2

@@ -51,16 +51,18 @@ class UManager(object):
 
     @staticmethod
     def load_texture(filename):
-        # texture = cv2.cvtColor(cv2.imread(filename, 1), cv2.COLOR_BGR2RGB)
-        # texture = np.flipud(texture)
-        # return texture
         image = Image.open(filename)
         image = image.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image for OpenGL
         img_mode = image.mode
-        if img_mode == "P": # handle "palettised" mode up here due to openGl not support
+
+        if img_mode == "I;16":
+            img_data = np.array(image, dtype=np.uint16)  # Preserve 16-bit data
+        elif img_mode == "P": # handle "palettised" mode up here due to openGl not support
             image = image.convert("RGB")
+            img_data = np.array(image, dtype=np.uint8)
             img_mode = "RGB"
-        img_data = np.array(image, dtype=np.uint8)
+        else:
+            img_data = np.array(image, dtype=np.uint8)
         return img_data, img_mode
 
     def _get_texture_loc(self):
@@ -93,8 +95,13 @@ class UManager(object):
         self.textures[binding_loc]["name"] = sampler_name
 
         # Determine optimal unpack alignment (default width should divided by 4)
-        _, width, num_channels = img_data.shape
-        row_size = width * num_channels
+        if len(img_data.shape) == 3:
+            _, width, num_channels = img_data.shape
+            row_size = width * num_channels
+        elif len(img_data.shape) == 2:
+            row_size = img_data.shape[1]
+        else:
+            row_size = img_data.shape[0]  # may need handle in the future
         alignment = 4 if (row_size % 4 == 0) else 1
         GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, alignment)
 
@@ -118,8 +125,19 @@ class UManager(object):
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_A, GL.GL_GREEN)
             GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RG, img_data.shape[1],
                             img_data.shape[0], 0, GL.GL_RG, GL.GL_UNSIGNED_BYTE, img_data)
+        elif img_mode == 'L':
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_G, GL.GL_RED)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_B, GL.GL_RED)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RED, img_data.shape[1],
+                            img_data.shape[0], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, img_data)
+        elif img_mode == 'I;16':
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_G, GL.GL_RED)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_SWIZZLE_B, GL.GL_RED)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_R16, img_data.shape[1],
+                            img_data.shape[0], 0, GL.GL_RED, GL.GL_UNSIGNED_SHORT, img_data)
         else:
             print("Problem with new image mode", img_mode)
+            print("Image file", image_file)
 
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)

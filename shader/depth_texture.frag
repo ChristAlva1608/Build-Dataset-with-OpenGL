@@ -45,7 +45,7 @@ void main() {
         vec3 norm = normalize(normal_interp);
         vec3 lightDir = normalize(lightPos - vert_pos);
         float diff = max(dot(norm, lightDir), 0.0);
-        vec3 diffuse = diffuseStrength * lightColor;
+        vec3 diffuse = diffuseStrength * diff * lightColor;
 
         // specular
         vec3 viewDir = normalize(viewPos - vert_pos);
@@ -70,7 +70,7 @@ void main() {
             vec4 bumpColor = texture(texture_bump, texcoord_interp);
 
             // Combine the textures
-            vec4 textureColor = diffuseColor * 0.8 + ambientColor * 0.05 + specularColor * 0.05 + reflColor * 0.05 + specularColor * 0.05; // Example blend
+            vec4 textureColor = diffuseColor * 0.8 + ambientColor * 0.05 + specularColor * 0.1 + reflColor * 0.05; // Example blend
             finalColor = textureColor * vec4(lighting, 1.0);
         } else {
             // Use object color

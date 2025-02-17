@@ -6,3 +6,8 @@ view_range: [0, 360] # angle view
 #cameraPos: [0.0, 0.6, 3.3]
 cameraPos: [0.0, 0.0, 0]
 center_translation_vec: [ -0.21324, -1.16714, 2.70241 ]
+x_range : [-5, 5]
+y_range : [0, 4]
+z_range : [-5, 5]
+yaw_range : [-40, 40]
+pitch_range: [-40, 40]

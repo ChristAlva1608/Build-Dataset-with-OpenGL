@@ -24,6 +24,8 @@ class Scene:
         overall_min, overall_max = self.parse_file_pywavefront(file_path)
         self.min_x, self.min_y, self.min_z = overall_min
         self.max_x, self.max_y, self.max_z = overall_max
+        print("over all min", overall_min)
+        print("over all max", overall_max)
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
@@ -50,7 +52,8 @@ class Scene:
                     vertices,
                     texcoords,
                     normals,
-                    self.materials[material.name],
+                    # self.materials[material.name],
+                    self.materials.get(material.name, None),
                     self.dir_path
                 ).setup()
 
