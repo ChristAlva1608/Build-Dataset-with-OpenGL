@@ -110,6 +110,9 @@ class Viewer:
         self.scale_changed = False
         self.scale_factor = 1
         self.prev_scale_factor = 1
+        self.show_autoselect_window = False
+        self.num_objs = 0
+        self.obj_folder_path = "No file selected"
 
         # Initialize operation
         self.vcameras = []
@@ -661,6 +664,32 @@ class Viewer:
             glfw.swap_buffers(self.win)
         self.autosave_flag = False
 
+    def autoselect_obj(self):
+        for i in range(self.num_objs):
+            # List all subdirectories (object categories)
+            subdirs = [d for d in os.listdir(self.obj_folder_path) if os.path.isdir(os.path.join(self.obj_folder_path, d))]
+            
+            if not subdirs:
+                print("No subdirectories found in", self.obj_folder_path)
+                return None
+
+            # Randomly select a subdirectory
+            random_subdir = random.choice(subdirs)
+            subdir_path = os.path.join(self.obj_folder_path, random_subdir)
+
+            # List all .obj files in the selected subdirectory
+            obj_files = [f for f in os.listdir(subdir_path) if f.endswith('.obj')]
+
+            if not obj_files:
+                print(f"No .obj files found in {subdir_path}")
+                return None
+
+            # Randomly select an .obj file
+            random_obj_file = random.choice(obj_files)
+            file_path = os.path.join(subdir_path, random_obj_file)
+
+            self.load_object(file_path)
+
     '''
     This function is used to debug
     '''
@@ -884,28 +913,27 @@ class Viewer:
 
         self.add(model)
 
-    def load_object(self):
+    def load_object(self, file_path):
         model = []
 
-        if self.selected_obj_path != "No file selected":
-            self.selected_object = Object(self.object_shader, self.selected_obj_path)
-            current_model = self.selected_object.get_model_matrix()
-            translation_matrix = self.lay_object()
-            model_matrix = current_model * translation_matrix
-            self.selected_object.update_attribute('model_matrix', model_matrix)
+        self.selected_object = Object(self.object_shader, file_path)
+        current_model = self.selected_object.get_model_matrix()
+        translation_matrix = self.lay_object()
+        model_matrix = current_model * translation_matrix
+        self.selected_object.update_attribute('model_matrix', model_matrix)
 
-            model.append(self.selected_object)
+        model.append(self.selected_object)
 
-            # Add new object to object managament
-            self.obj_management[self.selected_object.name] = {
-                'scale_factor': 1,
-                'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
-                'translation': glm.vec3(0.0, 0.0, 0.0)
-            }
+        # Add new object to object managament
+        self.obj_management[self.selected_object.name] = {
+            'scale_factor': 1,
+            'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
+            'translation': glm.vec3(0.0, 0.0, 0.0)
+        }
 
-            # Set scale factor for new object
-            self.prev_scale_factor = 1
-            self.scale_factor = 1
+        # Set scale factor for new object
+        self.prev_scale_factor = 1
+        self.scale_factor = 1
 
         self.add(model)
 
@@ -1119,101 +1147,138 @@ class Viewer:
         
         win_pos_width = 0
         win_pos_height = self.scene_height
-        imgui.set_next_window_position(win_pos_width, win_pos_height)
-        imgui.set_next_window_size(self.object_width, self.object_height)
 
-        imgui.begin("Object")
+        if not self.show_autoselect_window:
+            imgui.set_next_window_position(win_pos_width, win_pos_height)
+            imgui.set_next_window_size(self.object_width, self.object_height)
+            imgui.begin("Object")
 
-        select_obj_flag = self.button_with_icon('icons/load.png', 'Select Obj')
-        if select_obj_flag:
-            self.selected_obj_path = self.select_file('./object')
-        imgui.text(f"{self.selected_obj_path}")
+            if imgui.button("AutoSelect"):
+                self.show_autoselect_window = True
 
-        imgui.set_next_item_width(100)
+            select_obj_flag = self.button_with_icon('icons/load.png', 'Select Obj')
+            if select_obj_flag:
+                self.selected_obj_path = self.select_file('./object')
+            imgui.text(f"{self.selected_obj_path}")
 
-        current_item = "" if self.selected_object is None else self.selected_object.name
-        previous_selected_object = self.selected_object  # Store the previous selection
+            imgui.set_next_item_width(100)
 
-        if imgui.begin_combo("List of Objects", current_item):
-            for drawable in self.drawables:
-                if isinstance(drawable, Object):
-                    is_selected = self.selected_object == drawable
+            current_item = "" if self.selected_object is None else self.selected_object.name
+            previous_selected_object = self.selected_object  # Store the previous selection
 
-                    # Check if a new object is selected
-                    if imgui.selectable(drawable.name, is_selected)[0]:
-                        if self.selected_object != drawable:  # Only update if it's a new selection
-                            self.selected_object = drawable
+            if imgui.begin_combo("List of Objects", current_item):
+                for drawable in self.drawables:
+                    if isinstance(drawable, Object):
+                        is_selected = self.selected_object == drawable
 
-                            # Reset scale factor only if a different object is selected
-                            self.prev_scale_factor = self.obj_management[self.selected_object.name]['scale_factor']
-                            self.scale_factor = self.obj_management[self.selected_object.name]['scale_factor']
+                        # Check if a new object is selected
+                        if imgui.selectable(drawable.name, is_selected)[0]:
+                            if self.selected_object != drawable:  # Only update if it's a new selection
+                                self.selected_object = drawable
 
-                    if is_selected:
-                        imgui.set_item_default_focus()
+                                # Reset scale factor only if a different object is selected
+                                self.prev_scale_factor = self.obj_management[self.selected_object.name]['scale_factor']
+                                self.scale_factor = self.obj_management[self.selected_object.name]['scale_factor']
 
-            imgui.end_combo()
+                        if is_selected:
+                            imgui.set_item_default_focus()
 
-        if self.selected_object:
-            imgui.text(f"{self.selected_object.name} is selected")
-        else:
-            imgui.text(f"No object is selected")
+                imgui.end_combo()
 
-        imgui.set_next_item_width(100)
-        self.scale_changed, self.scale_factor = imgui.input_float("Scale factor", self.scale_factor, step=0.1, format="%.2f")
-        if self.selected_object:
-            self.obj_management[self.selected_object.name]['scale_factor'] = self.scale_factor # update info for obj
+            if self.selected_object:
+                imgui.text(f"{self.selected_object.name} is selected")
+            else:
+                imgui.text(f"No object is selected")
 
-        if self.drag_object_flag:
-            imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
-        else:
-            imgui.push_style_color(imgui.COLOR_BUTTON, 1.0, 0.0, 0.0, 1.0)  # Red before clicking
-
-        if imgui.button("Drag/Drop"):
-            self.drag_object_flag = not self.drag_object_flag # Toggle the flag
-
-            hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
-            arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+            imgui.set_next_item_width(100)
+            self.scale_changed, self.scale_factor = imgui.input_float("Scale factor", self.scale_factor, step=0.1, format="%.2f")
+            if self.selected_object:
+                self.obj_management[self.selected_object.name]['scale_factor'] = self.scale_factor # update info for obj
 
             if self.drag_object_flag:
-                # Set the hand cursor for the window
-                glfw.set_cursor(self.win, hand_cursor)
+                imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
             else:
-                # Set the hand cursor for the window
-                glfw.set_cursor(self.win, arrow_cursor)
+                imgui.push_style_color(imgui.COLOR_BUTTON, 1.0, 0.0, 0.0, 1.0)  # Red before clicking
 
-        # Restore default button color
-        imgui.pop_style_color()
+            if imgui.button("Drag/Drop"):
+                self.drag_object_flag = not self.drag_object_flag # Toggle the flag
 
-        if self.rotate_obj_flag:
-            imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
-        else:
-            imgui.push_style_color(imgui.COLOR_BUTTON, 1.0, 0.0, 0.0, 1.0)  # Red before clicking
+                hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
+                arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
 
-        if imgui.button('Rotate Object'):
-            self.rotate_obj_flag = not self.rotate_obj_flag # Toggle the flag
+                if self.drag_object_flag:
+                    # Set the hand cursor for the window
+                    glfw.set_cursor(self.win, hand_cursor)
+                else:
+                    # Set the hand cursor for the window
+                    glfw.set_cursor(self.win, arrow_cursor)
 
-            hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
-            arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
+            # Restore default button color
+            imgui.pop_style_color()
 
             if self.rotate_obj_flag:
-                # Set the hand cursor for the window
-                glfw.set_cursor(self.win, hand_cursor)
+                imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
             else:
-                # Set the hand cursor for the window
-                glfw.set_cursor(self.win, arrow_cursor)
+                imgui.push_style_color(imgui.COLOR_BUTTON, 1.0, 0.0, 0.0, 1.0)  # Red before clicking
 
-        # Restore default button color
-        imgui.pop_style_color()
+            if imgui.button('Rotate Object'):
+                self.rotate_obj_flag = not self.rotate_obj_flag # Toggle the flag
 
-        font_size = imgui.get_font_size()
-        vertical_padding = 8
-        button_height = font_size + vertical_padding*2
-        imgui.set_cursor_pos((imgui.get_window_width()//4, imgui.get_window_height() - button_height))
-        imgui.set_next_item_width(imgui.get_window_width()//2)
-        if imgui.button("Load Object"):
-            self.load_object()
+                hand_cursor = glfw.create_standard_cursor(glfw.HAND_CURSOR)
+                arrow_cursor = glfw.create_standard_cursor(glfw.ARROW_CURSOR)
 
-        imgui.end()
+                if self.rotate_obj_flag:
+                    # Set the hand cursor for the window
+                    glfw.set_cursor(self.win, hand_cursor)
+                else:
+                    # Set the hand cursor for the window
+                    glfw.set_cursor(self.win, arrow_cursor)
+
+            # Restore default button color
+            imgui.pop_style_color()
+
+            font_size = imgui.get_font_size()
+            vertical_padding = 8
+            button_height = font_size + vertical_padding*2
+            imgui.set_cursor_pos((imgui.get_window_width()//4, imgui.get_window_height() - button_height))
+            imgui.set_next_item_width(imgui.get_window_width()//2)
+            if imgui.button("Load Object"):
+                self.load_object(self.selected_obj_path)
+
+            imgui.end()
+        else:
+            # ==========================
+            # AUTOSELECT CONFIG WINDOW
+            # ==========================
+            imgui.set_next_window_position(win_pos_width, win_pos_height)
+            imgui.set_next_window_size(self.object_width, self.object_height)
+            imgui.begin("AutoSelect Configs")
+
+            imgui.spacing()
+            window_width = imgui.get_window_width()
+            text_width = imgui.calc_text_size("AutoSelect Configs").x
+            text_pos = (window_width - text_width) / 2
+            imgui.set_cursor_pos_x(text_pos)
+            imgui.text('AutoSelect Configs')
+
+            imgui.separator()
+
+            if imgui.button("Object Folder"):
+                self.obj_folder_path = self.select_folder()
+
+            imgui.set_next_item_width(100)
+            num_objs_changed, self.num_objs = imgui.input_int("Number Of Objects", self.num_objs)
+
+            if imgui.button("Confirm"):
+                self.autoselect_obj()
+
+            # ======= RETURN TO MAIN WINDOW BUTTON ========
+            imgui.separator()
+            if imgui.button("Back"):
+                self.show_autoselect_window = False  # Return to main window
+            
+            imgui.end()
+
 
         ########################################################################
         #                              Operation                              #
@@ -1288,7 +1353,7 @@ class Viewer:
                 self.depth_save_path = self.select_folder()
                 if self.depth_save_path:
                     self.save_depth(self.depth_save_path)
-                    
+
             imgui.end()
 
         else:
@@ -1322,10 +1387,10 @@ class Viewer:
             if imgui.begin_combo("Select Random Options", "Options"):
                 # Add checkboxes inside the combo
                 _, self.lightPos_option = imgui.checkbox("Light Position", self.lightPos_option)
-                _, self.shininess_option = imgui.checkbox("Shininess", self.shininess_option)
+                # _, self.shininess_option = imgui.checkbox("Shininess", self.shininess_option)
                 _, self.obj_location_option = imgui.checkbox("Object Location", self.obj_location_option)
                 _, self.obj_rotation_option = imgui.checkbox("Object Rotation", self.obj_rotation_option)
-                _, self.obj_scale_option = imgui.checkbox("Object Scaling", self.obj_scale_option)
+                # _, self.obj_scale_option = imgui.checkbox("Object Scaling", self.obj_scale_option)
                 _, self.camera_pos_option = imgui.checkbox("Camera Position", self.camera_pos_option)
                 imgui.end_combo()
 
