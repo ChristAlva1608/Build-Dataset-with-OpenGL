@@ -517,22 +517,30 @@ class Viewer:
         # np.savetxt('depth.txt',depth_info)
 
         ### Save depth image ###
-        # Read Pixel using GL_RGB
-        pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
-        depth_image = np.frombuffer(pixels, dtype=np.uint8).reshape((int(self.rgb_view_height), int(self.rgb_view_width), 3))
+        # Read depth values from OpenGL depth buffer (float32 values)
+        depth_pixels = GL.glReadPixels(
+            win_pos_width, 0,
+            self.rgb_view_width, self.rgb_view_height,
+            GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT
+        )
 
-        # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
-        depth_image = np.flipud(depth_image)
+        # Convert to NumPy array
+        depth_image = np.frombuffer(depth_pixels, dtype=np.float32).reshape(
+            (int(self.rgb_view_height), int(self.rgb_view_width))
+        )
 
-        # Convert numpy array (or your image data format) to PIL Image
-        depth_image = Image.fromarray(depth_image)
+        # Normalize depth to 16-bit range [0, 65535]
+        depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
+        depth_image = (depth_image * 65535).astype(np.uint16)  # Ensure 16-bit integer format
+
+        # Convert to PIL Image with correct mode "I;16"
+        depth_image_pil = Image.fromarray(depth_image, mode="I;16")  # Use "I;16" for 16-bit grayscale
         
         # Create a unique file name using timestamp
-        # timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")  # Includes microseconds
         file_name = f"depth_image_{numb}.png"
 
         # Save the image to the selected directory
-        depth_image.save(os.path.join(save_path, file_name))
+        depth_image_pil.save(os.path.join(save_path, file_name))
         print(f"Saved depth image as {file_name}")
 
     def autosave(self, lay_opts):
