@@ -1266,6 +1266,11 @@ class Viewer:
 
             imgui.get_style().colors[imgui.COLOR_BUTTON_HOVERED] = imgui.Vec4(0.6, 0.8, 0.6, 1.0)  # Green hover color
 
+            # ============== AutoSave Button ==============
+            imgui.set_next_item_width(100)
+            if imgui.button("AutoSave"):
+                self.show_autosave_window = True  # Switch to AutoSave window
+
             # Save RGB Button with Icon
             imgui.set_next_item_width(100)
             save_rgb = self.button_with_icon('icons/save.png', 'Save RGB')
@@ -1283,12 +1288,7 @@ class Viewer:
                 self.depth_save_path = self.select_folder()
                 if self.depth_save_path:
                     self.save_depth(self.depth_save_path)
-
-            # ============== AutoSave Button ==============
-            imgui.set_next_item_width(100)
-            if imgui.button("AutoSave"):
-                self.show_autosave_window = True  # Switch to AutoSave window
-
+                    
             imgui.end()
 
         else:
@@ -1347,7 +1347,7 @@ class Viewer:
             imgui.separator()
             if imgui.button("Back"):
                 self.show_autosave_window = False  # Return to main window
-
+            
             imgui.end()
 
         ########################################################################
