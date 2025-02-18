@@ -1397,8 +1397,8 @@ class Viewer:
             if imgui.button("Confirm"):
                 if not self.rgb_save_path or not self.depth_save_path:
                     scene_name = self.selected_scene.name
-                    self.rgb_save_path = Path("./rgb") / scene_name
-                    self.depth_save_path = Path("./depth") / scene_name
+                    self.rgb_save_path = Path("./dataset/rgb") / scene_name
+                    self.depth_save_path = Path("./dataset/depth") / scene_name
 
                     # Create directories if they don't exist
                     self.rgb_save_path.mkdir(parents=True, exist_ok=True)
