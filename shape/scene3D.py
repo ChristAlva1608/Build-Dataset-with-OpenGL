@@ -21,7 +21,8 @@ class Scene:
         self.subobjs = []
         self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
-
+        self.name = os.path.basename(file_path)[:-4]
+        
         self.split_obj()
 
     def parse_obj_file(self,file_path):

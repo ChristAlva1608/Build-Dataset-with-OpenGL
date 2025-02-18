@@ -20,6 +20,7 @@ class Scene:
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)
+        self.name = os.path.basename(file_path)[:-4]
 
         overall_min, overall_max = self.parse_file_pywavefront(file_path)
         self.min_x, self.min_y, self.min_z = overall_min
