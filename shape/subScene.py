@@ -125,6 +125,16 @@ class SubScene:
         # lighting setup
         self.uma.upload_uniform_vector3fv(np.array(light_pos), "lightPos")
         self.uma.upload_uniform_vector3fv(np.array(light_color), "lightColor")
+        return self
+
+    def draw(self, cameraPos):
+        self.vao.activate()
+        glUseProgram(self.shader.render_idx)
+
+        if self.use_texture: # use texture
+            self.uma.upload_uniform_scalar1i(1, "use_texture")
+        else:
+            self.uma.upload_uniform_scalar1i(0, "use_texture")
 
         object_color = glm.vec3(0.5, 0.5, 0.5)
         self.uma.upload_uniform_vector3fv(np.array(object_color), "objectColor")
@@ -139,22 +149,10 @@ class SubScene:
             self.specular = [0.5, 0.5, 0.5]
             self.ambient = [0.5, 0.5, 0.5]
             self.shininess = 100.0
-
         self.uma.upload_uniform_vector3fv(np.array(self.diffuse), 'diffuseStrength')
         self.uma.upload_uniform_vector3fv(np.array(self.specular), 'specularStrength')
         self.uma.upload_uniform_vector3fv(np.array(self.ambient), 'ambientStrength')
         self.uma.upload_uniform_scalar1f(self.shininess, 'shininess')
-
-        return self
-
-    def draw(self, cameraPos):
-        self.vao.activate()
-        glUseProgram(self.shader.render_idx)
-
-        if self.use_texture: # use texture
-            self.uma.upload_uniform_scalar1i(1, "use_texture")
-        else:
-            self.uma.upload_uniform_scalar1i(0, "use_texture")
 
         # Bind and upload textures dynamically
         if self.use_texture:

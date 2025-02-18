@@ -1,13 +1,13 @@
-scene_name: 'classroom'
-near: 0.1
-far: 20000
+scene_name: 'classroom_2'
+near: 500
+far: 13500
 sphere_radius: 2
 view_range: [0, 360] # angle view
 cameraPos: [0.0, 0.0, 0]
 #cameraPos: [  5776.61,      669.355,      -14000]
 center_translation_vec: [-6000, -1300, 15000]
-x_range : [-11, 11]
-y_range : [-0.25, 7.25]
-z_range : [-8, 8]
+x_range : [-4900, 5900]
+y_range : [-1000, 1300]
+z_range : [-4000, 4000]
 yaw_range : [0, 360]
 pitch_range: [0, 360]

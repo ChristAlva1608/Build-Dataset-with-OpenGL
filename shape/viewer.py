@@ -494,7 +494,7 @@ class Viewer:
         file_name = f"rgb_image_{numb}.png"
 
         # Save the image to the local directory
-        rgb_image.save(str(save_path / file_name))
+        rgb_image.save(os.path.join(save_path, file_name))
         print(f"Saved rgb image as {file_name}")
 
     def save_depth(self, save_path, numb):
@@ -529,7 +529,7 @@ class Viewer:
         file_name = f"depth_image_{numb}.png"
 
         # Save the image to the selected directory
-        depth_image.save(str(save_path / file_name))
+        depth_image.save(os.path.join(save_path, file_name))
         print(f"Saved depth image as {file_name}")
 
     def autosave(self, lay_opts):
