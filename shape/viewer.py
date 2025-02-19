@@ -18,10 +18,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from .object3D import *
-from .scene3D import *
-# from .object3D_v2 import *
-# from .scene3D_v2 import *
+# from .object3D import *
+# from .scene3D import *
+from .object3D_v2 import *
+from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -81,6 +81,7 @@ class Viewer:
         self.x_range = []
         self.y_range = []
         self.z_range = []
+        self.scale_range = []
 
         # Initialize mouse parameters
         self.last_x = width / 2
@@ -613,13 +614,15 @@ class Viewer:
                     drawable.update_attribute('model_matrix', model)
 
                 if self.obj_scale_option and isinstance(drawable, Object):
-                    scale_factor = random.uniform(20, 100)
-                    prev_scale_factor = self.obj_management[drawable.name]['scale_factor']
-                    self.obj_management[drawable.name]['scale_factor'] = scale_factor
+                    self.scale_factor = random.uniform(self.scale_range[0], self.scale_range[1])
+                    self.prev_scale_factor = self.obj_management[drawable.name]['scale_factor']
+                    self.obj_management[drawable.name]['scale_factor'] = self.scale_factor
+                    print(f'name: {drawable.name}')
+                    print(f'scale factor: {self.obj_management[drawable.name]["scale_factor"]}')
 
                     current_model = drawable.get_model_matrix()
-                    prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/prev_scale_factor))
-                    scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(scale_factor))
+                    prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/self.prev_scale_factor))
+                    scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(self.scale_factor))
                     model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
 
                     drawable.update_attribute('model_matrix', model)
@@ -926,31 +929,14 @@ class Viewer:
         model = []
 
         self.selected_object = Object(self.object_shader, file_path)
-        current_model = self.selected_object.get_model_matrix()
-        translation_matrix = self.lay_object()
-        model_matrix = current_model * translation_matrix
-        self.selected_object.update_attribute('model_matrix', model_matrix)
+
+        # current_model = self.selected_object.get_model_matrix()
+        # translation_matrix = self.lay_object()
+        # model_matrix = current_model * translation_matrix
+        # self.selected_object.update_attribute('model_matrix', model_matrix)
 
         model.append(self.selected_object)
 
-        '''
-        {
-            'wuson_0': 
-                {
-                    'order':1
-                    'scale_factor': 1,
-                    'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
-                    'translation': glm.vec3(0.0, 0.0, 0.0)
-                },
-            'wuson_1': 
-                {
-                    'order':1
-                    'scale_factor': 1,
-                    'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
-                    'translation': glm.vec3(0.0, 0.0, 0.0)
-                }
-        }
-        '''
         # Add new object to object management
         init_name = self.selected_object.name + '_' + str(0)
         if init_name in self.obj_management:
@@ -1037,15 +1023,16 @@ class Viewer:
             drawable.update_shininess(self.shininess)
 
             # Define model matrix
-            if self.selected_object == drawable and self.scale_changed:
+            if self.selected_object == drawable and self.scale_changed and self.scale_factor != 0:
                 current_model = self.selected_object.get_model_matrix()
                 
                 prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/self.prev_scale_factor))
                 scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(self.scale_factor))
 
                 model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
-                
+
                 self.prev_scale_factor = self.scale_factor
+                print(f'prev scale factor: {self.prev_scale_factor}')
                 drawable.update_attribute('model_matrix', model)
 
             # Define view matrix
@@ -1088,14 +1075,14 @@ class Viewer:
             drawable.update_colormap(self.selected_colormap)
 
             # Define model matrix
-            if self.selected_object == drawable and self.scale_changed:
+            if self.selected_object == drawable and self.scale_changed and self.scale_factor != 0:
                 current_model = self.selected_object.get_model_matrix()
                 
                 prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/self.prev_scale_factor))
                 scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(self.scale_factor))
 
                 model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
-                
+
                 self.prev_scale_factor = self.scale_factor
                 drawable.update_attribute('model_matrix', model)
 
@@ -1433,7 +1420,7 @@ class Viewer:
                 # _, self.shininess_option = imgui.checkbox("Shininess", self.shininess_option)
                 _, self.obj_location_option = imgui.checkbox("Object Location", self.obj_location_option)
                 _, self.obj_rotation_option = imgui.checkbox("Object Rotation", self.obj_rotation_option)
-                # _, self.obj_scale_option = imgui.checkbox("Object Scaling", self.obj_scale_option)
+                _, self.obj_scale_option = imgui.checkbox("Object Scaling", self.obj_scale_option)
                 _, self.camera_pos_option = imgui.checkbox("Camera Position", self.camera_pos_option)
                 imgui.end_combo()
 
