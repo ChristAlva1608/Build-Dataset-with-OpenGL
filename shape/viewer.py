@@ -587,10 +587,11 @@ class Viewer:
                     x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
                     x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
                     x = random.uniform(x_min, x_max)
+                    y = random.uniform(y_min, y_max)
                     z = random.uniform(z_min, z_max)
                     
                     self.reverse_translation = self.obj_management[drawable.name]['reverse_translation']
-                    self.translation = glm.vec3(x,0,z)
+                    self.translation = glm.vec3(x,y,z)
                     
                     current_model = drawable.get_model_matrix()
                     current_model[3] = current_model[3] + glm.vec4(self.reverse_translation, 0.0) + glm.vec4(self.translation, 0.0)
@@ -932,12 +933,46 @@ class Viewer:
 
         model.append(self.selected_object)
 
-        # Add new object to object managament
-        self.obj_management[self.selected_object.name] = {
-            'scale_factor': 1,
-            'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
-            'translation': glm.vec3(0.0, 0.0, 0.0)
+        '''
+        {
+            'wuson_0': 
+                {
+                    'order':1
+                    'scale_factor': 1,
+                    'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
+                    'translation': glm.vec3(0.0, 0.0, 0.0)
+                },
+            'wuson_1': 
+                {
+                    'order':1
+                    'scale_factor': 1,
+                    'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
+                    'translation': glm.vec3(0.0, 0.0, 0.0)
+                }
         }
+        '''
+        # Add new object to object management
+        init_name = self.selected_object.name + '_' + str(0)
+        if init_name in self.obj_management:
+            # Track order of object
+            self.obj_management[init_name]['order'] += 1
+
+            # Update new name
+            self.selected_object.name = self.selected_object.name + '_' + str(self.obj_management[init_name]['order'])
+            self.obj_management[self.selected_object.name] = {
+                'scale_factor': 1,
+                'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
+                'translation': glm.vec3(0.0, 0.0, 0.0)
+            }
+        else:
+            # First object will store order to manage obj name
+            self.selected_object.name = self.selected_object.name + '_' + str(0)
+            self.obj_management[self.selected_object.name] = {
+                'order': 0,
+                'scale_factor': 1,
+                'reverse_translation': glm.vec3(0.0, 0.0, 0.0),
+                'translation': glm.vec3(0.0, 0.0, 0.0)
+            }
 
         # Set scale factor for new object
         self.prev_scale_factor = 1
@@ -1245,11 +1280,11 @@ class Viewer:
             # Restore default button color
             imgui.pop_style_color()
 
-            font_size = imgui.get_font_size()
-            vertical_padding = 8
-            button_height = font_size + vertical_padding*2
-            imgui.set_cursor_pos((imgui.get_window_width()//4, imgui.get_window_height() - button_height))
-            imgui.set_next_item_width(imgui.get_window_width()//2)
+            # font_size = imgui.get_font_size()
+            # vertical_padding = 8
+            # button_height = font_size + vertical_padding*2
+            # imgui.set_cursor_pos((imgui.get_window_width()//4, imgui.get_window_height() - button_height))
+            # imgui.set_next_item_width(imgui.get_window_width()//2)
             if imgui.button("Load Object"):
                 self.load_object(self.selected_obj_path)
 

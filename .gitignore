@@ -16,3 +16,5 @@ imgui.ini
 obj/
 duck/
 dataset/
+scene/
+object/
