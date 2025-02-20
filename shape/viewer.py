@@ -138,6 +138,7 @@ class Viewer:
         self.obj_rotation_option = False
         self.obj_location_option = False
         self.obj_scale_option = False
+        self.obj_texture_option = False
         self.camera_pos_option = False
 
         # Initialize camera config
@@ -621,6 +622,12 @@ class Viewer:
                     model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
 
                     drawable.update_attribute('model_matrix', model)
+
+                if self.obj_texture_option and isinstance(drawable, Object):
+                    # Only update map_Kd, supposed an object only have 1 simple texture
+                    texture_list = os.listdir('textures')
+                    texture_path = random.choice(texture_list)
+                    drawable.update_attribute('texture', texture_path)
 
                 drawable.set_mode(1) # mode for rgb image
 
@@ -1419,6 +1426,7 @@ class Viewer:
                 _, self.obj_location_option = imgui.checkbox("Object Location", self.obj_location_option)
                 _, self.obj_rotation_option = imgui.checkbox("Object Rotation", self.obj_rotation_option)
                 _, self.obj_scale_option = imgui.checkbox("Object Scaling", self.obj_scale_option)
+                _, self.obj_texture_option = imgui.checkbox("Object Texture", self.obj_texture_option)
                 _, self.camera_pos_option = imgui.checkbox("Camera Position", self.camera_pos_option)
                 imgui.end_combo()
 
@@ -1579,7 +1587,6 @@ class Viewer:
         self.far_changed, self.far = imgui.input_float("Far", self.far, step=0.1, format="%.2f")
 
         imgui.end()
-
         imgui.render()
         self.imgui_impl.render(imgui.get_draw_data())
     

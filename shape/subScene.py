@@ -93,6 +93,10 @@ class SubScene:
     def update_projection_matrix(self, projection):
         self.projection = projection
 
+    def update_texture(self, texture_path):
+        # Only update map_Kd, supposed an object only have 1 simple texture
+        self.texture_id['map_Kd'] = self.uma.setup_texture("texture_diffuse", texture_path)
+
     def transform_vertices(self):
         transformed_vertices = []
         for vertex in self.vertices:
