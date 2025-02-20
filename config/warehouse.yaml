@@ -1,6 +1,6 @@
 scene_name: 'warehouse'
 near: 0.1
-far: 9
+far: 10
 sphere_radius: 2
 view_range: [0, 360] # angle view
 #cameraPos: [0.0, 0.6, 3.3]

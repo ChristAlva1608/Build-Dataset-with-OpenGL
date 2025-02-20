@@ -530,6 +530,9 @@ class Viewer:
             (int(self.rgb_view_height), int(self.rgb_view_width))
         )
 
+        # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
+        depth_image = np.flipud(depth_image)
+
         # Normalize depth to 16-bit range [0, 65535]
         depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
         depth_image = (depth_image * 65535).astype(np.uint16)  # Ensure 16-bit integer format
@@ -617,8 +620,8 @@ class Viewer:
                     self.scale_factor = random.uniform(self.scale_range[0], self.scale_range[1])
                     self.prev_scale_factor = self.obj_management[drawable.name]['scale_factor']
                     self.obj_management[drawable.name]['scale_factor'] = self.scale_factor
-                    print(f'name: {drawable.name}')
-                    print(f'scale factor: {self.obj_management[drawable.name]["scale_factor"]}')
+                    # print(f'name: {drawable.name}')
+                    # print(f'scale factor: {self.obj_management[drawable.name]["scale_factor"]}')
 
                     current_model = drawable.get_model_matrix()
                     prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/self.prev_scale_factor))
@@ -931,6 +934,9 @@ class Viewer:
         self.selected_object = Object(self.object_shader, file_path)
 
         # current_model = self.selected_object.get_model_matrix()
+        # translation_matrix = glm.translate(glm.mat4(1.0), self.center_translation_vec)
+        # model_matrix = current_model * translation_matrix
+        # self.selected_scene.update_attribute("model_matrix", model_matrix)
         # translation_matrix = self.lay_object()
         # model_matrix = current_model * translation_matrix
         # self.selected_object.update_attribute('model_matrix', model_matrix)
