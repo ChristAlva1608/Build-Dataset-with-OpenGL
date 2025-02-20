@@ -45,26 +45,11 @@ class SubObj:
 
         texture_found = False
         if self.use_texture:
-            texture_path = self.materials.get('map_Kd')
-            if os.path.exists(texture_path):
+            self.texture_path = self.materials.get('map_Kd')
+            if os.path.exists(self.texture_path):
                 self.texture_flag = True
-                self.texture_id= self.uma.setup_texture('texture_diffuse', texture_path)
+                self.texture_id= self.uma.setup_texture('texture_diffuse', self.texture_path)
                 texture_found = True
-
-            # for texture in TextureMap:
-            #     map_key, uniform_name = texture.value
-            #     self.texture_flags[map_key] = False  # Initialize texture flag as False
-            #     texture_path = self.materials.get(map_key)
-            #
-            #     if texture_path:
-            #         if map_key == 'map_bump':
-            #             texture_path = texture_path['filename']
-            #         texture_path = os.path.join(dir_path, texture_path)
-            #
-            #         if os.path.exists(texture_path):
-            #             self.texture_flags[map_key] = True
-            #             self.texture_id[map_key] = self.uma.setup_texture(uniform_name, texture_path)
-            #             texture_found = True
 
         if not texture_found:
             self.use_texture = False
@@ -170,7 +155,7 @@ class SubObj:
         if self.use_texture:
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, self.texture_id)
-            glUniform1i(glGetUniformLocation(self.shader.render_idx, 'texture_diffuse'), idx)
+            glUniform1i(glGetUniformLocation(self.shader.render_idx, 'texture_diffuse'), 0)
 
         self.uma.upload_uniform_vector3fv(np.array(cameraPos), "viewPos")
 

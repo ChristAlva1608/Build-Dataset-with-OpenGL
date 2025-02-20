@@ -628,6 +628,8 @@ class Viewer:
                 if self.obj_texture_option and isinstance(drawable, Object):
                     # Only update map_Kd, supposed an object only have 1 simple texture
                     texture_list = os.listdir('textures')
+                    # Store the initial texture of the object
+                    texture_list.append(self.selected_object.get_texture())
                     texture_path = random.choice(texture_list)
                     path = os.path.join('textures', texture_path)
                     drawable.update_attribute('texture', path)
@@ -1233,8 +1235,10 @@ class Viewer:
             if self.selected_object:
                 self.obj_management[self.selected_object.name]['scale_factor'] = self.scale_factor # update info for obj
 
-            if imgui.button('Random_textures'):
+            if imgui.button('Random Textures'):
                 texture_list = os.listdir('textures')
+                # Store the initial texture of the object
+                texture_list.append(self.selected_object.get_texture())
                 texture_path = random.choice(texture_list)
                 path = os.path.join('textures', texture_path)
                 self.selected_object.update_attribute('texture', path)
