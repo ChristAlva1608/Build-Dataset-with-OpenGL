@@ -518,28 +518,20 @@ class Viewer:
         # np.savetxt('depth.txt',depth_info)
 
         ### Save depth image ###
-        # Read depth values from OpenGL depth buffer (float32 values)
         depth_pixels = GL.glReadPixels(
-            win_pos_width, 0,
-            self.rgb_view_width, self.rgb_view_height,
-            GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT
-        )
+                win_pos_width, 0,
+                self.rgb_view_width, self.rgb_view_height,
+                GL.GL_RGB, GL.GL_UNSIGNED_BYTE
+            )
 
-        # Convert to NumPy array
-        depth_image = np.frombuffer(depth_pixels, dtype=np.float32).reshape(
-            (int(self.rgb_view_height), int(self.rgb_view_width))
+        depth_image = np.frombuffer(depth_pixels, dtype=np.uint8).reshape(
+            (int(self.rgb_view_height), int(self.rgb_view_width), 3)
         )
 
         # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
         depth_image = np.flipud(depth_image)
+        depth_image_pil = Image.fromarray(depth_image[:,:,0], mode='L')
 
-        # Normalize depth to 16-bit range [0, 65535]
-        depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min())
-        depth_image = (depth_image * 65535).astype(np.uint16)  # Ensure 16-bit integer format
-
-        # Convert to PIL Image with correct mode "I;16"
-        depth_image_pil = Image.fromarray(depth_image, mode="I;16")  # Use "I;16" for 16-bit grayscale
-        
         # Create a unique file name using timestamp
         file_name = f"depth_image_{numb}.png"
 
