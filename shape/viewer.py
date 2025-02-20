@@ -1,3 +1,5 @@
+import os.path
+
 import OpenGL.GL as GL
 import glfw
 import numpy as np
@@ -627,7 +629,8 @@ class Viewer:
                     # Only update map_Kd, supposed an object only have 1 simple texture
                     texture_list = os.listdir('textures')
                     texture_path = random.choice(texture_list)
-                    drawable.update_attribute('texture', texture_path)
+                    path = os.path.join('textures', texture_path)
+                    drawable.update_attribute('texture', path)
 
                 drawable.set_mode(1) # mode for rgb image
 
@@ -1229,6 +1232,12 @@ class Viewer:
             self.scale_changed, self.scale_factor = imgui.input_float("Scale factor", self.scale_factor, step=0.1, format="%.2f")
             if self.selected_object:
                 self.obj_management[self.selected_object.name]['scale_factor'] = self.scale_factor # update info for obj
+
+            if imgui.button('Random_textures'):
+                texture_list = os.listdir('textures')
+                texture_path = random.choice(texture_list)
+                path = os.path.join('textures', texture_path)
+                self.selected_object.update_attribute('texture', path)
 
             if self.drag_object_flag:
                 imgui.push_style_color(imgui.COLOR_BUTTON, 0.6, 0.8, 0.6, 1.0)  # Green when clicked
