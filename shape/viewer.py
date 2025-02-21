@@ -626,10 +626,11 @@ class Viewer:
                 if self.obj_texture_option and isinstance(drawable, Object):
                     # Only update map_Kd, supposed an object only have 1 simple texture
                     texture_list = os.listdir('textures')
+                    for i, texture in enumerate(texture_list):
+                        texture_list[i] = os.path.join('textures', texture)
                     # Store the initial texture of the object
                     texture_list.append(self.selected_object.get_texture())
-                    texture_path = random.choice(texture_list)
-                    path = os.path.join('textures', texture_path)
+                    path = random.choice(texture_list)
                     drawable.update_attribute('texture', path)
 
                 drawable.set_mode(1) # mode for rgb image
@@ -1240,7 +1241,6 @@ class Viewer:
                 # Store the initial texture of the object
                 texture_list.append(self.selected_object.get_texture())
                 path = random.choice(texture_list)
-                print("Path", path)
                 self.selected_object.update_attribute('texture', path)
 
             if self.drag_object_flag:

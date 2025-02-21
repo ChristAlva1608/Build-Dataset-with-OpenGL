@@ -10,8 +10,7 @@ from libs.buffer import *
 from libs.camera import *
 import glm
 from itertools import cycle
-from shape.subObj import *
-# from shape.subScene import *
+from shape.subScene import *
 import os
 
 class Object:
@@ -47,7 +46,7 @@ class Object:
             for material in mesh.materials:
                 texcoords, normals, vertices = self.process_material_data(material)
 
-                model = SubObj(
+                model = SubScene(
                     self.shader,
                     vertices,
                     texcoords,
