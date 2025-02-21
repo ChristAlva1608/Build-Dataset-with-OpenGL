@@ -47,7 +47,7 @@ class Object:
             for material in mesh.materials:
                 texcoords, normals, vertices = self.process_material_data(material)
 
-                model = SubScene(
+                model = SubObj(
                     self.shader,
                     vertices,
                     texcoords,
@@ -187,6 +187,9 @@ class Object:
     
     def get_projection_matrix(self):
         return self.subObjs[0].get_projection_matrix()
+    
+    def get_texture(self):
+        return self.subObjs[0].texture_path
     
     def update_colormap(self, selected_colormap):
         for subobj in self.subObjs:
