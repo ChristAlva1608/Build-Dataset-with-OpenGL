@@ -20,10 +20,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-# from .object3D import *
-# from .scene3D import *
-from .object3D_v2 import *
-from .scene3D_v2 import *
+from .object3D import *
+from .scene3D import *
+# from .object3D_v2 import *
+# from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
@@ -33,7 +33,7 @@ from utils import *
 
 class Viewer:
     ''' Initialize attributes '''
-    def __init__(self, width=1400, height=700):
+    def __init__(self, args, width=1400, height=700):
         self.fill_modes = cycle([GL.GL_LINE, GL.GL_POINT, GL.GL_FILL])
 
         # GLFW initialization
@@ -73,7 +73,8 @@ class Viewer:
         self.depth_texture_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
         self.object_shader = Shader('shader/depth_texture.vert', 'shader/depth_texture.frag')
 
-
+        # Initial variable that manage objects
+        self.drawables = []
         self.obj_management = {}
         
         # Initialize yaml file attributes
@@ -96,7 +97,7 @@ class Viewer:
         self.fov = 45.0
 
         # Initialize scene config
-        self.selected_scene_path = "No file selected"
+        self.selected_scene_path = args.scene_path
         self.selected_scene = None
         self.scene_view_flag = False
         self.bg_colors = [0.0, 0.0, 0.0]
@@ -114,8 +115,8 @@ class Viewer:
         self.scale_factor = 1
         self.prev_scale_factor = 1
         self.show_autoselect_window = False
-        self.num_objs = 0
-        self.obj_folder_path = "No file selected"
+        self.num_objs = args.num_objects
+        self.obj_folder_path = args.obj_folder_path
 
         # Initialize operation
         self.vcameras = []
@@ -123,11 +124,23 @@ class Viewer:
         self.multi_cam_flag = False
         # self.time_save = 0.0
         # self.time_count = 0.0
-        self.rgb_save_path = ""
-        self.depth_save_path = ""
+        if args.rgb_save_path != '':
+            self.rgb_save_path = args.rgb_save_path
+        else:
+            scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
+            self.rgb_save_path =  Path("./dataset/rgb") / scene_name
+            self.rgb_save_path.mkdir(parents=True, exist_ok=True)
+        
+        if args.depth_save_path != '':
+            self.depth_save_path = args.depth_save_path
+        else:
+            scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
+            self.depth_save_path = Path("./dataset/depth") / scene_name
+            self.depth_save_path.mkdir(parents=True, exist_ok=True)
+
         self.show_time_selection = False
         self.autosave_flag = False
-        self.layout_opts = 0
+        self.layout_opts = args.num_images
         self.save_all_flag = False
         self.show_autosave_window = False
         self.current_time = 0.0
@@ -135,13 +148,12 @@ class Viewer:
         self.drag_object_flag = False
         self.translation = glm.vec3(0.0, 0.0, 0.0)
         self.reverse_translation = glm.vec3(0.0, 0.0, 0.0)
-        self.lightPos_option = False
-        self.shininess_option = False
-        self.obj_rotation_option = False
-        self.obj_location_option = False
-        self.obj_scale_option = False
-        self.obj_texture_option = False
-        self.camera_pos_option = False
+        self.obj_rotation_option = args.obj_rotation
+        self.obj_location_option = args.obj_location
+        self.obj_scale_option = args.obj_scale
+        self.obj_texture_option = args.obj_texture
+        self.camera_pos_option = args.camera_pos
+        self.segmentation_flag = False
 
         # Initialize camera config
         self.cam_sys = None
@@ -162,6 +174,8 @@ class Viewer:
         self.shininess = 100
         self.lightPos = glm.vec3(250, 250, 300)
         self.lightColor = glm.vec3(1.0, 1.0, 1.0)
+        self.lightPos_changed = False
+        self.lightColor_changed = False
 
         # Initialize depth config
         self.near = 0.1
@@ -174,6 +188,12 @@ class Viewer:
         self.trackball = Trackball()
         self.mouse = (0, 0)
 
+        # Auto mode, no need to click confirm to load anything
+        # if args.auto:
+        #     self.load_scene()
+        #     self.load_object(self.selected_obj_path)
+        #     self.autosave(self.layout_opts)
+
         # Register callbacks
         glfw.set_key_callback(self.win, self.on_key)
         glfw.set_cursor_pos_callback(self.win, self.on_mouse_move)
@@ -185,7 +205,6 @@ class Viewer:
               ', Renderer', GL.glGetString(GL.GL_RENDERER).decode())
 
         GL.glClearColor(1.0, 1.0, 1.0, 1.0)
-        self.drawables = []
 
     def init_ui(self):
         self.font_size = 10
@@ -428,6 +447,22 @@ class Viewer:
 
         return texture_id
 
+    # def framebuffer_segmentation(self):
+    #     # Create Framebuffer for Segmentation Rendering
+    #     segmentation_fbo = GL.glGenFramebuffers(1)
+    #     segmentation_texture = GL.glGenTextures(1)
+    #     GL.glBindTexture(GL.GL_TEXTURE_2D, segmentation_texture)
+    #     GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB, 800, 600, 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, None)
+    #     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+    #     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+
+    #     # Attach Texture to FBO
+    #     GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, segmentation_fbo)
+    #     GL.glFramebufferTexture2D(GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0, GL.GL_TEXTURE_2D, segmentation_texture, 0)
+    #     GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)  # Unbind
+    #     # Random RGB color for each object
+    #     color = random.
+
     def button_with_icon(self, image_path, button_text, icon_size=(20, 20)):
         """Create a button with an icon and text"""
         icon_texture = self.load_texture(image_path)
@@ -548,9 +583,6 @@ class Viewer:
                 self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
                 self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
                 self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
-
-            if self.shininess_option:
-                self.shininess = random.uniform(0.1, 100)
 
             yaw = random.choice(np.linspace(self.yaw_range[1],self.yaw_range[0], 20))
             pitch = random.choice(np.linspace(self.pitch_range[1],self.pitch_range[0], 20))
@@ -705,7 +737,7 @@ class Viewer:
             # Randomly select an .obj file
             random_obj_file = random.choice(obj_files)
             file_path = os.path.join(subdir_path, random_obj_file)
-
+            print(file_path)
             self.load_object(file_path)
 
     '''
@@ -1129,6 +1161,9 @@ class Viewer:
 
         GL.glDisable(GL.GL_SCISSOR_TEST)
 
+    # def render_segmentation(self):
+    #     if self.segmentation_flag:
+
     ''' User Interface '''
     def imgui_menu(self):
         # Create a new frame
@@ -1366,8 +1401,10 @@ class Viewer:
 
             imgui.set_next_item_width(imgui.get_window_width())
             if imgui.button("Move Camera Around"):
-                self.move_camera_flag = True
+                self.move_camera_flag = not self.move_camera_flag
 
+            if imgui.button('Segmentation'):
+                self.segmentation_flag = not self.segmentation_flag
             # Section: Save Options
             imgui.spacing()
             window_width = imgui.get_window_width()
@@ -1434,8 +1471,6 @@ class Viewer:
             imgui.set_next_item_width(100)
             if imgui.begin_combo("Select Random Options", "Options"):
                 # Add checkboxes inside the combo
-                _, self.lightPos_option = imgui.checkbox("Light Position", self.lightPos_option)
-                # _, self.shininess_option = imgui.checkbox("Shininess", self.shininess_option)
                 _, self.obj_location_option = imgui.checkbox("Object Location", self.obj_location_option)
                 _, self.obj_rotation_option = imgui.checkbox("Object Rotation", self.obj_rotation_option)
                 _, self.obj_scale_option = imgui.checkbox("Object Scaling", self.obj_scale_option)
