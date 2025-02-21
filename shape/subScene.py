@@ -57,6 +57,8 @@ class SubScene:
                         self.texture_flags[map_key] = True
                         self.texture_id[map_key] = self.uma.setup_texture(uniform_name, texture_path)
                         texture_found = True
+                    else:
+                        print("Missing texture", texture_path)
 
         if not texture_found:
             self.use_texture = False

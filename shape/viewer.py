@@ -583,14 +583,12 @@ class Viewer:
                     # Instead of creating a translation matrix and multiply with current model, 
                     # I add the translation vector directly to the last column of current model 
                     # (avoid effect of scaling factor and rotation to the translation vector)
-                    x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
-                    x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
-                    x = random.uniform(x_min, x_max)
-                    y = random.uniform(y_min, y_max)
-                    z = random.uniform(z_min, z_max)
+                    x_obj = random.uniform(self.x_range[0], self.x_range[1])
+                    y_obj = random.uniform(self.y_range[0], self.y_range[1])
+                    z_obj = random.uniform(self.z_range[0], self.z_range[1])
                     
                     self.reverse_translation = self.obj_management[drawable.name]['reverse_translation']
-                    self.translation = glm.vec3(x,y,z)
+                    self.translation = glm.vec3(x_obj,y_obj,z_obj)
                     
                     current_model = drawable.get_model_matrix()
                     current_model[3] = current_model[3] + glm.vec4(self.reverse_translation, 0.0) + glm.vec4(self.translation, 0.0)
