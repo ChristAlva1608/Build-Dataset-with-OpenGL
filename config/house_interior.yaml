@@ -7,7 +7,7 @@ shininess: 3.5
 # cameraPos: [0.226251, -4.42832, 322.986]
 center_translation_vec: [-53.7476, -36.7846, -225.457]
 x_range: [-70, 300]
-y_range: [-40, 230]
+y_range: [-35, 230]
 z_range: [-300, 200]
 yaw_range: [-180, 180]
 pitch_range: [-180, 180]
