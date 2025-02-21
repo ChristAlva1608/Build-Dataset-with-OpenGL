@@ -1235,10 +1235,12 @@ class Viewer:
 
             if imgui.button('Random Textures'):
                 texture_list = os.listdir('textures')
+                for i, texture in enumerate(texture_list):
+                    texture_list[i] = os.path.join('textures', texture)
                 # Store the initial texture of the object
                 texture_list.append(self.selected_object.get_texture())
-                texture_path = random.choice(texture_list)
-                path = os.path.join('textures', texture_path)
+                path = random.choice(texture_list)
+                print("Path", path)
                 self.selected_object.update_attribute('texture', path)
 
             if self.drag_object_flag:

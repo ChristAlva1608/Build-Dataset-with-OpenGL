@@ -1,0 +1,14 @@
+scene_name: 'bedroom'
+near: 0.1
+far: 6
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, -10.0]
+center_translation_vec: [ 0, 0, 0 ]
+x_range : [-3, 3]
+y_range : [0, 2]
+z_range : [-1.5, 1.5]
+yaw_range : [0, 360]
+pitch_range: [0, 360]
+scale_range: [0.1, 0.5] # used for scaling random

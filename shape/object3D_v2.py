@@ -10,8 +10,8 @@ from libs.buffer import *
 from libs.camera import *
 import glm
 from itertools import cycle
-# from shape.subObj import *
-from shape.subScene import *
+from shape.subObj import *
+# from shape.subScene import *
 import os
 
 class Object:
