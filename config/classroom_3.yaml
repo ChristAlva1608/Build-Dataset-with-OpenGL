@@ -4,7 +4,7 @@ far: 27
 sphere_radius: 2
 view_range: [0, 360] # angle view
 #cameraPos: [0.0, 0.6, 3.3]
-cameraPos: [0, 0, 0]
+cameraPos: [0, 0, -10]
 center_translation_vec: [ 0,  0,  0]
 x_range : [-10, 10]
 y_range : [0.05, 6]

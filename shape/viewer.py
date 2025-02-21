@@ -623,13 +623,17 @@ class Viewer:
 
                     drawable.update_attribute('model_matrix', model)
 
-                if self.obj_texture_option and isinstance(drawable, Object):
+                # switch texture every 500
+                if (self.obj_texture_option
+                        and isinstance(drawable, Object)
+                        and (i % 500 == 0)
+                        and (i != 0)):
                     # Only update map_Kd, supposed an object only have 1 simple texture
                     texture_list = os.listdir('textures')
-                    for i, texture in enumerate(texture_list):
-                        texture_list[i] = os.path.join('textures', texture)
+                    for j, texture in enumerate(texture_list):
+                        texture_list[j] = os.path.join('textures', texture)
                     # Store the initial texture of the object
-                    texture_list.append(self.selected_object.get_texture())
+                    texture_list.append(drawable.get_texture())
                     path = random.choice(texture_list)
                     drawable.update_attribute('texture', path)
 
