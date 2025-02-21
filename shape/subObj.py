@@ -9,14 +9,12 @@ import glm
 import numpy as np
 from OpenGL.GL import *
 
-
 class TextureMap(Enum):
     KA = ("map_Ka", "texture_ambient")
     KD = ("map_Kd", "texture_diffuse")
     KS = ("map_Ks", "texture_specular")
     REFL = ("map_refl", "texture_refl")
     BUMP = ("map_bump", "texture_bump")
-
 
 class SubObj:
     def __init__(self, shader, vert, teco, normals, material, dir_path):
@@ -40,16 +38,27 @@ class SubObj:
         self.projection = glm.perspective(glm.radians(45.0), 800.0 / 600.0, 0.1, 100.0)
 
         # init texture
-        self.texture_id = None
-        self.texture_flag = False
+        self.texture_id = {}
+        self.texture_flags = {}
 
         texture_found = False
         if self.use_texture:
-            self.texture_path = self.materials.get('map_Kd')
-            if os.path.exists(self.texture_path):
-                self.texture_flag = True
-                self.texture_id= self.uma.setup_texture('texture_diffuse', self.texture_path)
-                texture_found = True
+            for texture in TextureMap:
+                map_key, uniform_name = texture.value
+                self.texture_flags[map_key] = False  # Initialize texture flag as False
+                texture_path = self.materials.get(map_key)
+
+                if texture_path:
+                    if map_key == 'map_bump':
+                        texture_path = texture_path['filename']
+                    self.texture_path = os.path.join(dir_path, texture_path)
+
+                    if os.path.exists(self.texture_path):
+                        self.texture_flags[map_key] = True
+                        self.texture_id[map_key] = self.uma.setup_texture(uniform_name, self.texture_path)
+                        texture_found = True
+                    else:
+                        print("Missing texture", self.texture_path)
 
         if not texture_found:
             self.use_texture = False
@@ -59,10 +68,10 @@ class SubObj:
 
     def get_view_matrix(self):
         return self.view
-
+    
     def get_projection_matrix(self):
         return self.projection
-
+    
     def update_shader(self, shader):
         self.shader = shader
         self.uma = UManager(self.shader)
@@ -87,7 +96,7 @@ class SubObj:
 
     def update_texture(self, texture_path):
         # Only update map_Kd, supposed an object only have 1 simple texture
-        self.texture_id = self.uma.setup_texture("texture_diffuse", texture_path)
+        self.texture_id['map_Kd'] = self.uma.setup_texture("texture_diffuse", texture_path)
 
     def transform_vertices(self):
         transformed_vertices = []
@@ -116,7 +125,7 @@ class SubObj:
         self.vao.add_vbo(2, self.textcoords, ncomponents=2, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
 
         light_pos = glm.vec3(250, 250, 300)
-        light_color = glm.vec3(1.0, 1.0, 1.0)  # only affect the current object, not the light source
+        light_color = glm.vec3(1.0, 1.0, 1.0) # only affect the current object, not the light source
 
         # lighting setup
         self.uma.upload_uniform_vector3fv(np.array(light_pos), "lightPos")
@@ -138,7 +147,7 @@ class SubObj:
         self.vao.activate()
         glUseProgram(self.shader.render_idx)
 
-        if self.use_texture:  # use texture
+        if self.use_texture: # use texture
             self.uma.upload_uniform_scalar1i(1, "use_texture")
         else:
             self.uma.upload_uniform_scalar1i(0, "use_texture")
@@ -153,9 +162,12 @@ class SubObj:
 
         # Bind and upload textures dynamically
         if self.use_texture:
-            glActiveTexture(GL_TEXTURE0)
-            glBindTexture(GL_TEXTURE_2D, self.texture_id)
-            glUniform1i(glGetUniformLocation(self.shader.render_idx, 'texture_diffuse'), 0)
+            for idx, texture in enumerate(TextureMap):
+                map_key, uniform_name = texture.value
+                if self.texture_flags[map_key]:
+                    glActiveTexture(GL_TEXTURE0 + idx)
+                    glBindTexture(GL_TEXTURE_2D, self.texture_id[map_key])
+                    glUniform1i(glGetUniformLocation(self.shader.render_idx, uniform_name), idx)
 
         self.uma.upload_uniform_vector3fv(np.array(cameraPos), "viewPos")
 
@@ -167,7 +179,8 @@ class SubObj:
 
         # Unbind all textures
         if self.use_texture:
-            glActiveTexture(GL_TEXTURE0)
-            glBindTexture(GL_TEXTURE_2D, 0)
+            for idx, texture in enumerate(TextureMap):
+                glActiveTexture(GL_TEXTURE0 + idx)
+                glBindTexture(GL_TEXTURE_2D, 0)
 
         self.vao.deactivate()
