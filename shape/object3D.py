@@ -13,7 +13,7 @@ from itertools import cycle
 from shape.subObj import *
 
 class Object:
-    def __init__(self, shader, file_path):
+    def __init__(self, shader, file_path, colors=[]):
         self.shader = shader
         self.uma = UManager(self.shader)
 
@@ -23,6 +23,10 @@ class Object:
         self.name = os.path.basename(file_path)[:-4]
 
         self.split_obj()
+
+        # If switch to segmentation mode
+        if colors:
+            self.colors = colors
 
     def parse_obj_file(self,file_path):
         vertices_all = []
