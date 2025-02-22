@@ -2,12 +2,12 @@
 
 # Define arguments
 SCENE_PATH="scene/house_interior/house_interior.obj"
-OBJ_FOLDER_PATH="object"
+OBJ_FOLDER_PATH="obj/GSO"
 NUM_IMAGES=10
 NUM_OBJECTS=5
 
 # Run Python script with arguments
-python3 main.py \
+py main.py \
     --obj_location \
     --obj_rotation \
     --obj_scale \

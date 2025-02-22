@@ -11,4 +11,4 @@ y_range : [0.05, 7]
 z_range : [-8, 8]
 yaw_range : [0, 360]
 pitch_range: [0, 360]
-scale_range: [2, 5] # used for scaling random
+scale_range: [3, 6] # used for scaling random

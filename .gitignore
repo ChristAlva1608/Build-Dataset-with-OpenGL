@@ -19,3 +19,5 @@ dataset/
 scene/
 object/
 textures/
+run.sh
+run.bat

@@ -20,10 +20,10 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-from .object3D import *
-from .scene3D import *
-# from .object3D_v2 import *
-# from .scene3D_v2 import *
+# from .object3D import *
+# from .scene3D import *
+from .object3D_v2 import *
+from .scene3D_v2 import *
 from .quad import *
 from .vcamera import *
 from .sphere import *
