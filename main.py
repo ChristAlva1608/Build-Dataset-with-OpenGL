@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
 
     viewer = Viewer(args, width=1918, height=480) # NYU resolution
-    # viewer = Viewer(1200, 700)  # debug resolution
+    # viewer = Viewer(args,1200, 700)  # debug resolution
     viewer.run()
 
 if __name__ == '__main__':

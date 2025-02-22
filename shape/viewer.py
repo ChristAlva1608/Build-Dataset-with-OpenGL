@@ -124,19 +124,8 @@ class Viewer:
         self.multi_cam_flag = False
         # self.time_save = 0.0
         # self.time_count = 0.0
-        if args.rgb_save_path != '':
-            self.rgb_save_path = args.rgb_save_path
-        else:
-            scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
-            self.rgb_save_path =  Path("./dataset/rgb") / scene_name
-            self.rgb_save_path.mkdir(parents=True, exist_ok=True)
-        
-        if args.depth_save_path != '':
-            self.depth_save_path = args.depth_save_path
-        else:
-            scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
-            self.depth_save_path = Path("./dataset/depth") / scene_name
-            self.depth_save_path.mkdir(parents=True, exist_ok=True)
+        self.rgb_save_path = args.rgb_save_path
+        self.depth_save_path = args.depth_save_path
 
         self.show_time_selection = False
         self.autosave_flag = False
@@ -579,6 +568,15 @@ class Viewer:
         print(f"Saved depth image as {file_name}")
 
     def autosave(self, lay_opts):
+        scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
+        if self.rgb_save_path == '':
+            self.rgb_save_path = Path("./dataset/rgb") / scene_name
+            self.rgb_save_path.mkdir(parents=True, exist_ok=True)
+
+        if self.depth_save_path == '':
+            self.depth_save_path = Path("./dataset/depth") / scene_name
+            self.depth_save_path.mkdir(parents=True, exist_ok=True)
+
         for i in range(lay_opts):
             if self.camera_pos_option:
                 self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
