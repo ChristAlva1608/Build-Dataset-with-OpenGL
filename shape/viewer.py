@@ -189,10 +189,11 @@ class Viewer:
         self.mouse = (0, 0)
 
         # Auto mode, no need to click confirm to load anything
-        # if args.auto:
-        #     self.load_scene()
-        #     self.load_object(self.selected_obj_path)
-        #     self.autosave(self.layout_opts)
+        if args.auto:
+            self.process_scene_config()
+            self.load_scene()
+            self.autoselect_obj()
+            self.autosave(self.layout_opts)
 
         # Register callbacks
         glfw.set_key_callback(self.win, self.on_key)
@@ -594,7 +595,7 @@ class Viewer:
             
             self.cameraFront = glm.normalize(direction)
             view = glm.lookAt(self.cameraPos, self.cameraFront, self.cameraUp)
-            
+
             # view = self.trackball.view_matrix()
             GL.glClearColor(0, 0, 0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -681,7 +682,6 @@ class Viewer:
                 drawable.update_shininess(self.shininess)
 
                 drawable.update_attribute('view_matrix', view)
-
                 projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
                 drawable.update_attribute('projection_matrix', projection)
 
@@ -741,7 +741,7 @@ class Viewer:
             # Randomly select an .obj file
             random_obj_file = random.choice(obj_files)
             file_path = os.path.join(subdir_path, random_obj_file)
-            print(file_path)
+
             self.load_object(file_path)
 
     '''
@@ -969,7 +969,6 @@ class Viewer:
 
     def load_object(self, file_path):
         model = []
-
         self.selected_object = Object(self.object_shader, file_path)
 
         # current_model = self.selected_object.get_model_matrix()
