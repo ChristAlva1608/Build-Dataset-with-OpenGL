@@ -1,0 +1,18 @@
+scene_name: 'empty_house'
+near: 0.1
+far: 575
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, -10.0]
+center_translation_vec: [ 0, 0, 0 ]
+#x_range : [-250, 0]
+x_range : [-200, 190]
+y_range : [1, 200]
+z_range : [-400, 40]
+yaw_range : [0, 360]
+pitch_range: [0, 360]
+scale_range: [100, 150] # used for scaling random
+
+#over all min [-318.6875, -5.5e-05, -410.875153]
+#over all max [476.0625, 281.5, 150.812515]

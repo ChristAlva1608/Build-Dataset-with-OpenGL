@@ -1,0 +1,20 @@
+scene_name: 'big_room'
+near: 0.1
+far: 700
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, -10.0]
+center_translation_vec: [  -500,      -100,      80 ]
+#x_range : [-250, 0]
+#x_range : [-260, 225]
+x_range : [-270, 220]
+y_range : [-90, 70]
+z_range : [-370, 30]
+yaw_range : [0, 360]
+pitch_range: [0, 360]
+scale_range: [100, 150] # used for scaling random
+
+#over all min [196.001678, -11.811024, -539.933716]
+#over all max [821.904968, 169.291351, -43.989197]
+

@@ -582,7 +582,7 @@ class Viewer:
                 self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
                 self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
                 self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
-
+            # print("Campos", self.cameraPos)
             yaw = random.choice(np.linspace(self.yaw_range[1],self.yaw_range[0], 20))
             pitch = random.choice(np.linspace(self.pitch_range[1],self.pitch_range[0], 20))
             direction = glm.vec3(
