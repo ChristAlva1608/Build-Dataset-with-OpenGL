@@ -14,6 +14,7 @@ import imgui
 from pathlib import Path
 import random
 from imgui.integrations.glfw import GlfwRenderer
+import math
 
 from libs.buffer import *
 from libs.camera import *
@@ -33,7 +34,7 @@ from utils import *
 
 class Viewer:
     ''' Initialize attributes '''
-    def __init__(self, args, width=1400, height=700):
+    def __init__(self, args, img_width=640, img_height=480):
         self.fill_modes = cycle([GL.GL_LINE, GL.GL_POINT, GL.GL_FILL])
 
         # GLFW initialization
@@ -46,20 +47,35 @@ class Viewer:
         glfw.window_hint(glfw.DOUBLEBUFFER, True)
         glfw.window_hint(glfw.COCOA_RETINA_FRAMEBUFFER, False) # Turn off Retina scaling in MacOS
 
-        self.win = glfw.create_window(width, height, 'Viewer', None, None)
+        self.scene_width, self.object_width, self.operation_width = 300, 300, 300
+        self.scene_height = 160
+        self.object_height = 160
+        self.operation_height = 160
+
+        self.camera_config_width, self.light_config_width, self.depth_config_width = 300, 300, 300
+        self.camera_config_height = 160
+        self.light_config_height = 160
+        self.depth_config_height = 160
+
+        self.rgb_view_width, self.depth_view_width = img_width, img_width
+        self.rgb_view_height, self.depth_view_height = img_height, img_height
+
+        self.win_width = self.scene_width + self.rgb_view_width*2 + self.camera_config_width
+        self.win_height = self.rgb_view_height
+
+        self.win = glfw.create_window(self.win_width, self.win_height, 'Viewer', None, None)
         if not self.win:
             glfw.terminate()
             raise RuntimeError("Failed to create GLFW window")
 
         glfw.make_context_current(self.win)
 
-        # Initialize window width and height
-        self.win_width, self.win_height = width, height
-
         # Initialize imgui
         imgui.create_context()
         self.imgui_impl = GlfwRenderer(self.win)
-        self.init_ui()
+        # self.init_ui()
+        self.font_size = 10
+        self.load_font_size()
 
         # Enable depth testing
         GL.glEnable(GL.GL_DEPTH_TEST)
@@ -85,10 +101,11 @@ class Viewer:
         self.y_range = []
         self.z_range = []
         self.scale_range = []
+        self.scale_unit = 0 # defaut is 0 milimeters
 
         # Initialize mouse parameters
-        self.last_x = width / 2
-        self.last_y = height / 2
+        # self.last_x = width / 2
+        # self.last_y = height / 2
         self.first_mouse = True
         self.left_mouse_pressed = False
         self.right_mouse_pressed = False
@@ -177,6 +194,19 @@ class Viewer:
         self.trackball = Trackball()
         self.mouse = (0, 0)
 
+        # Camera Intrinsic when convert from FOV
+        # aspect_ratio = self.rgb_view_width / self.rgb_view_height
+        # self.f_x = 640/(2*math.tan(glm.radians(45/2))*aspect_ratio)
+        # self.f_y = 480/(2*math.tan(glm.radians(45/2)))
+        # self.c_x = 640/2 + 300
+        # self.c_y = 480/2
+        # NYU rgb camera intrinsic https://cs.nyu.edu/~fergus/datasets/nyu_depth_v2.html
+        self.f_x = 518.86
+        self.f_y = 519.47
+        self.c_x = 325.58 + 300 # offset of viewport
+        self.c_y = 253.74
+        self.s = 0
+
         # Auto mode, no need to click confirm to load anything
         if args.auto:
             self.process_scene_config()
@@ -196,33 +226,6 @@ class Viewer:
 
         GL.glClearColor(1.0, 1.0, 1.0, 1.0)
 
-    def init_ui(self):
-        self.font_size = 10
-        self.load_font_size()
-
-        self.scene_width = self.win_width // 6
-        self.scene_height = self.win_height // 3
-
-        self.object_width = self.win_width // 6
-        self.object_height = self.win_height // 3
-
-        self.operation_width = self.win_width // 6 
-        self.operation_height = self.win_height // 3
-
-        self.camera_config_width = self.win_width // 6 
-        self.camera_config_height = self.win_height // 3
-
-        self.light_config_width = self.win_width // 6 
-        self.light_config_height = self.win_height // 3
-
-        self.depth_config_width = self.win_width // 6 
-        self.depth_config_height = self.win_height // 3
-
-        self.rgb_view_width = (self.win_width - self.scene_width - self.light_config_width) // 2
-        self.rgb_view_height = self.win_height
-
-        self.depth_view_width = self.rgb_view_width
-        self.depth_view_height = self.rgb_view_height
 
     ''' Supportive functions '''
     def add(self, drawables):
@@ -348,7 +351,8 @@ class Viewer:
 
         else:
             if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT):
-                self.trackball.drag(old, self.mouse, glfw.get_window_size(window))
+                # self.trackball.drag(old, self.mouse, glfw.get_window_size(window))
+                self.trackball.drag(old, self.mouse, (self.depth_view_width, self.depth_view_height))
 
             if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_RIGHT):
                 self.trackball.pan(old, self.mouse)
@@ -529,6 +533,7 @@ class Viewer:
         rgb_image.save(os.path.join(save_path, file_name))
         print(f"Saved rgb image as {file_name}")
 
+
     def save_depth(self, save_path, numb):
         # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width + self.rgb_view_width
@@ -546,19 +551,46 @@ class Viewer:
         # np.savetxt('depth.txt',depth_info)
 
         ### Save depth image ###
-        depth_pixels = GL.glReadPixels(
-                win_pos_width, 0,
-                self.rgb_view_width, self.rgb_view_height,
-                GL.GL_RGB, GL.GL_UNSIGNED_BYTE
-            )
+        # depth_pixels = GL.glReadPixels(
+        #         win_pos_width, 0,
+        #         self.rgb_view_width, self.rgb_view_height,
+        #         GL.GL_RGB, GL.GL_UNSIGNED_BYTE
+        #     )
 
-        depth_image = np.frombuffer(depth_pixels, dtype=np.uint8).reshape(
-            (int(self.rgb_view_height), int(self.rgb_view_width), 3)
+        # depth_image = np.frombuffer(depth_pixels, dtype=np.uint8).reshape(
+        #     (int(self.rgb_view_height), int(self.rgb_view_width), 3)
+        # )
+        #
+        # # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
+        # depth_image = np.flipud(depth_image)
+        # depth_image_pil = Image.fromarray(depth_image[:,:,0], mode='L')
+
+        depth_pixels = GL.glReadPixels(win_pos_width, 0,
+            self.rgb_view_width, self.rgb_view_height,
+            GL.GL_DEPTH_COMPONENT,
+            GL.GL_FLOAT
         )
+        depth_array = np.frombuffer(depth_pixels, dtype=np.float32).reshape(self.rgb_view_height, self.rgb_view_width)
+        background_mask = (depth_array == 1) # fragment which are not drawn
 
-        # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
-        depth_image = np.flipud(depth_image)
-        depth_image_pil = Image.fromarray(depth_image[:,:,0], mode='L')
+        px, py = np.meshgrid(np.arange(self.rgb_view_width), np.arange(self.rgb_view_height)) # meshgrih to calculate x,y offset pixel
+        x_ndc = (px / self.rgb_view_width) * 2 - 1
+        y_ndc = (py / self.rgb_view_height) * 2 - 1
+
+        z_ndc = depth_array * 2.0 - 1.0 # invert viewport (to NDC -1 -> 1)
+        real_depth = ((2.0 * self.near * self.far) / (self.far + self.near - z_ndc * (self.far - self.near))) # invert projection
+
+        x_camera = x_ndc * real_depth / self.f_x
+        y_camera = y_ndc * real_depth / self.f_y
+
+        euclidean_depth = np.sqrt(x_camera ** 2 + y_camera ** 2 + real_depth ** 2)
+
+        euclidean_depth[background_mask] = 0
+
+        depth_image = np.flipud(euclidean_depth) # (because OpenGL's origin is at the bottom-left corner)
+        depth_image = depth_image*self.scale_unit # convert to milimeter
+        depth_image = depth_image.astype(np.uint16)
+        depth_image_pil = Image.fromarray(depth_image, mode='I;16')
 
         # Create a unique file name using timestamp
         file_name = f"depth_image_{numb}.png"
@@ -582,32 +614,51 @@ class Viewer:
                 self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
                 self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
                 self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
-            # print("Campos", self.cameraPos)
-            yaw = random.choice(np.linspace(self.yaw_range[1],self.yaw_range[0], 20))
-            pitch = random.choice(np.linspace(self.pitch_range[1],self.pitch_range[0], 20))
+
+            # lookAt_position = glm.vec3(random.uniform(self.x_range[0], self.x_range[1]),
+            #                            random.uniform(self.y_range[0], self.y_range[1]),
+            #                            random.uniform(self.z_range[0], self.z_range[1])
+            #                            )
+            # lookAt_position = glm.vec3(0, 0, 100)
+            #
+            # view = glm.lookAt(self.cameraPos, lookAt_position, glm.vec3(0, -1, 0)) # flip due to cv camera
+
+            yaw = random.choice(np.linspace(self.yaw_range[1], self.yaw_range[0], 20))
+            pitch = random.choice(np.linspace(self.pitch_range[1], self.pitch_range[0], 20))
             direction = glm.vec3(
                 glm.cos(glm.radians(yaw)) * glm.cos(glm.radians(pitch)),  # x
                 glm.sin(glm.radians(pitch)),  # y
-                glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch))   # z
+                glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch))  # z
             )
-            
-            self.cameraFront = glm.normalize(direction)
-            view = glm.lookAt(self.cameraPos, self.cameraFront, self.cameraUp)
 
-            # view = self.trackball.view_matrix()
+            self.cameraFront = glm.normalize(direction)
+            view = glm.lookAt(self.cameraPos, self.cameraFront, glm.vec3(0, -1, 0))
+
+
+
             GL.glClearColor(0, 0, 0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             # Viewport for RGB Scene
-            win_pos_width = self.scene_width
-            win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
+            rgb_win_pos_x = self.scene_width
+            rgb_win_pos_y = self.win_height - self.rgb_view_height # start from bottom-left
 
-            GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-            GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
+            GL.glViewport(rgb_win_pos_x, rgb_win_pos_y, self.rgb_view_width, self.rgb_view_height)
+            GL.glScissor(rgb_win_pos_x, rgb_win_pos_y, self.rgb_view_width, self.rgb_view_height)
             GL.glEnable(GL.GL_SCISSOR_TEST)
             GL.glClearColor(*self.bg_colors, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
             GL.glUseProgram(self.depth_texture_shader.render_idx)
+
+            projection_mat = self.cam_proj_matrix(
+                rgb_win_pos_x,
+                rgb_win_pos_y,
+                self.rgb_view_width,
+                self.rgb_view_height,
+                self.near,
+                self.far
+            )        # depth viewport also use win pos of rgb to ensure the two show the same
+            # projection_mat = glm.perspective(glm.radians(45), (self.rgb_view_width/ self.rgb_view_height), self.near, self.far)
 
             for drawable in self.drawables:
                 if self.obj_location_option and isinstance(drawable, Object):
@@ -680,17 +731,17 @@ class Viewer:
                 drawable.update_shininess(self.shininess)
 
                 drawable.update_attribute('view_matrix', view)
-                projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
-                drawable.update_attribute('projection_matrix', projection)
+                # projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
+                drawable.update_attribute('projection_matrix', projection_mat)
 
                 # Normal rendering
                 drawable.draw(self.cameraPos)
 
             # Viewport for Depth Scene
-            win_pos_width = self.scene_width + self.rgb_view_width
-            win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
-            GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-            GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+            depth_win_pos_x = self.scene_width + self.rgb_view_width
+            depth_win_pos_y = self.win_height - self.depth_view_height # start from bottom-left
+            GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
+            GL.glScissor(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
             for drawable in self.drawables:
@@ -1038,19 +1089,29 @@ class Viewer:
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         # Viewport for RGB Scene
-        win_pos_width = self.scene_width
-        win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
+        rgb_win_pos_x = self.scene_width
+        rgb_win_pos_y = self.win_height - self.rgb_view_height # this is 0
 
-        GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-        GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
         GL.glEnable(GL.GL_SCISSOR_TEST)
+        GL.glViewport(rgb_win_pos_x, rgb_win_pos_y, self.rgb_view_width, self.rgb_view_height)
+        GL.glScissor(rgb_win_pos_x, rgb_win_pos_y, self.rgb_view_width, self.rgb_view_height)
+
         GL.glClearColor(*self.bg_colors, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-        GL.glUseProgram(self.depth_texture_shader.render_idx)   
+        GL.glUseProgram(self.depth_texture_shader.render_idx)
 
         if self.multi_cam_flag:
             # self.multi_cam()
             self.multi_cam_inward()
+
+        projection_mat = self.cam_proj_matrix(
+            rgb_win_pos_x,
+            rgb_win_pos_y,
+            self.rgb_view_width,
+            self.rgb_view_height,
+            self.near,
+            self.far
+        )
 
         for drawable in self.drawables:
             drawable.set_mode(1) # mode for rgb image
@@ -1079,6 +1140,14 @@ class Viewer:
 
             # Define view matrix
             view = self.trackball.view_matrix()
+            # view = np.array(
+            #     [
+            #         [1., 0., 0., 0.],
+            #         [0., 1., 0., 0.],
+            #         [0., 0., 1., 0.],
+            #         [0., 0., 0., 1.]
+            #     ], dtype = np.float32
+            # )
 
             if self.move_camera_flag:
                 # Call to create hemisphere of multi-cam
@@ -1093,20 +1162,23 @@ class Viewer:
 
             if self.selected_camera:
                 view = self.selected_camera.view
-            drawable.update_attribute('view_matrix', view)
 
-            # projection = self.trackball.projection_matrix((self.rgb_view_width, self.rgb_view_height))
-            projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width/self.rgb_view_height, self.near, self.far)
-            drawable.update_attribute('projection_matrix', projection)
+            # projection_mat = self.trackball.projection_matrix((self.rgb_view_width, self.rgb_view_height))
+            drawable.update_attribute('view_matrix', view)
+            drawable.update_attribute('projection_matrix', projection_mat)
+
+            # print("View matrix \n", view)
+            # print("Projection matrix \n", projection_mat)
+
 
             # Normal rendering
             drawable.draw(self.cameraPos)
 
         # Viewport for Depth Scene
-        win_pos_width = self.scene_width + self.rgb_view_width
-        win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
-        GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-        GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
+        depth_win_pos_x = self.scene_width + self.rgb_view_width
+        depth_win_pos_y = self.win_height - self.depth_view_height # start from bottom-left
+        GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
+        GL.glScissor(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
         # GL.glClearColor(*self.bg_colors, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
@@ -1145,10 +1217,6 @@ class Viewer:
             if self.selected_camera:
                 view = self.selected_camera.view
             drawable.update_attribute('view_matrix', view)
-
-            # projection = self.trackball.projection_matrix((self.depth_view_width, self.depth_view_height))
-            projection = glm.perspective(glm.radians(self.fov), self.depth_view_width/ self.depth_view_height, self.near, self.far)
-            drawable.update_attribute('projection_matrix', projection)
 
             # Depth map rendering
             drawable.update_near_far(self.near, self.far)
@@ -1638,7 +1706,25 @@ class Viewer:
         imgui.end()
         imgui.render()
         self.imgui_impl.render(imgui.get_draw_data())
-    
+
+    ''' Magic here '''
+    def cam_proj_matrix(self, x_0, y_0, w, h, near, far):
+        p00 = 2*self.f_x/w
+        p01 = -2*self.s/w
+        p02 = (-2*self.c_x + w + 2*x_0)/w
+        p11 = -2*self.f_y/h
+        p12 = (-2*self.c_y + h + 2*y_0)/h
+        p22 = -(far + near)/(far - near)
+        p23 = -(2*far*near)/(far - near)
+        return np.array(
+            [
+                [p00, p01, p02, 0  ],
+                [0  , p11, p12, 0  ],
+                [0  , 0  , p22, p23],
+                [0  , 0  , -1 , 0  ]
+            ], dtype=np.float32
+        )
+
     ''' Main Loop'''
     def run(self):
         while not glfw.window_should_close(self.win):
@@ -1646,7 +1732,7 @@ class Viewer:
                 self.render()
 
             # Use to debug and find good view for each scene
-            # print('track ball cameraPos: ', self.trackball.get_cameraPos()) 
+            # print('track ball cameraPos: ', self.trackball.get_cameraPos())
             self.imgui_menu()
 
             glfw.swap_buffers(self.win)

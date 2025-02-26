@@ -26,7 +26,7 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
-    viewer = Viewer(args, width=1918, height=480) # NYU resolution
+    viewer = Viewer(args, img_width=640, img_height=480) # NYU resolution
     # viewer = Viewer(args,1200, 700)  # debug resolution
     viewer.run()
 

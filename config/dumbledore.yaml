@@ -12,3 +12,7 @@ z_range : [-0.02, 0.02]
 yaw_range : [0, 90]
 pitch_range: [0, 90]
 scale_range: [0.01, 0.03] # used for scaling random
+scale_unit: 50000
+
+#over all min [-0.059991, -0.0075, -0.042725]
+#over all max [0.084298, 0.124208, 0.042725]
