@@ -590,6 +590,13 @@ class Viewer:
         depth_image = np.flipud(euclidean_depth) # (because OpenGL's origin is at the bottom-left corner)
         depth_image = depth_image*self.scale_unit # convert to milimeter
         depth_image = depth_image.astype(np.uint16)
+
+        # check if the depth valid
+        if not valid_depth_map(depth_image):
+            print("Invalid depth map")
+            return False
+
+
         depth_image_pil = Image.fromarray(depth_image, mode='I;16')
 
         # Create a unique file name using timestamp
@@ -598,6 +605,7 @@ class Viewer:
         # Save the image to the selected directory
         depth_image_pil.save(os.path.join(save_path, file_name))
         print(f"Saved depth image as {file_name}")
+        return True
 
     def autosave(self, lay_opts):
         scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
@@ -609,32 +617,31 @@ class Viewer:
             self.depth_save_path = Path("./dataset/depth") / scene_name
             self.depth_save_path.mkdir(parents=True, exist_ok=True)
 
-        for i in range(lay_opts):
+        i = 0
+        while i < lay_opts:
             if self.camera_pos_option:
                 self.cameraPos.x = random.uniform(self.x_range[0], self.x_range[1])
                 self.cameraPos.y = random.uniform(self.y_range[0], self.y_range[1])
                 self.cameraPos.z = random.uniform(self.z_range[0], self.z_range[1])
 
-            # lookAt_position = glm.vec3(random.uniform(self.x_range[0], self.x_range[1]),
-            #                            random.uniform(self.y_range[0], self.y_range[1]),
-            #                            random.uniform(self.z_range[0], self.z_range[1])
-            #                            )
+            lookAt_position = glm.vec3(random.uniform(self.x_range[0], self.x_range[1]),
+                                       random.uniform(self.y_range[0], self.y_range[1]),
+                                       random.uniform(self.z_range[0], self.z_range[1])
+                                       )
             # lookAt_position = glm.vec3(0, 0, 100)
-            #
-            # view = glm.lookAt(self.cameraPos, lookAt_position, glm.vec3(0, -1, 0)) # flip due to cv camera
 
-            yaw = random.choice(np.linspace(self.yaw_range[1], self.yaw_range[0], 20))
-            pitch = random.choice(np.linspace(self.pitch_range[1], self.pitch_range[0], 20))
-            direction = glm.vec3(
-                glm.cos(glm.radians(yaw)) * glm.cos(glm.radians(pitch)),  # x
-                glm.sin(glm.radians(pitch)),  # y
-                glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch))  # z
-            )
+            view = glm.lookAt(self.cameraPos, lookAt_position, glm.vec3(0, -1, 0)) # flip due to cv camera
 
-            self.cameraFront = glm.normalize(direction)
-            view = glm.lookAt(self.cameraPos, self.cameraFront, glm.vec3(0, -1, 0))
+            # yaw = random.choice(np.linspace(self.yaw_range[1], self.yaw_range[0], 20))
+            # pitch = random.choice(np.linspace(self.pitch_range[1], self.pitch_range[0], 20))
+            # direction = glm.vec3(
+            #     glm.cos(glm.radians(yaw)) * glm.cos(glm.radians(pitch)),  # x
+            #     glm.sin(glm.radians(pitch)),  # y
+            #     glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch))  # z
+            # )
 
-
+            # self.cameraFront = glm.normalize(direction)
+            # view = glm.lookAt(self.cameraPos, self.cameraFront, glm.vec3(0, -1, 0))
 
             GL.glClearColor(0, 0, 0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -762,8 +769,14 @@ class Viewer:
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
+            status = self.save_depth(self.depth_save_path, i)
+            if not status:
+                glfw.swap_buffers(self.win)
+                continue
+
             self.save_rgb(self.rgb_save_path, i)
-            self.save_depth(self.depth_save_path, i)
+            i += 1
+
             glfw.swap_buffers(self.win)
         self.autosave_flag = False
 
