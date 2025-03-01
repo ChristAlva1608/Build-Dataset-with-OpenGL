@@ -4,6 +4,7 @@ from libs import transform as T
 from shape.texture import *
 from enum import Enum
 import os
+import random
 
 import glm
 import numpy as np
@@ -17,7 +18,7 @@ class TextureMap(Enum):
     BUMP = ("map_bump", "texture_bump")
 
 class SubScene:
-    def __init__(self, shader, vert, teco, normals, material, dir_path):
+    def __init__(self, shader, vert, teco, normals, material, dir_path, sceneNet_flag):
         self.shader = shader
         self.vao = VAO()
         self.uma = UManager(self.shader)
@@ -49,16 +50,27 @@ class SubScene:
                 texture_path = self.materials.get(map_key)
 
                 if texture_path:
-                    if map_key == 'map_bump':
-                        texture_path = texture_path['filename']
-                    self.texture_path = os.path.join(dir_path, texture_path)
+                    if sceneNet_flag:
+                        base_dir = os.path.dirname(dir_path)
+                        normalized_path = os.path.normpath(texture_path)
+                        object_fol = os.path.relpath(normalized_path, os.pardir)
+                        texture_path = os.path.join(base_dir, object_fol)
 
-                    if os.path.exists(self.texture_path):
+                        texture_list = os.listdir(texture_path)
+                        path = random.choice(texture_list)
+                        path = os.path.join(texture_path, path)
+                        texture_path = path
+                    else:
+                        if map_key == 'map_bump':
+                            texture_path = texture_path['filename']
+                        texture_path = os.path.join(dir_path, texture_path)
+
+                    if os.path.exists(texture_path):
                         self.texture_flags[map_key] = True
-                        self.texture_id[map_key] = self.uma.setup_texture(uniform_name, self.texture_path)
+                        self.texture_id[map_key] = self.uma.setup_texture(uniform_name, texture_path)
                         texture_found = True
                     else:
-                        print("Missing texture", self.texture_path)
+                        print("Missing texture", texture_path)
 
         if not texture_found:
             self.use_texture = False

@@ -20,6 +20,8 @@ def main():
     parser.add_argument("--obj_texture", action="store_true", help="Randomize Object Texture")
     parser.add_argument("--camera_pos", action="store_true", help="Randomize Camera Position")
 
+    parser.add_argument("--scene_net_layout", action="store_true", help="switch to SceneNet flow")
+
     # Auto flag: If set, "load_scene" and "autosave" is automatic
     parser.add_argument("--auto", action="store_true", help="Enable automatic execution (skip manual confirmation)")
 

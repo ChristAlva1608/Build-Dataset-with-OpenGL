@@ -1,15 +1,6 @@
 import os.path
 
-import OpenGL.GL as GL
-import glfw
-import numpy as np
-import time
-import glm
-from itertools import cycle
 from PyQt6.QtWidgets import QApplication, QFileDialog
-import sys
-import time
-from datetime import datetime
 import imgui
 from pathlib import Path
 import random
@@ -25,7 +16,6 @@ from libs.transform import *
 # from .scene3D import *
 from .object3D_v2 import *
 from .scene3D_v2 import *
-from .quad import *
 from .vcamera import *
 from .sphere import *
 from colormap import *
@@ -207,10 +197,14 @@ class Viewer:
         self.c_y = 253.74
         self.s = 0
 
+        # using scenet layout
+        self.sceneNet_usage = args.scene_net_layout
+        print("self.sceneNet_usage", self.sceneNet_usage)
+
         # Auto mode, no need to click confirm to load anything
         if args.auto:
             self.process_scene_config()
-            self.load_scene()
+            self.load_scene(self.sceneNet_usage)
             self.autoselect_obj()
             self.autosave(self.layout_opts)
 
@@ -1009,7 +1003,7 @@ class Viewer:
         self.drag_object_flag = False
         self.move_cam_sys_flag = False
 
-    def load_scene(self):
+    def load_scene(self, scene_net_flag):
         model = []
 
         # remove last Scene
@@ -1017,7 +1011,7 @@ class Viewer:
 
         # Add chosen object or scene
         if self.selected_scene_path != "No file selected":
-            self.selected_scene = Scene(self.depth_texture_shader, self.selected_scene_path)
+            self.selected_scene = Scene(self.depth_texture_shader, self.selected_scene_path, scene_net_flag)
 
             # Translate the scene for better view
             current_model = self.selected_scene.get_model_matrix()
@@ -1293,7 +1287,7 @@ class Viewer:
         if imgui.button("Load Scene"):
             self.trackball.set_default()
             self.process_scene_config()
-            self.load_scene()
+            self.load_scene(self.sceneNet_usage)
 
         imgui.end()
 

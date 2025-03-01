@@ -14,19 +14,16 @@ from shape.subScene import *
 import os
 
 class Scene:
-    def __init__(self, shader, file_path):
+    def __init__(self, shader, file_path, scene_net_flag):
         self.shader = shader
         self.uma = UManager(self.shader)
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)
         self.name = os.path.basename(file_path)[:-4]
+        self.sceneNet_flag = scene_net_flag
+        self.parse_file_pywavefront(file_path)
 
-        overall_min, overall_max = self.parse_file_pywavefront(file_path)
-        self.min_x, self.min_y, self.min_z = overall_min
-        self.max_x, self.max_y, self.max_z = overall_max
-        print("over all min", overall_min)
-        print("over all max", overall_max)
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
@@ -38,9 +35,6 @@ class Scene:
         else:
             mtl_path = obj_file.replace(".obj", ".mtl")
         self.materials = self.load_materials(mtl_path)
-
-        overall_min = np.array([float('inf'), float('inf'), float('inf')])
-        overall_max = np.array([float('-inf'), float('-inf'), float('-inf')])
 
         all_vertices = []
 
@@ -55,21 +49,14 @@ class Scene:
                     normals,
                     # self.materials[material.name],
                     self.materials.get(material.name, None),
-                    self.dir_path
+                    self.dir_path,
+                    self.sceneNet_flag
                 ).setup()
 
                 self.subObjs.append(model)
                 all_vertices.extend(vertices)
 
         print("Finish parsing meshes")
-
-        if all_vertices:
-            all_vertices = np.array(all_vertices).reshape(-1, 3)
-            overall_min = np.min(all_vertices, axis=0)
-            overall_max = np.max(all_vertices, axis=0)
-
-        print("Finish min max")
-        return overall_min.tolist(), overall_max.tolist()
 
     def process_material_data(self, material):
         data = material.vertices  # List of vertex data
