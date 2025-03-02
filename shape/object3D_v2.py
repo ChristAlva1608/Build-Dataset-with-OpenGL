@@ -10,7 +10,7 @@ from libs.buffer import *
 from libs.camera import *
 import glm
 from itertools import cycle
-from shape.subScene import *
+from .subObj import *
 import os
 
 class Object:
@@ -21,24 +21,17 @@ class Object:
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)
-
-        overall_min, overall_max = self.parse_file_pywavefront(file_path)
-        self.min_x, self.min_y, self.min_z = overall_min
-        self.max_x, self.max_y, self.max_z = overall_max
+        self.parse_file_pywavefront(file_path)
+        print("Finish parsed object", os.path.basename(file_path)[:-4])
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
-        print("Finished Parsing PyWavefront")
 
         if scene.mtllibs:
-            print(f"Material libraries: {scene.mtllibs}")
             mtl_path =  os.path.join(self.dir_path, scene.mtllibs[0])
         else:
             mtl_path = obj_file.replace(".obj", ".mtl")
         self.materials = self.load_materials(mtl_path)
-
-        overall_min = np.array([float('inf'), float('inf'), float('inf')])
-        overall_max = np.array([float('-inf'), float('-inf'), float('-inf')])
 
         all_vertices = []
 
@@ -46,7 +39,7 @@ class Object:
             for material in mesh.materials:
                 texcoords, normals, vertices = self.process_material_data(material)
 
-                model = SubScene(
+                model = SubObj(
                     self.shader,
                     vertices,
                     texcoords,
@@ -57,16 +50,6 @@ class Object:
 
                 self.subObjs.append(model)
                 all_vertices.extend(vertices)
-
-        print("Finish parsing meshes")
-
-        if all_vertices:
-            all_vertices = np.array(all_vertices).reshape(-1, 3)
-            overall_min = np.min(all_vertices, axis=0)
-            overall_max = np.max(all_vertices, axis=0)
-
-        print("Finish min max")
-        return overall_min.tolist(), overall_max.tolist()
 
     def process_material_data(self, material):
         data = material.vertices  # List of vertex data

@@ -221,6 +221,10 @@ class Trackball:
         flip_y = np.diag([1, -1, 1, 1])  # Matrix to flip Y-axis
         return flip_y @ translate(*self.pos2d, -self.distance) @ self.matrix()
 
+    def view_matrix_old(self):
+        """ View matrix transformation, including distance to target point """
+        return translate(*self.pos2d, -self.distance) @ self.matrix()
+
     # def view_matrix2(self, cameraPos):
     #     # Create a translation matrix with cameraPos affecting x, y, and z.
     #     translation_matrix = glm.translate(

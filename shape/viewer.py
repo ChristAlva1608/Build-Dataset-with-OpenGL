@@ -1,5 +1,6 @@
 import os.path
 
+import numpy as np
 from PyQt6.QtWidgets import QApplication, QFileDialog
 import imgui
 from pathlib import Path
@@ -506,27 +507,19 @@ class Viewer:
 
     ''' Specialized Functions '''
     def save_rgb(self, save_path, numb):
-        # Create a numpy array to hold the pixel data
         win_pos_width = self.scene_width
         pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
-
-        # Convert the pixels into a numpy array
         rgb_image = np.frombuffer(pixels, dtype=np.uint8).reshape((int(self.rgb_view_height), int(self.rgb_view_width), 3))
 
-        # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
+        # flip image up-down and left-right
         rgb_image = np.flipud(rgb_image)
+        rgb_image = np.fliplr(rgb_image)
 
         # Convert numpy array (or your image data format) to PIL Image
         rgb_image = Image.fromarray(rgb_image)
-
-        # Create a unique file name using timestamp
-        # timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")  # Includes microseconds
         file_name = f"rgb_image_{numb}.png"
-
-        # Save the image to the local directory
         rgb_image.save(os.path.join(save_path, file_name))
         print(f"Saved rgb image as {file_name}")
-
 
     def save_depth(self, save_path, numb):
         # Create a numpy array to hold the pixel data
@@ -581,7 +574,10 @@ class Viewer:
 
         euclidean_depth[background_mask] = 0
 
-        depth_image = np.flipud(euclidean_depth) # (because OpenGL's origin is at the bottom-left corner)
+        # flip due to CV camera
+        depth_image = np.flipud(euclidean_depth)
+        depth_image = np.fliplr(depth_image)
+
         depth_image = depth_image*self.scale_unit # convert to milimeter
         depth_image = depth_image.astype(np.uint16)
 
@@ -1503,7 +1499,7 @@ class Viewer:
             if save_rgb:
                 self.rgb_save_path = self.select_folder()
                 if self.rgb_save_path:
-                    self.save_rgb(self.rgb_save_path)
+                    self.save_rgb(self.rgb_save_path, 0)
 
             imgui.same_line()
 
@@ -1513,7 +1509,7 @@ class Viewer:
             if save_depth:
                 self.depth_save_path = self.select_folder()
                 if self.depth_save_path:
-                    self.save_depth(self.depth_save_path)
+                    self.save_depth(self.depth_save_path, 0)
 
             imgui.end()
 
