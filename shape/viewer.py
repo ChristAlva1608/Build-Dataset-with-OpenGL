@@ -523,7 +523,8 @@ class Viewer:
 
     def save_depth(self, save_path, numb):
         # Create a numpy array to hold the pixel data
-        win_pos_width = self.scene_width + self.rgb_view_width
+        # win_pos_width = self.scene_width + self.rgb_view_width
+        win_pos_width = self.scene_width
 
         ### Extract depth value ###
         # Read Pixel using GL_RGB
@@ -734,28 +735,28 @@ class Viewer:
                 # Normal rendering
                 drawable.draw(self.cameraPos)
 
-            # Viewport for Depth Scene
-            depth_win_pos_x = self.scene_width + self.rgb_view_width
-            depth_win_pos_y = self.win_height - self.depth_view_height # start from bottom-left
-            GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
-            GL.glScissor(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-
-            for drawable in self.drawables:
-                drawable.set_mode(0) # mode for depth map
-
-                # update depth map color
-                drawable.update_colormap(self.selected_colormap)
-
-                # Depth map rendering
-                drawable.update_near_far(self.near, self.far)
-
-                # Draw the full object
-                drawable.draw(self.cameraPos)
-
-                # Visualize with chosen colormap
-                if self.selected_colormap == 1:
-                    self.pass_magma_data(self.depth_texture_shader)
+            # # Viewport for Depth Scene
+            # depth_win_pos_x = self.scene_width + self.rgb_view_width
+            # depth_win_pos_y = self.win_height - self.depth_view_height # start from bottom-left
+            # GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
+            # GL.glScissor(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
+            # GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+            #
+            # for drawable in self.drawables:
+            #     drawable.set_mode(0) # mode for depth map
+            #
+            #     # update depth map color
+            #     drawable.update_colormap(self.selected_colormap)
+            #
+            #     # Depth map rendering
+            #     drawable.update_near_far(self.near, self.far)
+            #
+            #     # Draw the full object
+            #     drawable.draw(self.cameraPos)
+            #
+            #     # Visualize with chosen colormap
+            #     if self.selected_colormap == 1:
+            #         self.pass_magma_data(self.depth_texture_shader)
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
