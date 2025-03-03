@@ -12,9 +12,10 @@ import glm
 from itertools import cycle
 from shape.subScene import *
 import os
+import pychrono as chrono
 
 class Scene:
-    def __init__(self, shader, file_path, scene_net_flag):
+    def __init__(self, shader, file_path, scene_net_flag, chrono_sys, mat):
         self.shader = shader
         self.uma = UManager(self.shader)
         self.subObjs = []
@@ -24,6 +25,11 @@ class Scene:
         self.sceneNet_flag = scene_net_flag
         self.parse_file_pywavefront(file_path)
 
+        ch_scene = chrono.ChTriangleMeshConnected()
+        ch_scene.LoadWavefrontMesh(file_path)
+        self.body = chrono.ChBodyEasyMesh(ch_scene, 1000, True, True, True, mat, 0.001)
+        self.body.SetFixed(True)
+        chrono_sys.Add(self.body)
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
@@ -201,6 +207,7 @@ class Scene:
             subobj.setup()
 
     def draw(self, cameraPos):
+        # print("Scene position", self.body.GetPos())
         for subobj in self.subObjs:
             subobj.draw(cameraPos)
 

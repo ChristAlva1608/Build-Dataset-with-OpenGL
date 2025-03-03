@@ -1,5 +1,6 @@
 import os.path
 
+import glm
 import numpy as np
 from PyQt6.QtWidgets import QApplication, QFileDialog
 import imgui
@@ -21,6 +22,7 @@ from .vcamera import *
 from .sphere import *
 from colormap import *
 from utils import *
+import pychrono as chrono
 
 
 class Viewer:
@@ -202,12 +204,36 @@ class Viewer:
         self.sceneNet_usage = args.scene_net_layout
         print("self.sceneNet_usage", self.sceneNet_usage)
 
+        # chrono physic engine setup
+        # chrono.ChCollisionModel.SetDefaultSuggestedMargin(0.001)
+        self.chrono_sys = chrono.ChSystemNSC()
+        self.chrono_sys.SetCollisionSystemType(chrono.ChCollisionSystem.Type_BULLET)  # Use the Bullet collision system
+        self.mat = chrono.ChContactMaterialNSC()
+        self.mat.SetFriction(0.1)
+        self.mat.SetCompliance(0.0)
+        self.mat.SetComplianceT(0.0)
+        self.mat.SetDampingF(0.0) # close to 1 to bounce
+        solver = chrono.ChSolverPSOR()
+        solver.SetMaxIterations(50)
+        solver.EnableWarmStart(True)
+        self.chrono_sys.SetSolver(solver)
+        self.chrono_sys.SetMaxPenetrationRecoverySpeed(0.5)
+        self.chrono_sys.SetGravitationalAcceleration(chrono.ChVector3d(0, -9.81, 0))
+        self.time_step = 0.005
+
         # Auto mode, no need to click confirm to load anything
         if args.auto:
             self.process_scene_config()
-            self.load_scene(self.sceneNet_usage)
+            self.load_scene()
             self.autoselect_obj()
-            self.autosave(self.layout_opts)
+            # for i in range(2000):
+            #     self.chrono_sys.DoStepDynamics(self.time_step)
+            #
+            #     if i % 100 == 0:
+            #         for drawable in self.drawables:
+            #             if isinstance(drawable, Object):
+            #                 drawable.update_gravity()
+            # self.autosave(self.layout_opts)
 
         # Register callbacks
         glfw.set_key_callback(self.win, self.on_key)
@@ -658,6 +684,8 @@ class Viewer:
             # projection_mat = glm.perspective(glm.radians(45), (self.rgb_view_width/ self.rgb_view_height), self.near, self.far)
 
             for drawable in self.drawables:
+                if isinstance(drawable, Object):
+                    drawable.update_gravity()
                 if self.obj_location_option and isinstance(drawable, Object):
                     # Instead of creating a translation matrix and multiply with current model, 
                     # I add the translation vector directly to the last column of current model 
@@ -999,7 +1027,7 @@ class Viewer:
         self.drag_object_flag = False
         self.move_cam_sys_flag = False
 
-    def load_scene(self, scene_net_flag):
+    def load_scene(self):
         model = []
 
         # remove last Scene
@@ -1007,7 +1035,7 @@ class Viewer:
 
         # Add chosen object or scene
         if self.selected_scene_path != "No file selected":
-            self.selected_scene = Scene(self.depth_texture_shader, self.selected_scene_path, scene_net_flag)
+            self.selected_scene = Scene(self.depth_texture_shader, self.selected_scene_path, self.sceneNet_usage, self.chrono_sys, self.mat)
 
             # Translate the scene for better view
             current_model = self.selected_scene.get_model_matrix()
@@ -1021,15 +1049,29 @@ class Viewer:
 
     def load_object(self, file_path):
         model = []
-        self.selected_object = Object(self.object_shader, file_path)
 
-        # current_model = self.selected_object.get_model_matrix()
-        # translation_matrix = glm.translate(glm.mat4(1.0), self.center_translation_vec)
-        # model_matrix = current_model * translation_matrix
-        # self.selected_scene.update_attribute("model_matrix", model_matrix)
-        # translation_matrix = self.lay_object()
-        # model_matrix = current_model * translation_matrix
-        # self.selected_object.update_attribute('model_matrix', model_matrix)
+        # scale
+        scale_factor = random.uniform(self.scale_range[0], self.scale_range[1])
+        scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(scale_factor))
+        # position
+        x_obj = random.uniform(self.x_range[0], self.x_range[1])
+        y_obj = random.uniform(self.y_range[0], self.y_range[1])
+        z_obj = random.uniform(self.z_range[0], self.z_range[1])
+        translation_matrix = glm.translate(glm.mat4(1.0), glm.vec3(x_obj, y_obj, z_obj))
+        # translation_matrix = glm.translate(glm.mat4(1.0), glm.vec3(100, 200, 100))
+
+        print("Translate", x_obj, y_obj, z_obj)
+        # rotate is fix
+        rotate_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-90), glm.vec3(1, 0, 0))
+
+
+        self.selected_object = Object(self.object_shader, file_path, self.chrono_sys, self.mat, scale_factor, x_obj, y_obj, z_obj)
+
+        ############ DEBUG ###############
+        current_model = self.selected_object.get_model_matrix()
+        model_matrix = current_model * translation_matrix * rotate_matrix * scale_matrix
+        self.selected_object.update_attribute("model_matrix", model_matrix)
+        ############ DEBUG ###############
 
         model.append(self.selected_object)
 
@@ -1117,6 +1159,8 @@ class Viewer:
         )
 
         for drawable in self.drawables:
+            # if isinstance(drawable, Object):
+            #     drawable.update_gravity()
             drawable.set_mode(1) # mode for rgb image
 
             # update light configuration
@@ -1172,7 +1216,6 @@ class Viewer:
 
             # print("View matrix \n", view)
             # print("Projection matrix \n", projection_mat)
-
 
             # Normal rendering
             drawable.draw(self.cameraPos)
@@ -1283,7 +1326,7 @@ class Viewer:
         if imgui.button("Load Scene"):
             self.trackball.set_default()
             self.process_scene_config()
-            self.load_scene(self.sceneNet_usage)
+            self.load_scene()
 
         imgui.end()
 
@@ -1730,10 +1773,18 @@ class Viewer:
 
     ''' Main Loop'''
     def run(self):
+        i = 0
         while not glfw.window_should_close(self.win):
             if not self.autosave_flag:
                 self.render()
 
+            self.chrono_sys.DoStepDynamics(self.time_step)
+
+            if i%10 == 0:
+                for drawable in self.drawables:
+                    if isinstance(drawable, Object):
+                        drawable.update_gravity()
+                        # print(drawable.body.GetPos())
             # Use to debug and find good view for each scene
             # print('track ball cameraPos: ', self.trackball.get_cameraPos())
             self.imgui_menu()
@@ -1741,5 +1792,6 @@ class Viewer:
             glfw.swap_buffers(self.win)
             glfw.poll_events()
             self.imgui_impl.process_inputs()
+            i += 1
 
         self.imgui_impl.shutdown()

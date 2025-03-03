@@ -1,0 +1,17 @@
+scene_name: 'floor'
+near: 0.1
+far: 1000
+sphere_radius: 100
+shininess: 3.5
+
+# cameraPos: [0.226251, -4.42832, 322.986]
+center_translation_vec: [0, 0, 0]
+x_range: [-20, 350]
+y_range: [50, 230]
+z_range: [-70, 350]
+yaw_range: [-180, 180]
+pitch_range: [-180, 180]
+scale_range: [150, 200] # used for scaling random
+scale_unit: 12.5 #sofa 2.2m, floor 2.5x sofa
+#over all min [-71.3373, -1.8172, -70.536]
+#over all max [367.6519, 243.2062, 344.3887]

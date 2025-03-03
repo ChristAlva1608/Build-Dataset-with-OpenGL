@@ -12,9 +12,10 @@ import glm
 from itertools import cycle
 from .subObj import *
 import os
+import pychrono as chrono
 
 class Object:
-    def __init__(self, shader, file_path):
+    def __init__(self, shader, file_path, chrono_sys, mat, scale_factor, x, y, z):
         self.name = os.path.basename(file_path)[:-4]
         self.shader = shader
         self.uma = UManager(self.shader)
@@ -23,6 +24,30 @@ class Object:
         self.dir_path = os.path.dirname(file_path)
         self.parse_file_pywavefront(file_path)
         print("Finish parsed object", os.path.basename(file_path)[:-4])
+
+        ch_object = chrono.ChTriangleMeshConnected()
+        ch_object.LoadWavefrontMesh(file_path)
+        # ch_object.Transform(chrono.ChVector3d(0, 100, 0), chrono.ChMatrix33d(200))
+
+        angle_rad = math.radians(-90)
+        quat_rotation = chrono.QuatFromAngleX(angle_rad)
+        mat_rotation = chrono.ChMatrix33d(quat_rotation)
+
+        for i in range(3):
+            for j in range(3):
+                mat_rotation.setitem(i, j, mat_rotation.getitem(i, j) * scale_factor)
+
+        ch_object.Transform(chrono.ChVector3d(x, y, z), mat_rotation)  # scale factor
+
+        self.body = chrono.ChBodyEasyMesh(ch_object, 8000, True, True, True, mat, 0.001)
+        # self.body.AddCollisionShape(chrono.ChCollisionShapeBox(mat, scale_factor/2, scale_factor/2, scale_factor/2)) # may need to change
+        self.body.EnableCollision(True)
+        self.body.SetPosDt(chrono.ChVector3d(0, 0, 0)) # set initial velocity
+        self.currentChPos = chrono.ChVector3d(self.body.GetPos())
+        print("Init position", self.currentChPos)
+        # self.currentChPos = chrono.ChVector3d(0, 0, 0)
+        self.epsilon = 1
+        chrono_sys.Add(self.body)
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
@@ -204,6 +229,27 @@ class Object:
     def setup(self):
         for subobj in self.subObjs:
             subobj.setup()
+
+    def update_gravity(self):
+        prev_pos = glm.vec3(self.currentChPos.x, self.currentChPos.y, self.currentChPos.z)
+        update_pos = self.body.GetPos()
+        curr_pos = glm.vec3(update_pos.x, update_pos.y, update_pos.z)
+
+        if curr_pos.y < 0:
+            return
+        # print("Previous pos", prev_pos)
+        # print("Current pos", curr_pos)
+        # if curr_pos.y - prev_pos.y > 10:
+        if glm.distance(prev_pos, curr_pos) > 0.1:
+            translation_vec = curr_pos
+
+            curr_mat = self.get_model_matrix()
+            curr_mat[3] = glm.vec4(translation_vec, 1)
+
+            update_mat = curr_mat
+            # print("Update mat", update_mat)
+            self.subObjs[0].update_model_matrix(update_mat)
+            self.currentChPos = chrono.ChVector3d(update_pos)
 
     def draw(self, cameraPos):
         for subobj in self.subObjs:
