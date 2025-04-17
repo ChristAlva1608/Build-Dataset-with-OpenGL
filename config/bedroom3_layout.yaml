@@ -1,0 +1,16 @@
+scene_name: 'bedroom3_layout'
+near: 0.1
+far: 11
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-3.6, 4.2]
+y_range : [0.1, 2.5]
+z_range : [-3.5, 2.8]
+scale_range: [1, 2] # used for scaling random
+scale_unit: 1000
+#Min [-3.810996, -0.0103, -3.707996]
+#Max [4.439295, 2.791297, 3.089997]
+
+
+

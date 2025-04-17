@@ -1,3 +1,5 @@
+import random
+
 import glfw
 import numpy as np
 from OpenGL.GL import *
@@ -14,7 +16,7 @@ from shape.subScene import *
 import os
 
 class Scene:
-    def __init__(self, shader, file_path, scene_net_flag):
+    def __init__(self, shader, file_path, scene_net_flag, nyu_rgb_paths):
         self.shader = shader
         self.uma = UManager(self.shader)
         self.subObjs = []
@@ -22,6 +24,8 @@ class Scene:
         self.dir_path = os.path.dirname(file_path)
         self.name = os.path.basename(file_path)[:-4]
         self.sceneNet_flag = scene_net_flag
+        self.NYU_rgb_paths = nyu_rgb_paths
+
         self.parse_file_pywavefront(file_path)
 
 
@@ -41,16 +45,16 @@ class Scene:
         for mesh in scene.meshes.values():
             for material in mesh.materials:
                 texcoords, normals, vertices = self.process_material_data(material)
-
+                NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
                 model = SubScene(
                     self.shader,
                     vertices,
                     texcoords,
                     normals,
-                    # self.materials[material.name],
                     self.materials.get(material.name, None),
                     self.dir_path,
-                    self.sceneNet_flag
+                    self.sceneNet_flag,
+                    NYU_path
                 ).setup()
 
                 self.subObjs.append(model)
@@ -206,3 +210,9 @@ class Scene:
 
     def get_model_matrix(self):
         return self.subObjs[0].get_model_matrix()
+
+    def change_NYU_texture(self):
+        # perform change all the scene texture to new NYU image
+        for subScene in self.subObjs:
+            NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
+            subScene.update_texture(NYU_path)

@@ -137,7 +137,9 @@ class Viewer:
 
         self.show_time_selection = False
         self.autosave_flag = False
-        self.layout_opts = args.num_images
+        self.layout_opts = args.num_images_train # TODO fix later
+        self.numb_train_img = args.num_images_train
+        self.numb_test_img = args.num_images_test
         self.save_all_flag = False
         self.show_autosave_window = False
         self.current_time = 0.0
@@ -200,14 +202,20 @@ class Viewer:
 
         # using scenet layout
         self.sceneNet_usage = args.scene_net_layout
-        print("self.sceneNet_usage", self.sceneNet_usage)
+        # using NYU texture
+        self.NYU_rgb_paths = ""
+        if args.NYU_path != "": # if flag on and path defined load the path
+            self.NYU_rgb_paths = get_all_NYU_rgb_images(args.NYU_path)
+            print("Using NYU texture !", len(self.NYU_rgb_paths), "images from", args.NYU_path)
 
         # Auto mode, no need to click confirm to load anything
         if args.auto:
             self.process_scene_config()
             self.load_scene(self.sceneNet_usage)
+            self.autosave(self.numb_test_img, False)
             self.autoselect_obj()
-            self.autosave(self.layout_opts)
+            self.autosave(self.numb_train_img, True)
+            glfw.set_window_should_close(self.win, True) # close window when done
 
         # Register callbacks
         glfw.set_key_callback(self.win, self.on_key)
@@ -598,16 +606,27 @@ class Viewer:
         print(f"Saved depth image as {file_name}")
         return True
 
-    def autosave(self, lay_opts):
-        scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
-        if self.rgb_save_path == '':
-            self.rgb_save_path = Path("./dataset/rgb") / scene_name
+    def autosave(self, lay_opts, train_set_flag):
+        # scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
+        scene_name = os.path.basename(self.selected_scene_path)[:-4]
+
+        if train_set_flag:
+        # if self.rgb_save_path == '':
+            self.rgb_save_path = Path("E:/DataDuck/dataset/train/rgb") / scene_name
             self.rgb_save_path.mkdir(parents=True, exist_ok=True)
 
-        if self.depth_save_path == '':
-            self.depth_save_path = Path("./dataset/depth") / scene_name
+        # if self.depth_save_path == '':
+            self.depth_save_path = Path("E:/DataDuck/dataset/train/depth") / scene_name
             self.depth_save_path.mkdir(parents=True, exist_ok=True)
+        else: # test set generate
+        # if self.rgb_save_path == '':
+            self.rgb_save_path = Path("E:/DataDuck/dataset/test/rgb") / scene_name
+            self.rgb_save_path.mkdir(parents=True, exist_ok=True)
 
+        # if self.depth_save_path == '':
+            self.depth_save_path = Path("E:/DataDuck/dataset/test/depth") / scene_name
+            self.depth_save_path.mkdir(parents=True, exist_ok=True)
+        invalid_flag = False
         i = 0
         while i < lay_opts:
             if self.camera_pos_option:
@@ -619,20 +638,7 @@ class Viewer:
                                        random.uniform(self.y_range[0], self.y_range[1]),
                                        random.uniform(self.z_range[0], self.z_range[1])
                                        )
-            # lookAt_position = glm.vec3(0, 0, 100)
-
             view = glm.lookAt(self.cameraPos, lookAt_position, glm.vec3(0, -1, 0)) # flip due to cv camera
-
-            # yaw = random.choice(np.linspace(self.yaw_range[1], self.yaw_range[0], 20))
-            # pitch = random.choice(np.linspace(self.pitch_range[1], self.pitch_range[0], 20))
-            # direction = glm.vec3(
-            #     glm.cos(glm.radians(yaw)) * glm.cos(glm.radians(pitch)),  # x
-            #     glm.sin(glm.radians(pitch)),  # y
-            #     glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch))  # z
-            # )
-
-            # self.cameraFront = glm.normalize(direction)
-            # view = glm.lookAt(self.cameraPos, self.cameraFront, glm.vec3(0, -1, 0))
 
             GL.glClearColor(0, 0, 0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -659,6 +665,7 @@ class Viewer:
             # projection_mat = glm.perspective(glm.radians(45), (self.rgb_view_width/ self.rgb_view_height), self.near, self.far)
 
             for drawable in self.drawables:
+                # random object location
                 if self.obj_location_option and isinstance(drawable, Object):
                     # Instead of creating a translation matrix and multiply with current model, 
                     # I add the translation vector directly to the last column of current model 
@@ -677,6 +684,7 @@ class Viewer:
                     
                     drawable.update_attribute('model_matrix', current_model)
 
+                # random object rotation
                 if self.obj_rotation_option and isinstance(drawable, Object):
                     yaw = random.choice(np.linspace(0,360, 360))
                     pitch = random.choice(np.linspace(0,360, 360))
@@ -689,6 +697,7 @@ class Viewer:
 
                     drawable.update_attribute('model_matrix', model)
 
+                # random object scale
                 if self.obj_scale_option and isinstance(drawable, Object):
                     self.scale_factor = random.uniform(self.scale_range[0], self.scale_range[1])
                     self.prev_scale_factor = self.obj_management[drawable.name]['scale_factor']
@@ -703,19 +712,28 @@ class Viewer:
 
                     drawable.update_attribute('model_matrix', model)
 
-                # switch texture every 500
+                # switch object texture every 500 images
                 if (self.obj_texture_option
                         and isinstance(drawable, Object)
                         and (i % 500 == 0)
-                        and (i != 0)):
+                        and not invalid_flag):
+                        # and (i != 0)):  # turn this line off only for NYU
                     # Only update map_Kd, supposed an object only have 1 simple texture
-                    texture_list = os.listdir('textures')
-                    for j, texture in enumerate(texture_list):
-                        texture_list[j] = os.path.join('textures', texture)
-                    # Store the initial texture of the object
-                    texture_list.append(drawable.get_texture())
-                    path = random.choice(texture_list)
+                    if self.NYU_rgb_paths:
+                        path = random.choice(self.NYU_rgb_paths)
+                    else:
+                        texture_list = os.listdir('textures')
+                        for j, texture in enumerate(texture_list):
+                            texture_list[j] = os.path.join('textures', texture)
+                        # Store the initial texture of the object
+                        texture_list.append(drawable.get_texture())
+                        path = random.choice(texture_list)
                     drawable.update_attribute('texture', path)
+
+                # switch scene texture every 300 images
+                if self.NYU_rgb_paths and isinstance(drawable, Scene) and (i % 100 == 0) and (i != 0) and not invalid_flag:
+                    print(".... Changing NYU texture for scene....")
+                    drawable.change_NYU_texture()
 
                 drawable.set_mode(1) # mode for rgb image
 
@@ -729,7 +747,6 @@ class Viewer:
                 drawable.update_shininess(self.shininess)
 
                 drawable.update_attribute('view_matrix', view)
-                # projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
                 drawable.update_attribute('projection_matrix', projection_mat)
 
                 # Normal rendering
@@ -762,9 +779,10 @@ class Viewer:
 
             status = self.save_depth(self.depth_save_path, i)
             if not status:
+                invalid_flag = True
                 glfw.swap_buffers(self.win)
                 continue
-
+            invalid_flag = False
             self.save_rgb(self.rgb_save_path, i)
             i += 1
 
@@ -800,104 +818,6 @@ class Viewer:
     '''
     This function is used to debug
     '''
-    def random_location(self):
-        # x_min, y_min, z_min = self.selected_scene.min_x, self.selected_scene.min_y, self.selected_scene.min_z
-        # x_max, y_max, z_max = self.selected_scene.max_x, self.selected_scene.max_y, self.selected_scene.max_z
-
-        x_min, x_max = self.x_range[0], self.x_range[1]
-        y_min, y_max = self.y_range[0], self.y_range[1]
-        z_min, z_max = self.z_range[0], self.z_range[1]
-
-        print(f'x min: {x_min}, y min: {y_min}, z min: {z_min}')
-        print(f'x max: {x_max}, y max: {y_max}, z max: {z_max}')
-        GL.glClearColor(0, 0, 0, 1.0)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
-        # Viewport for RGB Scene
-        win_pos_width = self.scene_width
-        win_pos_height = self.win_height - self.rgb_view_height # start from bottom-left
-
-        GL.glViewport(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-        GL.glScissor(win_pos_width, win_pos_height, self.rgb_view_width, self.rgb_view_height)
-        GL.glEnable(GL.GL_SCISSOR_TEST)
-        GL.glClearColor(*self.bg_colors, 1.0)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-        GL.glUseProgram(self.depth_texture_shader.render_idx)
-
-        for drawable in self.drawables:
-            drawable.set_mode(1) # mode for rgb image
-
-            # update light configuration
-            if self.lightPos_changed:
-                drawable.update_lightPos(self.lightPos)
-
-            if self.lightColor_changed:
-                drawable.update_lightColor(self.lightColor)
-
-            drawable.update_shininess(self.shininess)
-
-            if isinstance(drawable, Object):
-                x = random.uniform(x_min, x_max)
-                z = random.uniform(z_min, z_max)
-
-                current_model = drawable.get_model_matrix()
-
-                # Instead of creating a translation matrix and multiply with current model, 
-                # I add the translation vector directly to the last column of current model 
-                # (avoid effect of scaling factor and rotation to the translation vector)
-                self.reverse_translation = self.obj_management[drawable.name]['reverse_translation']
-                self.translation = glm.vec3(x,0,z)
-                current_model[3] = current_model[3] + glm.vec4(self.reverse_translation, 0.0) + glm.vec4(self.translation, 0.0)
-                self.obj_management[drawable.name]['reverse_translation'] = - self.translation
-
-                yaw = random.choice(np.linspace(0, 360, 360))
-                pitch = random.choice(np.linspace(0, 360, 360))
-                x_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-pitch), glm.vec3(1.0, 0.0, 0.0)) # add - angle because object rotation not camera
-                y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
-
-                model = current_model * x_rotation_matrix * y_rotation_matrix
-
-                drawable.update_attribute('model_matrix', model)
-
-            # drawable.update_attribute('view_matrix', view)
-
-            projection = glm.perspective(glm.radians(self.fov), self.rgb_view_width / self.rgb_view_height, self.near, self.far)
-            drawable.update_attribute('projection_matrix', projection)
-
-            # Normal rendering
-            drawable.draw(self.cameraPos)
-
-        # Viewport for Depth Scene
-        win_pos_width = self.scene_width + self.rgb_view_width
-        win_pos_height = self.win_height - self.depth_view_height # start from bottom-left
-        GL.glViewport(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-        GL.glScissor(win_pos_width, win_pos_height, self.depth_view_width, self.depth_view_height)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-
-        for drawable in self.drawables:
-            drawable.set_mode(0) # mode for depth map
-
-            # update depth map color
-            drawable.update_colormap(self.selected_colormap)
-
-            # drawable.update_attribute('view_matrix', view)
-
-            projection = glm.perspective(glm.radians(self.fov), self.depth_view_width / self.depth_view_height, self.near, self.far)
-            drawable.update_attribute('projection_matrix', projection)
-
-            # Depth map rendering
-            drawable.update_near_far(self.near, self.far)
-
-            # Draw the full object
-            drawable.draw(self.cameraPos)
-
-            # Visualize with chosen colormap
-            if self.selected_colormap == 1:
-                self.pass_magma_data(self.depth_texture_shader)
-
-        GL.glDisable(GL.GL_SCISSOR_TEST)
-
-        glfw.swap_buffers(self.win)
 
     def multi_cam(self):
         # Define the hemisphere of multi-camera
@@ -1008,7 +928,7 @@ class Viewer:
 
         # Add chosen object or scene
         if self.selected_scene_path != "No file selected":
-            self.selected_scene = Scene(self.depth_texture_shader, self.selected_scene_path, scene_net_flag)
+            self.selected_scene = Scene(self.depth_texture_shader, self.selected_scene_path, scene_net_flag, self.NYU_rgb_paths)
 
             # Translate the scene for better view
             current_model = self.selected_scene.get_model_matrix()
@@ -1144,14 +1064,6 @@ class Viewer:
 
             # Define view matrix
             view = self.trackball.view_matrix()
-            # view = np.array(
-            #     [
-            #         [1., 0., 0., 0.],
-            #         [0., 1., 0., 0.],
-            #         [0., 0., 1., 0.],
-            #         [0., 0., 0., 1.]
-            #     ], dtype = np.float32
-            # )
 
             if self.move_camera_flag:
                 # Call to create hemisphere of multi-cam

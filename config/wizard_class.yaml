@@ -9,9 +9,8 @@ center_translation_vec: [ -0.21324, -1.16714, 2.70241 ]
 x_range : [-5, 5]
 y_range : [0, 4]
 z_range : [-5, 5]
-yaw_range : [-40, 40]
-pitch_range: [-40, 40]
 scale_range: [1, 2] # used for scaling random
-scale_unit: 1500
+#scale_unit: 1500
+scale_unit: 660
 #over all min [-5.73923, -0.2, -7.767766]
 #over all max [5.772667, 4.916986, 7.79462]

@@ -1,0 +1,19 @@
+scene_name: 'bathroom5_layout'
+near: 0.1
+far: 17
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-4.0, 4.0]
+y_range : [0.2, 4.4]
+z_range : [-4.9, 7.3]
+scale_range: [1, 2] # used for scaling random
+#scale_unit: 1000
+scale_unit: 760
+#Min [-4.13386, 0.11417, -5.135042]
+#Max [4.135045, 4.661418, 7.503941]
+
+
+
+
+

@@ -1,0 +1,13 @@
+scene_name: 'office2_layout'
+near: 0.1
+far: 19
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-6.9, 6.2]
+y_range : [0.0, 4.0]
+z_range : [-6.26, 4.6]
+scale_range: [1, 2] # used for scaling random
+#scale_unit: 1000
+scale_unit: 650
+#Min [-7.153677, -0.200002, -6.465255]
+#Max [6.459466, 4.200006, 4.819804]

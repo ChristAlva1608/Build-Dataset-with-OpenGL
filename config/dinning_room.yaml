@@ -1,0 +1,19 @@
+scene_name: 'dinning_room'
+near: 0.1
+far: 12
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, -10.0]
+center_translation_vec: [ 0, 0, 0 ]
+x_range : [-5, 3]
+y_range : [0.1, 2.9]
+z_range : [-3, 3]
+yaw_range : [0, 360]
+pitch_range: [0, 360]
+scale_range: [1, 2] # used for scaling random
+#scale_unit: 1000
+scale_unit: 880
+
+#over all min [-5.87667, 0.013093, -4.007995]
+#over all max [3.961758, 3.013095, 3.958937]

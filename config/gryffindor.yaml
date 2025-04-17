@@ -1,0 +1,20 @@
+scene_name: 'gryffindor'
+near: 0.001
+far: 0.25
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, -10.0]
+center_translation_vec: [ 0, 0, 0 ]
+x_range : [-0.05, 0.05]
+y_range : [0.01, 0.08]
+z_range : [-0.13, 0.13]
+yaw_range : [0, 360]
+pitch_range: [0, 360]
+scale_range: [0.02, 0.04] # used for scaling random
+#scale_unit: 50000
+scale_unit: 40000
+
+#Min [-0.081371, -0.0, -0.151197]
+#Max [0.081371, 0.094485, 0.151197]
+

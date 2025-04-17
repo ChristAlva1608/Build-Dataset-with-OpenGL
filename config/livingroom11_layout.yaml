@@ -1,0 +1,16 @@
+scene_name: 'livingroom11_layout'
+near: 0.1
+far: 19
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-4.3, 8.3]
+y_range : [0.1, 2.6]
+z_range : [-5.5, 6.7]
+scale_range: [1, 2] # used for scaling random
+scale_unit: 850
+#Min [-4.504815, -0.01, -5.710626]
+#Max [8.495198, 2.830003, 6.964346]
+
+
+
+

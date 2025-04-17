@@ -1,0 +1,16 @@
+scene_name: 'kitchen1_layout'
+near: 0.1
+far: 6
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-2.2, 1.3]
+y_range : [0.1, 2.8]
+z_range : [-1.3, 0.7]
+scale_range: [1, 2] # used for scaling random
+scale_unit: 1000
+#Min [-2.47687, 0.0, -1.478423]
+#Max [1.564661, 3.000001, 0.961579]
+
+
+

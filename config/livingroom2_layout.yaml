@@ -1,0 +1,21 @@
+scene_name: 'livingroom2_layout'
+near: 0.1
+far: 18
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-8.5, 7.7]
+y_range : [0.1, 2.6]
+z_range : [-1.6, 2.5]
+yaw_range : [-40, 40]
+pitch_range: [-40, 40]
+scale_range: [1, 2] # used for scaling random
+#scale_unit: 1000
+scale_unit: 550
+#Min [-8.787218, -1e-06, -1.783522]
+#Max [7.925558, 2.850473, 2.679925]
+
+
+

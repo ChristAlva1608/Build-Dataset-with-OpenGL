@@ -1,4 +1,5 @@
 # this file use for checking the min max vertices of the obj file to config the .yaml file
+import os
 
 def check_min_max(scene_path):
     min_x = min_y = min_z = float('inf')
@@ -13,8 +14,11 @@ def check_min_max(scene_path):
                 min_y, max_y = min(min_y, y), max(max_y, y)
                 min_z, max_z = min(min_z, z), max(max_z, z)
 
-    print("Min \n", min_x, min_y, min_z)
-    print("Max \n", max_x, max_y, max_z)
+    print(f"Min [{min_x}, {min_y}, {min_z}]")
+    print(f"Max [{max_x}, {max_y}, {max_z}]")
 
-scene_path = "scene/ours/house_interior/house_interior.obj"
+# scene_path = "scene/ours/living_room_2/living_room_2.obj"
+scene_path = "scene/SceneNetRGBD_Layouts/office/office4_layout.obj"
+
+print("Check min max for", os.path.basename(scene_path)[:-4])
 check_min_max(scene_path)

@@ -1,0 +1,20 @@
+scene_name: 'bathroom2_layout'
+near: 0.1
+far: 18
+sphere_radius: 2
+view_range: [0, 360] # angle view
+#cameraPos: [0.0, 0.6, 3.3]
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-4.5, 4.5]
+y_range : [0, 2.6]
+z_range : [-5, 9]
+yaw_range : [-40, 40]
+pitch_range: [-40, 40]
+scale_range: [1, 2] # used for scaling random
+#scale_unit: 1000
+scale_unit: 650
+#Min [-4.867206, -0.247106, -5.559955]
+#Max [4.837682, 2.781088, 9.34254]
+
+

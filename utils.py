@@ -1,17 +1,9 @@
 import yaml
 from PIL import Image
 import numpy as np
+import os
 
 def read_yaml_file(file_path):
-    """
-    Reads a YAML file and returns its content.
-
-    Args:
-        file_path (str): The path to the YAML file.
-
-    Returns:
-        dict: Parsed content of the YAML file.
-    """
     try:
         with open(file_path, 'r') as file:
             content = yaml.safe_load(file)
@@ -22,6 +14,7 @@ def read_yaml_file(file_path):
         print(f"Error: An error occurred while parsing the YAML file.\n{e}")
     return None
 
+
 def valid_depth_map(depth_image):
     mask_depth = depth_image[depth_image > 0]
     std = np.std(mask_depth)
@@ -30,13 +23,22 @@ def valid_depth_map(depth_image):
     zero_mask = (depth_image == 0)
     masked_percentage = np.mean(zero_mask) * 100
 
-    # close mask percetage
-    close_mask = (depth_image < 500)
+    # close pixels percetage
+    close_mask = (depth_image < 1000)
     close_percentage = np.mean(close_mask) * 100
 
-    if (std < 300 or masked_percentage > 20 or close_percentage > 20): # is not valid
+    if (std < 500 or masked_percentage > 10 or close_percentage > 20): # is not valid
         # print("Standard deviation", np.std(mask_depth))
         # print("Mask percentage", masked_percentage)
         # print("Close percentage", close_percentage)
         return False
     return True
+
+
+def get_all_NYU_rgb_images(dataset_path):
+    image_paths = []
+    for root, _, files in os.walk(dataset_path):
+        for file in files:
+            if file.startswith("rgb_") and file.lower().endswith((".jpg")):
+                image_paths.append(os.path.join(root, file))
+    return image_paths

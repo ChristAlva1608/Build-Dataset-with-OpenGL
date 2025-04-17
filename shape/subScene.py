@@ -18,7 +18,7 @@ class TextureMap(Enum):
     BUMP = ("map_bump", "texture_bump")
 
 class SubScene:
-    def __init__(self, shader, vert, teco, normals, material, dir_path, sceneNet_flag):
+    def __init__(self, shader, vert, teco, normals, material, dir_path, sceneNet_flag, NYU_path):
         self.shader = shader
         self.vao = VAO()
         self.uma = UManager(self.shader)
@@ -50,20 +50,23 @@ class SubScene:
                 texture_path = self.materials.get(map_key)
 
                 if texture_path:
-                    if sceneNet_flag:
-                        base_dir = os.path.dirname(dir_path)
-                        normalized_path = os.path.normpath(texture_path)
-                        object_fol = os.path.relpath(normalized_path, os.pardir)
-                        texture_path = os.path.join(base_dir, object_fol)
-
-                        texture_list = os.listdir(texture_path)
-                        path = random.choice(texture_list)
-                        path = os.path.join(texture_path, path)
-                        texture_path = path
+                    if NYU_path: # this apply 100% scene texture
+                        texture_path = NYU_path
                     else:
-                        if map_key == 'map_bump':
-                            texture_path = texture_path['filename']
-                        texture_path = os.path.join(dir_path, texture_path)
+                        if sceneNet_flag:
+                            base_dir = os.path.dirname(dir_path)
+                            normalized_path = os.path.normpath(texture_path)
+                            object_fol = os.path.relpath(normalized_path, os.pardir)
+                            texture_path = os.path.join(base_dir, object_fol)
+
+                            texture_list = os.listdir(texture_path)
+                            path = random.choice(texture_list)
+                            path = os.path.join(texture_path, path)
+                            texture_path = path
+                        else:
+                            if map_key == 'map_bump':
+                                texture_path = texture_path['filename']
+                            texture_path = os.path.join(dir_path, texture_path)
 
                     if os.path.exists(texture_path):
                         self.texture_flags[map_key] = True
