@@ -73,7 +73,6 @@ class SubObj:
         return self.projection
 
     def update_colors(self, colors):
-        print(colors)
         # self.colors = np.array(colors, dtype=np.float32)
         self.colors = np.tile(colors, (len(self.vertices), 1)).astype(np.float32)
         self.vao.update_vbo(3, self.colors)

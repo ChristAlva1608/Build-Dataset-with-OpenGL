@@ -19,27 +19,15 @@ class Scene:
         
         self.dir_path = os.path.dirname(file_path)
         self.subobjs = []
+        self.obj_names_list = [] 
         self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
         self.name = os.path.basename(file_path)[:-4]
-        self.obj_names_list = self.get_obj_names(file_path)   
 
         self.sceneNet_flag = scene_net_flag
         self.NYU_rgb_paths = nyu_rgb_paths
 
         self.split_obj()
-    
-    def get_obj_names(self, obj_path):
-        obj_names = []
-        with open(obj_path, 'r') as f:
-            for line in f:
-                if line.startswith('o '):
-                    name = line.strip().split(' ', 1)[1]
-                    obj_names.append(name)
-        if not obj_names:
-            # No 'o' found in the obj file, use the file name as default object name
-            obj_names.append(self.name)
-        return obj_names
     
     def parse_obj_file(self,file_path):
         vertices_all = []
@@ -106,6 +94,7 @@ class Scene:
                         'normal_obj_id': [],  # List to store the normals for the object
                         'texture_name': None,  # Texture name (if any)
                     }
+                    self.obj_names_list.append(parts[1])  # Store the object name
 
                 # Process texture name (use 'usemtl' to get texture name if available)
                 elif parts[0] == 'usemtl':
@@ -247,7 +236,8 @@ class Scene:
                 for normal_id in sublist:
                     normals.append(self.normals[int(normal_id)])
 
-            # if (obj['texture_name']=='wire_115115115'):
+            # if (obj['obj_name']=='Cylinder001' or obj['obj_name']=='Plane002'):
+            # if (obj['obj_name']=='Box001'):
             NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
             model = SubScene( self.shader,
                             vertices,
@@ -274,6 +264,10 @@ class Scene:
         for subobj in self.subobjs:
             subobj.uma.upload_uniform_scalar1i(num, 'mode')
     
+    def update_colors(self, color_list):
+        for i, subobj in enumerate(self.subobjs):
+            subobj.update_colors(color_list[i])
+
     def update_shader(self, shader):
         for subobj in self.subobjs:
             subobj.update_shader(shader)

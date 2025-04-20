@@ -23,29 +23,21 @@ class Scene:
 
         self.dir_path = os.path.dirname(file_path)
         self.name = os.path.basename(file_path)[:-4]
-        self.obj_names_list = self.get_obj_names(file_path)
+        self.obj_names_list = []
 
         self.sceneNet_flag = scene_net_flag
         self.NYU_rgb_paths = nyu_rgb_paths
 
         self.parse_file_pywavefront(file_path)
-
-    def get_obj_names(self, obj_path):
-        obj_names = []
-        with open(obj_path, 'r') as f:
-            for line in f:
-                if line.startswith('o '):
-                    name = line.strip().split(' ', 1)[1]
-                    obj_names.append(name)
-        if not obj_names:
-            # No 'o' found in the obj file, use the file name as default object name
-            obj_names.append(self.name)
-        return obj_names
     
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
         print("Finished Parsing PyWavefront")
+        for mesh_name, mesh in scene.meshes.items():
+            self.obj_names_list.append(mesh_name)
+            # print(f"Mesh name: {mesh_name}")
 
+        # Do something with material
         if scene.mtllibs:
             print(f"Material libraries: {scene.mtllibs}")
             mtl_path =  os.path.join(self.dir_path, scene.mtllibs[0])

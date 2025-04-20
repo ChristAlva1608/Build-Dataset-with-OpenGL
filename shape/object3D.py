@@ -289,9 +289,9 @@ class Object:
         for subobj in self.subobjs:
             subobj.update_shader(shader)
 
-    def update_colors(self, colors):
-        for subobj in self.subobjs:
-            subobj.update_colors(colors)
+    def update_colors(self, color_list):
+        for i, subobj in enumerate(self.subobjs):
+            subobj.update_colors(color_list[i])
 
     def update_colormap(self, selected_colormap):
         for subobj in self.subobjs:

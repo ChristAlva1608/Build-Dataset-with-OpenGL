@@ -1203,37 +1203,50 @@ class Viewer:
 
         GL.glDisable(GL.GL_SCISSOR_TEST)
 
-    def render_segmentation(self):
-        # pseudo code for segmentation rendering
+    def get_label_from_name(self, name, labels):
+        """
+        Extracts the correct label key from an object name by matching the longest prefix in labels.
+        """
+        matched_label = None
+        max_len = 0
 
-        # First part, visualize the segmentation
+        for label in labels:
+            if name.startswith(label) and len(label) > max_len:
+                matched_label = label
+                max_len = len(label)
+
+        return matched_label
+
+    def render_segmentation(self):
+        def normalize_color(color):
+            return [c / 255.0 for c in color]
+
         for drawable in self.drawables:
             if isinstance(drawable, Object):
-                # Get the object name (e.g., "car_1")
+                color_list = []
                 name = drawable.name
+                category = self.get_label_from_name(name, labels)
 
-                # Extract class name by splitting on underscore
-                category = name.split('_')[0]
-
-                # Set the color based on the category
-                if category in labels:
-                    color = labels[category].color
-                    drawable.update_colors(color)
+                if category:
+                    color = normalize_color(labels[category].color)
+                    color_list.append(color)
                 else:
-                    # Default color for unknown labels
-                    drawable.update_colors([1.0, 1.0, 1.0])
-            # elif isinstance(drawable, Scene):
-            #     for obj_name in drawable.obj_names_list:
-            #         # Extract class name by splitting on underscore
-            #         category = obj_name.split('_')[0]
+                    color_list.append([1.0, 1.0, 1.0])
 
-            #         # Set the color based on the category
-            #         if category in labels:
-            #             color = labels[category].color
-            #             drawable.update_colors(color)
-            #         else:
-            #             # Default color for unknown labels
-            #             drawable.update_colors([1.0, 1.0, 1.0])
+                drawable.update_colors(color_list)
+
+            elif isinstance(drawable, Scene):
+                color_list = []
+                for obj_name in drawable.obj_names_list:
+                    category = self.get_label_from_name(obj_name, labels)
+
+                    if category:
+                        color = normalize_color(labels[category].color)
+                        color_list.append(color)
+                    else:
+                        color_list.append([1.0, 1.0, 1.0])
+
+                drawable.update_colors(color_list)   
 
     def coloring_segmentation(self):
         # Set the color for the segmentation
@@ -1292,6 +1305,7 @@ class Viewer:
         select_scene_flag = self.button_with_icon('icons/load.png', 'Select Scene')
         if select_scene_flag:
             self.selected_scene_path = self.select_file('./scene')
+        self.selected_scene_path = '/Users/christalva/Desktop/HK242/Thesis/Build-Dataset-with-OpenGL/scene/house_interior/house_interior.obj'
 
         imgui.text(f"{self.selected_scene_path}")
 

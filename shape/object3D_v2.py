@@ -186,6 +186,10 @@ class Object:
     def get_texture(self):
         return self.subObjs[0].texture_path
     
+    def update_colors(self, color_list):
+        for i, subobj in enumerate(self.subobjs):
+            subobj.update_colors(color_list[i])
+            
     def update_colormap(self, selected_colormap):
         for subobj in self.subObjs:
             subobj.uma.upload_uniform_scalar1i(selected_colormap, 'colormap_selection')
