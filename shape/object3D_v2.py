@@ -22,7 +22,20 @@ class Object:
 
         self.dir_path = os.path.dirname(file_path)
         self.parse_file_pywavefront(file_path)
+        self.obj_names_list = self.get_obj_names(file_path)
         print("Finish parsed object", os.path.basename(file_path)[:-4])
+
+    def get_obj_names(self, obj_path):
+        obj_names = []
+        with open(obj_path, 'r') as f:
+            for line in f:
+                if line.startswith('o '):
+                    name = line.strip().split(' ', 1)[1]
+                    obj_names.append(name)
+        if not obj_names:
+            # No 'o' found in the obj file, use the file name as default object name
+            obj_names.append(self.name)
+        return obj_names
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)

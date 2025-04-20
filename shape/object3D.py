@@ -13,7 +13,7 @@ from itertools import cycle
 from shape.subObj import *
 
 class Object:
-    def __init__(self, shader, file_path, colors=[]):
+    def __init__(self, shader, file_path):
         self.shader = shader
         self.uma = UManager(self.shader)
 
@@ -22,13 +22,21 @@ class Object:
         self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
         self.name = os.path.basename(file_path)[:-4]
-
+        self.obj_names_list = self.get_obj_names(file_path)
         self.split_obj()
 
-        # If switch to segmentation mode
-        if colors:
-            self.colors = colors
-
+    def get_obj_names(self, obj_path):
+        obj_names = []
+        with open(obj_path, 'r') as f:
+            for line in f:
+                if line.startswith('o '):
+                    name = line.strip().split(' ', 1)[1]
+                    obj_names.append(name)
+        if not obj_names:
+            # No 'o' found in the obj file, use the file name as default object name
+            obj_names.append(self.name)
+        return obj_names
+    
     def parse_obj_file(self,file_path):
         vertices_all = []
         texcoords_all = []
@@ -280,6 +288,10 @@ class Object:
     def update_shader(self, shader):
         for subobj in self.subobjs:
             subobj.update_shader(shader)
+
+    def update_colors(self, colors):
+        for subobj in self.subobjs:
+            subobj.update_colors(colors)
 
     def update_colormap(self, selected_colormap):
         for subobj in self.subobjs:

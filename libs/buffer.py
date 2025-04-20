@@ -31,6 +31,20 @@ class VAO(object):
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indices, GL.GL_STATIC_DRAW)
         self.deactivate()
 
+    def update_vbo(self, location, new_data):
+        """
+        Update VBO data at a given attribute location.
+        Assumes the VBO has already been created.
+        """
+        if location not in self.vbo:
+            raise ValueError(f"VBO at location {location} not found.")
+
+        self.activate()
+        buffer_idx = self.vbo[location]
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, buffer_idx)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, new_data.nbytes, new_data, GL.GL_STATIC_DRAW)
+        self.deactivate()
+
     def __del__(self):
         GL.glDeleteVertexArrays(1, [self.vao])
         GL.glDeleteBuffers(1, list(self.vbo.values()))

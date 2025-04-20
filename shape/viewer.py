@@ -13,15 +13,15 @@ from libs.camera import *
 from libs.shader import *
 from libs.transform import *
 
-# from .object3D import *
-# from .scene3D import *
-from .object3D_v2 import *
-from .scene3D_v2 import *
+from .object3D import *
+from .scene3D import *
+# from .object3D_v2 import *
+# from .scene3D_v2 import *
 from .vcamera import *
 from .sphere import *
 from colormap import *
 from utils import *
-
+from .labels import labels
 
 class Viewer:
     ''' Initialize attributes '''
@@ -132,8 +132,10 @@ class Viewer:
         self.multi_cam_flag = False
         # self.time_save = 0.0
         # self.time_count = 0.0
-        self.rgb_save_path = args.rgb_save_path
-        self.depth_save_path = args.depth_save_path
+        self.rgb_save_path = Path(args.rgb_save_path)
+        self.rgb_save_path.mkdir(parents=True, exist_ok=True)
+        self.depth_save_path = Path(args.depth_save_path)
+        self.depth_save_path.mkdir(parents=True, exist_ok=True)
 
         self.show_time_selection = False
         self.autosave_flag = False
@@ -186,6 +188,9 @@ class Viewer:
         # Initialize trackball
         self.trackball = Trackball()
         self.mouse = (0, 0)
+
+        # Initialize visual task mode
+        self.chosen_visual_task = 0
 
         # Camera Intrinsic when convert from FOV
         # aspect_ratio = self.rgb_view_width / self.rgb_view_height
@@ -611,20 +616,16 @@ class Viewer:
         scene_name = os.path.basename(self.selected_scene_path)[:-4]
 
         if train_set_flag:
-        # if self.rgb_save_path == '':
-            self.rgb_save_path = Path("E:/DataDuck/dataset/train/rgb") / scene_name
+            self.rgb_save_path = self.rgb_save_path / "train/rgb" / scene_name
             self.rgb_save_path.mkdir(parents=True, exist_ok=True)
 
-        # if self.depth_save_path == '':
-            self.depth_save_path = Path("E:/DataDuck/dataset/train/depth") / scene_name
+            self.depth_save_path = self.depth_save_path / "train/depth" / scene_name
             self.depth_save_path.mkdir(parents=True, exist_ok=True)
         else: # test set generate
-        # if self.rgb_save_path == '':
-            self.rgb_save_path = Path("E:/DataDuck/dataset/test/rgb") / scene_name
+            self.rgb_save_path = self.rgb_save_path / "test/rgb" / scene_name
             self.rgb_save_path.mkdir(parents=True, exist_ok=True)
 
-        # if self.depth_save_path == '':
-            self.depth_save_path = Path("E:/DataDuck/dataset/test/depth") / scene_name
+            self.depth_save_path = self.depth_save_path / "test/depth" / scene_name
             self.depth_save_path.mkdir(parents=True, exist_ok=True)
         invalid_flag = False
         i = 0
@@ -920,6 +921,9 @@ class Viewer:
         self.drag_object_flag = False
         self.move_cam_sys_flag = False
 
+        # Reopen visual task option
+        self.chosen_visual_task = 0
+
     def load_scene(self, scene_net_flag):
         model = []
 
@@ -1038,7 +1042,7 @@ class Viewer:
         )
 
         for drawable in self.drawables:
-            drawable.set_mode(1) # mode for rgb image
+            drawable.set_mode(0) # mode for rgb image
 
             # update light configuration
             if self.lightPos_changed:
@@ -1090,7 +1094,7 @@ class Viewer:
             # Normal rendering
             drawable.draw(self.cameraPos)
 
-        # Viewport for Depth Scene
+        # Viewport for Visual Task
         depth_win_pos_x = self.scene_width + self.rgb_view_width
         depth_win_pos_y = self.win_height - self.depth_view_height # start from bottom-left
         GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
@@ -1098,62 +1102,183 @@ class Viewer:
         # GL.glClearColor(*self.bg_colors, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-        for drawable in self.drawables:
-            drawable.set_mode(0) # mode for depth map
+        if self.chosen_visual_task == 1:
+            for drawable in self.drawables:
+                drawable.set_mode(1) # mode for depth map
 
-            # update depth map color
-            drawable.update_colormap(self.selected_colormap)
+                # update depth map color
+                drawable.update_colormap(self.selected_colormap)
 
-            # Define model matrix
-            if self.selected_object == drawable and self.scale_changed and self.scale_factor != 0:
-                current_model = self.selected_object.get_model_matrix()
-                
-                prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/self.prev_scale_factor))
-                scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(self.scale_factor))
+                # Define model matrix
+                if self.selected_object == drawable and self.scale_changed and self.scale_factor != 0:
+                    current_model = self.selected_object.get_model_matrix()
+                    
+                    prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/self.prev_scale_factor))
+                    scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(self.scale_factor))
 
-                model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
+                    model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
 
-                self.prev_scale_factor = self.scale_factor
-                drawable.update_attribute('model_matrix', model)
+                    self.prev_scale_factor = self.scale_factor
+                    drawable.update_attribute('model_matrix', model)
 
-            # Define view matrix
-            view = self.trackball.view_matrix()
+                # Define view matrix
+                view = self.trackball.view_matrix()
 
-            if self.move_camera_flag:
-                # Call to create hemisphere of multi-cam
-                self.multi_cam()
+                if self.move_camera_flag:
+                    # Call to create hemisphere of multi-cam
+                    self.multi_cam()
 
-                current_time = glfw.get_time()
-                if current_time - self.last_update_time >= 0.5:  # Check if 1 second has passed
-                    vcamera = random.choice(self.vcameras)
-                    self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
-                    view = vcamera.view
-                    self.last_update_time = current_time
+                    current_time = glfw.get_time()
+                    if current_time - self.last_update_time >= 0.5:  # Check if 1 second has passed
+                        vcamera = random.choice(self.vcameras)
+                        self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
+                        view = vcamera.view
+                        self.last_update_time = current_time
 
-            if self.selected_camera:
-                view = self.selected_camera.view
-            drawable.update_attribute('view_matrix', view)
+                if self.selected_camera:
+                    view = self.selected_camera.view
+                drawable.update_attribute('view_matrix', view)
 
-            # Depth map rendering
-            drawable.update_near_far(self.near, self.far)
+                # Depth map rendering
+                drawable.update_near_far(self.near, self.far)
 
-            # Draw the full object
-            drawable.draw(self.cameraPos)
+                # Draw the full object
+                drawable.draw(self.cameraPos)
 
-            # Visualize with chosen colormap
-            if self.selected_colormap == 1:
-                self.pass_magma_data(self.depth_texture_shader)
+                # Visualize with chosen colormap
+                if self.selected_colormap == 1:
+                    self.pass_magma_data(self.depth_texture_shader)
+
+        elif self.chosen_visual_task == 2:
+            self.render_segmentation()
+            # Example of segmentation rendering
+            for drawable in self.drawables:
+                drawable.set_mode(2) # mode for segmentation image
+
+                # update light configuration
+                if self.lightPos_changed:
+                    drawable.update_lightPos(self.lightPos)
+
+                if self.lightColor_changed:
+                    drawable.update_lightColor(self.lightColor)
+
+                drawable.update_shininess(self.shininess)
+
+                # Define model matrix
+                if self.selected_object == drawable and self.scale_changed and self.scale_factor != 0:
+                    current_model = self.selected_object.get_model_matrix()
+                    
+                    prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/self.prev_scale_factor))
+                    scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(self.scale_factor))
+
+                    model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
+
+                    self.prev_scale_factor = self.scale_factor
+                    print(f'prev scale factor: {self.prev_scale_factor}')
+                    drawable.update_attribute('model_matrix', model)
+
+                # Define view matrix
+                view = self.trackball.view_matrix()
+
+                if self.move_camera_flag:
+                    # Call to create hemisphere of multi-cam
+                    self.multi_cam()
+
+                    self.current_time = glfw.get_time()
+                    if self.current_time - self.last_update_time >= 0.5:  # Check if 1 second has passed
+                        vcamera = random.choice(self.vcameras)
+                        self.cameraPos = self.cameraPos_lst[self.vcameras.index(vcamera)]
+                        view = vcamera.view
+                        self.last_update_time = self.current_time
+
+                if self.selected_camera:
+                    view = self.selected_camera.view
+
+                # projection_mat = self.trackball.projection_matrix((self.rgb_view_width, self.rgb_view_height))
+                drawable.update_attribute('view_matrix', view)
+                drawable.update_attribute('projection_matrix', projection_mat)
+
+                # Normal rendering
+                drawable.draw(self.cameraPos)
 
         GL.glDisable(GL.GL_SCISSOR_TEST)
 
-    # def render_segmentation(self):
-    #     if self.segmentation_flag:
+    def render_segmentation(self):
+        # pseudo code for segmentation rendering
 
+        # First part, visualize the segmentation
+        for drawable in self.drawables:
+            if isinstance(drawable, Object):
+                # Get the object name (e.g., "car_1")
+                name = drawable.name
+
+                # Extract class name by splitting on underscore
+                category = name.split('_')[0]
+
+                # Set the color based on the category
+                if category in labels:
+                    color = labels[category].color
+                    drawable.update_colors(color)
+                else:
+                    # Default color for unknown labels
+                    drawable.update_colors([1.0, 1.0, 1.0])
+            # elif isinstance(drawable, Scene):
+            #     for obj_name in drawable.obj_names_list:
+            #         # Extract class name by splitting on underscore
+            #         category = obj_name.split('_')[0]
+
+            #         # Set the color based on the category
+            #         if category in labels:
+            #             color = labels[category].color
+            #             drawable.update_colors(color)
+            #         else:
+            #             # Default color for unknown labels
+            #             drawable.update_colors([1.0, 1.0, 1.0])
+
+    def coloring_segmentation(self):
+        # Set the color for the segmentation
+        for drawable in self.drawables:
+            if isinstance(drawable, Object):
+                # Set the color for the object
+                drawable.set_color(self.segmentation_color)
+            elif isinstance(drawable, Scene):
+                # Set the color for the scene
+                drawable.set_color(self.segmentation_color)
     ''' User Interface '''
     def imgui_menu(self):
         # Create a new frame
         imgui.new_frame()
 
+        ########################################################################
+        #                          Visual Task Option                          #
+
+        ########################################################################
+        win_pos_width = self.scene_width + self.rgb_view_width + self.rgb_view_width/2 - 50 # lay in center of depth view
+        win_pos_height = self.win_height/2 - 50 # lay in center of depth view
+        win_width = 100
+        win_height = 100
+
+        imgui.set_next_window_position(win_pos_width, win_pos_height)
+        imgui.set_next_window_size(win_width, win_height)
+
+        window_flags = (
+            imgui.WINDOW_NO_TITLE_BAR |
+            imgui.WINDOW_NO_RESIZE |
+            imgui.WINDOW_NO_MOVE |
+            imgui.WINDOW_NO_SCROLLBAR |
+            imgui.WINDOW_NO_SAVED_SETTINGS |
+            imgui.WINDOW_NO_BACKGROUND |
+            imgui.WINDOW_NO_COLLAPSE
+        )
+        
+        if self.chosen_visual_task == 0:
+            imgui.begin("##InvisibleWindow", flags=window_flags)
+            if imgui.button('Depth Map'):
+                self.chosen_visual_task = 1 
+            if imgui.button('Segmentation'):
+                self.chosen_visual_task = 2 
+
+            imgui.end()
         ########################################################################
         #                                Scene                                 #
         ########################################################################

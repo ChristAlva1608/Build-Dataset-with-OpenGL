@@ -13,7 +13,7 @@ from itertools import cycle
 from shape.subScene import *
 
 class Scene:
-    def __init__(self, shader, file_path):
+    def __init__(self, shader, file_path, scene_net_flag, nyu_rgb_paths):
         self.shader = shader
         self.uma = UManager(self.shader)
         
@@ -22,9 +22,25 @@ class Scene:
         self.vertices, self.texcoords, self.normals, self.objects = self.parse_obj_file(file_path)
         self.materials = self.load_materials(file_path)
         self.name = os.path.basename(file_path)[:-4]
-        
-        self.split_obj()
+        self.obj_names_list = self.get_obj_names(file_path)   
 
+        self.sceneNet_flag = scene_net_flag
+        self.NYU_rgb_paths = nyu_rgb_paths
+
+        self.split_obj()
+    
+    def get_obj_names(self, obj_path):
+        obj_names = []
+        with open(obj_path, 'r') as f:
+            for line in f:
+                if line.startswith('o '):
+                    name = line.strip().split(' ', 1)[1]
+                    obj_names.append(name)
+        if not obj_names:
+            # No 'o' found in the obj file, use the file name as default object name
+            obj_names.append(self.name)
+        return obj_names
+    
     def parse_obj_file(self,file_path):
         vertices_all = []
         texcoords_all = []
@@ -232,12 +248,15 @@ class Scene:
                     normals.append(self.normals[int(normal_id)])
 
             # if (obj['texture_name']=='wire_115115115'):
+            NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
             model = SubScene( self.shader,
                             vertices,
                             tecos,
                             normals,
                             self.materials[obj['texture_name']],
-                            self.dir_path
+                            self.dir_path,
+                            self.sceneNet_flag,
+                            NYU_path
                             ).setup()
             self.subobjs.append(model)  
         return self
