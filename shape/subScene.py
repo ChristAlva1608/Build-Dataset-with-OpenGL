@@ -29,6 +29,7 @@ class SubScene:
         self.vertices = np.array(vert, dtype=np.float32)
         self.textcoords = np.array(teco, dtype=np.float32)
         self.normals = np.array(normals, dtype=np.float32)
+        self.colors = np.array([1.0, 1.0, 1.0], dtype=np.float32)
 
         # init materials
         self.materials = material
@@ -87,6 +88,10 @@ class SubScene:
     def get_projection_matrix(self):
         return self.projection
     
+    def update_colors(self, colors):
+        self.colors = np.tile(colors, (len(self.vertices), 1)).astype(np.float32)
+        self.vao.update_vbo(3, self.colors)
+
     def update_shader(self, shader):
         self.shader = shader
         self.uma = UManager(self.shader)
@@ -138,6 +143,7 @@ class SubScene:
         self.vao.add_vbo(0, self.vertices, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
         self.vao.add_vbo(1, self.normals, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
         self.vao.add_vbo(2, self.textcoords, ncomponents=2, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
+        self.vao.add_vbo(3, self.colors, ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
 
         light_pos = glm.vec3(250, 250, 300)
         light_color = glm.vec3(1.0, 1.0, 1.0) # only affect the current object, not the light source

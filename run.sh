@@ -2,12 +2,16 @@
 
 # Define arguments
 SCENE_PATH="scene/house_interior/house_interior.obj"
+RGB_PATH="/Users/christalva/Desktop/HK242/Thesis/our-data"
+DEPTH_PATH="/Users/christalva/Desktop/HK242/Thesis/our-data"
 OBJ_FOLDER_PATH="obj/GSO"
 NUM_IMAGES=10
 NUM_OBJECTS=5
 
 # Run Python script with arguments
 py main.py \
+    --rgb_save_path "$RGB_PATH"\
+    --depth_save_path "$DEPTH_PATH"\
     --obj_location \
     --obj_rotation \
     --obj_scale \

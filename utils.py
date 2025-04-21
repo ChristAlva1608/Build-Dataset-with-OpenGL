@@ -1,7 +1,11 @@
 import yaml
 from PIL import Image
 import numpy as np
+import json
+from labels import Label
 import os
+
+LABELS_FILE = "instance_labels.json"
 
 def read_yaml_file(file_path):
     try:
@@ -42,3 +46,17 @@ def get_all_NYU_rgb_images(dataset_path):
             if file.startswith("rgb_") and file.lower().endswith((".jpg")):
                 image_paths.append(os.path.join(root, file))
     return image_paths
+
+
+def load_labels():
+    if os.path.exists(LABELS_FILE):
+        with open(LABELS_FILE, 'r') as f:
+            raw = json.load(f)
+        return {k: Label(k, v['id'], v['color']) for k, v in raw.items()}
+    else:
+        return {}
+
+def save_labels(labels):
+    data = {name: {'id': label.id, 'color': label.color} for name, label in labels.items()}
+    with open(LABELS_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
