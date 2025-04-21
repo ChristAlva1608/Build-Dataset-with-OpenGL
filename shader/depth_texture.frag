@@ -4,6 +4,7 @@ precision mediump float;
 in vec3 vert_pos;       // Vertex position
 in vec3 normal_interp;  // Surface normal
 in vec2 texcoord_interp;
+flat in vec3 colorInterp;
 
 out vec4 fragColor;
 
@@ -37,7 +38,7 @@ float LinearizeDepth(float depth) {
 }
 
 void main() {
-    if (mode==1){
+    if (mode==0){
         // ambient
         vec3 ambient = ambientStrength * lightColor;
 
@@ -79,7 +80,7 @@ void main() {
 
         fragColor = finalColor;
     }
-    else {
+    if (mode==1){
         float depth = gl_FragCoord.z;
         float linearDepth = LinearizeDepth(depth) / far;
         int depth_value = int(linearDepth * 255);
@@ -94,5 +95,8 @@ void main() {
                 break;
         }
         fragColor = vec4(value, 1.0);
+    }
+    else if (mode==2){
+        fragColor = vec4(colorInterp, 1.0);
     }
 }

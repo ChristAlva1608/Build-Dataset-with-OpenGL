@@ -50,8 +50,8 @@ class Viewer:
         self.light_config_height = 160
         self.depth_config_height = 160
 
-        self.rgb_view_width, self.depth_view_width = img_width, img_width
-        self.rgb_view_height, self.depth_view_height = img_height, img_height
+        self.rgb_view_width, self.depth_seg_view_width = img_width, img_width
+        self.rgb_view_height, self.depth_seg_view_height = img_height, img_height
 
         self.win_width = self.scene_width + self.rgb_view_width*2 + self.camera_config_width
         self.win_height = self.rgb_view_height
@@ -362,7 +362,7 @@ class Viewer:
         else:
             if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT):
                 # self.trackball.drag(old, self.mouse, glfw.get_window_size(window))
-                self.trackball.drag(old, self.mouse, (self.depth_view_width, self.depth_view_height))
+                self.trackball.drag(old, self.mouse, (self.depth_seg_view_width, self.depth_seg_view_height))
 
             if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_RIGHT):
                 self.trackball.pan(old, self.mouse)
@@ -543,8 +543,8 @@ class Viewer:
 
         ### Extract depth value ###
         # Read Pixel using GL_RGB
-        # pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
-        # depth_info = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_view_height, self.depth_view_width, 3))
+        # pixels = GL.glReadPixels(win_pos_width, 0, self.depth_seg_view_width, self.depth_seg_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
+        # depth_info = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_seg_view_height, self.depth_seg_view_width, 3))
         #
         # # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
         # depth_info = np.flipud(depth_info)
@@ -613,7 +613,7 @@ class Viewer:
             depth_image_pil.save(os.path.join(save_path, file_name))
             print(f"Saved depth image as {file_name}")
 
-        elif self.chosen_visual_task == 2:
+        elif self.chosen_visual_task == 2 or self.chosen_visual_task == 3: # semantic segmentation and instance segmentation
             win_pos_width = self.scene_width + self.rgb_view_width
             pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
             seg_image = np.frombuffer(pixels, dtype=np.uint8).reshape((int(self.rgb_view_height), int(self.rgb_view_width), 3))
@@ -649,8 +649,10 @@ class Viewer:
 
             if self.chosen_visual_task == 1:  # Depth
                 self.depth_segment_save_path = self.depth_segment_save_path / "train/depth" / scene_name
-            elif self.chosen_visual_task == 2:  # Segmentation
-                self.depth_segment_save_path = self.depth_segment_save_path / "train/segmentation" / scene_name
+            elif self.chosen_visual_task == 2:  # Semantic Segmentation
+                self.depth_segment_save_path = self.depth_segment_save_path / "train/semantic_segmentation" / scene_name
+            elif self.chosen_visual_task == 3:  # Instance Segmentation
+                self.depth_segment_save_path = self.depth_segment_save_path / "train/instance_segmentation" / scene_name
             else:
                 raise ValueError("Unsupported visual task. Use 1 for depth or 2 for segmentation.")
             
@@ -662,8 +664,10 @@ class Viewer:
 
             if self.chosen_visual_task == 1:  # Depth
                 self.depth_segment_save_path = self.depth_segment_save_path / "test/depth" / scene_name
-            elif self.chosen_visual_task == 2:  # Segmentation
-                self.depth_segment_save_path = self.depth_segment_save_path / "test/segmentation" / scene_name
+            elif self.chosen_visual_task == 2:  # Semantic Segmentation
+                self.depth_segment_save_path = self.depth_segment_save_path / "test/semantic_segmentation" / scene_name
+            elif self.chosen_visual_task == 3:  # Instance Segmentation
+                self.depth_segment_save_path = self.depth_segment_save_path / "test/instance_segmentation" / scene_name
             else:
                 raise ValueError("Unsupported visual task. Use 1 for depth or 2 for segmentation.")
 
@@ -797,9 +801,9 @@ class Viewer:
 
             # # Viewport for Depth Scene
             # depth_win_pos_x = self.scene_width + self.rgb_view_width
-            # depth_win_pos_y = self.win_height - self.depth_view_height # start from bottom-left
-            # GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
-            # GL.glScissor(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
+            # depth_win_pos_y = self.win_height - self.depth_seg_view_height # start from bottom-left
+            # GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_seg_view_width, self.depth_seg_view_height)
+            # GL.glScissor(depth_win_pos_x, depth_win_pos_y, self.depth_seg_view_width, self.depth_seg_view_height)
             # GL.glClear(GL.GL_COLOR_BUFFER_BIT)
             #
             # for drawable in self.drawables:
@@ -1138,9 +1142,9 @@ class Viewer:
 
         # Viewport for Visual Task
         depth_win_pos_x = self.scene_width + self.rgb_view_width
-        depth_win_pos_y = self.win_height - self.depth_view_height # start from bottom-left
-        GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
-        GL.glScissor(depth_win_pos_x, depth_win_pos_y, self.depth_view_width, self.depth_view_height)
+        depth_win_pos_y = self.win_height - self.depth_seg_view_height # start from bottom-left
+        GL.glViewport(depth_win_pos_x, depth_win_pos_y, self.depth_seg_view_width, self.depth_seg_view_height)
+        GL.glScissor(depth_win_pos_x, depth_win_pos_y, self.depth_seg_view_width, self.depth_seg_view_height)
         # GL.glClearColor(*self.bg_colors, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
@@ -1191,8 +1195,12 @@ class Viewer:
                 if self.selected_colormap == 1:
                     self.pass_magma_data(self.depth_texture_shader)
 
-        elif self.chosen_visual_task == 2:
-            self.render_instance_segmentation()
+        elif self.chosen_visual_task == 2 or self.chosen_visual_task == 3: # semantic segmentation and instance segmentation
+            if self.chosen_visual_task == 2:
+                self.render_semantic_segmentation()
+            else:
+                self.render_instance_segmentation()
+
             # Example of segmentation rendering
             for drawable in self.drawables:
                 drawable.set_mode(2) # mode for segmentation image
@@ -1318,6 +1326,7 @@ class Viewer:
             elif isinstance(drawable, Scene):
                 # Set the color for the scene
                 drawable.set_color(self.segmentation_color)
+
     ''' User Interface '''
     def imgui_menu(self):
         # Create a new frame
@@ -1325,7 +1334,6 @@ class Viewer:
 
         ########################################################################
         #                          Visual Task Option                          #
-
         ########################################################################
         win_pos_width = self.scene_width + self.rgb_view_width + self.rgb_view_width/2 - 50 # lay in center of depth view
         win_pos_height = self.win_height/2 - 50 # lay in center of depth view
@@ -1333,7 +1341,7 @@ class Viewer:
         win_height = 100
 
         imgui.set_next_window_position(win_pos_width, win_pos_height)
-        imgui.set_next_window_size(win_width, win_height)
+        imgui.set_next_window_size(self.depth_seg_view_width, self.depth_seg_view_height)
 
         window_flags = (
             imgui.WINDOW_NO_TITLE_BAR |
@@ -1349,10 +1357,13 @@ class Viewer:
             imgui.begin("##InvisibleWindow", flags=window_flags)
             if imgui.button('Depth Map'):
                 self.chosen_visual_task = 1 
-            if imgui.button('Segmentation'):
+            if imgui.button('Semantic Segmentation'):
                 self.chosen_visual_task = 2 
+            if imgui.button('Instance Segmentation'):
+                self.chosen_visual_task = 3 
 
             imgui.end()
+
         ########################################################################
         #                                Scene                                 #
         ########################################################################
@@ -1623,7 +1634,7 @@ class Viewer:
                     self.depth_segment_save_path = self.select_folder()
                     if self.depth_segment_save_path:
                         self.save_depth_segment(self.depth_segment_save_path, 0)
-            elif self.chosen_visual_task == 2:
+            elif self.chosen_visual_task == 2 or self.chosen_visual_task == 3:
                 imgui.set_next_item_width(100)
                 save_depth_segment = self.button_with_icon('icons/save.png', 'Save Segmentation')
                 if save_depth_segment:
