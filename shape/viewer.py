@@ -134,8 +134,8 @@ class Viewer:
         # self.time_count = 0.0
         self.rgb_save_path = Path(args.rgb_save_path)
         self.rgb_save_path.mkdir(parents=True, exist_ok=True)
-        self.depth_save_path = Path(args.depth_save_path)
-        self.depth_save_path.mkdir(parents=True, exist_ok=True)
+        self.depth_segment_save_path = Path(args.depth_segment_save_path)
+        self.depth_segment_save_path.mkdir(parents=True, exist_ok=True)
 
         self.show_time_selection = False
         self.autosave_flag = False
@@ -521,7 +521,7 @@ class Viewer:
     ''' Specialized Functions '''
     def save_rgb(self, save_path, numb):
         win_pos_width = self.scene_width
-        pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
+        pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)   # left viewport
         rgb_image = np.frombuffer(pixels, dtype=np.uint8).reshape((int(self.rgb_view_height), int(self.rgb_view_width), 3))
 
         # flip image up-down and left-right
@@ -533,8 +533,8 @@ class Viewer:
         file_name = f"rgb_image_{numb}.png"
         rgb_image.save(os.path.join(save_path, file_name))
         print(f"Saved rgb image as {file_name}")
-
-    def save_depth(self, save_path, numb):
+    
+    def save_depth_segment(self, save_path, numb):
         # Create a numpy array to hold the pixel data
         # win_pos_width = self.scene_width + self.rgb_view_width
         win_pos_width = self.scene_width
@@ -593,7 +593,8 @@ class Viewer:
         depth_image = np.fliplr(depth_image)
 
         depth_image = depth_image*self.scale_unit # convert to milimeter
-        depth_image = depth_image.astype(np.uint16)
+        depth_image = depth_image.astype(np.float32)  # Ensure float before scaling
+        depth_image = (depth_image / np.max(depth_image) * 255).astype(np.uint8)
 
         # check if the depth valid
         if not valid_depth_map(depth_image):
@@ -601,7 +602,7 @@ class Viewer:
             return False
 
 
-        depth_image_pil = Image.fromarray(depth_image, mode='I;16')
+        depth_image_pil = Image.fromarray(depth_image, mode='L')
 
         # Create a unique file name using timestamp
         file_name = f"depth_image_{numb}.png"
@@ -610,6 +611,107 @@ class Viewer:
         depth_image_pil.save(os.path.join(save_path, file_name))
         print(f"Saved depth image as {file_name}")
         return True
+    
+    # def save_depth_segment(self, save_path, numb):
+    #     # Create a numpy array to hold the pixel data
+    #     # win_pos_width = self.scene_width + self.rgb_view_width
+    #     win_pos_width = self.scene_width
+
+    #     ### Extract depth value ###
+    #     # Read Pixel using GL_RGB
+    #     # pixels = GL.glReadPixels(win_pos_width, 0, self.depth_view_width, self.depth_view_height, GL.GL_RGB, GL.GL_SHORT) # return linear depth, not raw depth value
+    #     # depth_info = np.frombuffer(pixels, dtype=np.short).reshape((self.depth_view_height, self.depth_view_width, 3))
+    #     #
+    #     # # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
+    #     # depth_info = np.flipud(depth_info)
+    #     #
+    #     # # Get metric depth value for image
+    #     # depth_info = depth_info[:,:,0] # get only 1 channel (gray image)
+    #     # np.savetxt('depth.txt',depth_info)
+
+    #     ### Save depth image ###
+    #     # depth_pixels = GL.glReadPixels(
+    #     #         win_pos_width, 0,
+    #     #         self.rgb_view_width, self.rgb_view_height,
+    #     #         GL.GL_RGB, GL.GL_UNSIGNED_BYTE
+    #     #     )
+
+    #     # depth_image = np.frombuffer(depth_pixels, dtype=np.uint8).reshape(
+    #     #     (int(self.rgb_view_height), int(self.rgb_view_width), 3)
+    #     # )
+    #     #
+    #     # # Flip the image vertically (because OpenGL's origin is at the bottom-left corner)
+    #     # depth_image = np.flipud(depth_image)
+    #     # depth_image_pil = Image.fromarray(depth_image[:,:,0], mode='L')
+
+    #     if self.chosen_visual_task == 1:
+    #         depth_pixels = GL.glReadPixels(win_pos_width, 0,        # left viewport
+    #             self.rgb_view_width, self.rgb_view_height,
+    #             GL.GL_DEPTH_COMPONENT,
+    #             GL.GL_FLOAT
+    #         )
+    #         depth_array = np.frombuffer(depth_pixels, dtype=np.float32).reshape(self.rgb_view_height, self.rgb_view_width)
+    #         background_mask = (depth_array == 1) # fragment which are not drawn
+
+    #         px, py = np.meshgrid(np.arange(self.rgb_view_width), np.arange(self.rgb_view_height)) # meshgrih to calculate x,y offset pixel
+    #         x_ndc = (px / self.rgb_view_width) * 2 - 1
+    #         y_ndc = (py / self.rgb_view_height) * 2 - 1
+
+    #         z_ndc = depth_array * 2.0 - 1.0 # invert viewport (to NDC -1 -> 1)
+    #         real_depth = ((2.0 * self.near * self.far) / (self.far + self.near - z_ndc * (self.far - self.near))) # invert projection
+
+    #         x_camera = x_ndc * real_depth / self.f_x
+    #         y_camera = y_ndc * real_depth / self.f_y
+
+    #         euclidean_depth = np.sqrt(x_camera ** 2 + y_camera ** 2 + real_depth ** 2)
+
+    #         euclidean_depth[background_mask] = 0
+
+    #         # flip due to CV camera
+    #         depth_image = np.flipud(euclidean_depth)
+    #         depth_image = np.fliplr(depth_image)
+
+    #         depth_image = depth_image*self.scale_unit # convert to milimeter
+    #         depth_image = depth_image.astype(np.uint16)
+
+    #         # check if the depth valid
+    #         if not valid_depth_map(depth_image):
+    #             print("Invalid depth map")
+    #             return False
+
+    #         depth_image_pil = Image.fromarray(depth_image, mode='I;16')
+
+    #         # Create a unique file name using timestamp
+    #         file_name = f"depth_image_{numb}.png"
+
+    #         # Save the image to the selected directory
+    #         depth_image_pil.save(os.path.join(save_path, file_name))
+    #         print(f"Saved depth image as {file_name}")
+
+    #     elif self.chosen_visual_task == 2:
+    #         pixels = GL.glReadPixels(win_pos_width, 0, self.rgb_view_width, self.rgb_view_height, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
+    #         seg_image = np.frombuffer(pixels, dtype=np.uint8).reshape((int(self.rgb_view_height), int(self.rgb_view_width), 3))
+            
+    #         # flip image up-down and left-right
+    #         seg_image = np.flipud(seg_image)
+    #         seg_image = np.fliplr(seg_image)
+            
+    #         # Normalize to 0-255
+    #         seg_image = (seg_image / np.max(seg_image) * 255).astype(np.uint8)
+
+    #         # Map each color to its class index (label.id)
+    #         # label_id_map = np.zeros((self.rgb_view_height, self.rgb_view_width), dtype=np.uint8) # grayscale image with shape (height, width)
+    #         # for name, label in labels.items():
+    #         #     rgb = np.array(label.color, dtype=np.uint8)
+    #         #     mask = np.all(seg_image == rgb, axis=-1)
+    #         #     label_id_map[mask] = label.id
+
+    #         # Convert numpy array (or your image data format) to PIL Image
+    #         seg_image = Image.fromarray(seg_image)
+    #         file_name = f"seg_image_{numb}.png"
+    #         seg_image.save(os.path.join(save_path, file_name))
+    #         print(f"Saved segmentation image as {file_name}")
+    #     return True
 
     def autosave(self, lay_opts, train_set_flag):
         # scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
@@ -619,14 +721,28 @@ class Viewer:
             self.rgb_save_path = self.rgb_save_path / "train/rgb" / scene_name
             self.rgb_save_path.mkdir(parents=True, exist_ok=True)
 
-            self.depth_save_path = self.depth_save_path / "train/depth" / scene_name
-            self.depth_save_path.mkdir(parents=True, exist_ok=True)
-        else: # test set generate
+            if self.chosen_visual_task == 1:  # Depth
+                self.depth_segment_save_path = self.depth_segment_save_path / "train/depth" / scene_name
+            elif self.chosen_visual_task == 2:  # Segmentation
+                self.depth_segment_save_path = self.depth_segment_save_path / "train/segmentation" / scene_name
+            else:
+                raise ValueError("Unsupported visual task. Use 1 for depth or 2 for segmentation.")
+            
+            self.depth_segment_save_path.mkdir(parents=True, exist_ok=True)
+
+        else:  # test set generate
             self.rgb_save_path = self.rgb_save_path / "test/rgb" / scene_name
             self.rgb_save_path.mkdir(parents=True, exist_ok=True)
 
-            self.depth_save_path = self.depth_save_path / "test/depth" / scene_name
-            self.depth_save_path.mkdir(parents=True, exist_ok=True)
+            if self.chosen_visual_task == 1:  # Depth
+                self.depth_segment_save_path = self.depth_segment_save_path / "test/depth" / scene_name
+            elif self.chosen_visual_task == 2:  # Segmentation
+                self.depth_segment_save_path = self.depth_segment_save_path / "test/segmentation" / scene_name
+            else:
+                raise ValueError("Unsupported visual task. Use 1 for depth or 2 for segmentation.")
+
+            self.depth_segment_save_path.mkdir(parents=True, exist_ok=True)
+            
         invalid_flag = False
         i = 0
         while i < lay_opts:
@@ -778,7 +894,7 @@ class Viewer:
 
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
-            status = self.save_depth(self.depth_save_path, i)
+            status = self.save_depth_segment(self.depth_segment_save_path, i)
             if not status:
                 invalid_flag = True
                 glfw.swap_buffers(self.win)
@@ -1312,16 +1428,16 @@ class Viewer:
         # if imgui.button('Scene View'):
         #     scene_name = self.selected_scene.name
         #     self.rgb_save_path = Path("./rgb") / scene_name
-        #     self.depth_save_path = Path("./depth") / scene_name
+        #     self.depth_segment_save_path = Path("./depth") / scene_name
 
         #     # Create directories if they don't exist
         #     self.rgb_save_path.mkdir(parents=True, exist_ok=True)
-        #     self.depth_save_path.mkdir(parents=True, exist_ok=True)
+        #     self.depth_segment_save_path.mkdir(parents=True, exist_ok=True)
 
         #     self.scene_view_flag = not self.scene_view_flag
 
         # Warning if not select
-        if self.rgb_save_path == "" or self.depth_save_path == "":
+        if self.rgb_save_path == "" or self.depth_segment_save_path == "":
             imgui.text('Please select save path')
 
         # Adjust RGB
@@ -1556,13 +1672,20 @@ class Viewer:
             imgui.same_line()
 
             # Save Depth Button with Icon
-            imgui.set_next_item_width(100)
-            save_depth = self.button_with_icon('icons/save.png', 'Save Depth')
-            if save_depth:
-                self.depth_save_path = self.select_folder()
-                if self.depth_save_path:
-                    self.save_depth(self.depth_save_path, 0)
-
+            if self.chosen_visual_task == 1:
+                imgui.set_next_item_width(100)
+                save_depth_segment = self.button_with_icon('icons/save.png', 'Save Depth')
+                if save_depth_segment:
+                    self.depth_segment_save_path = self.select_folder()
+                    if self.depth_segment_save_path:
+                        self.save_depth_segment(self.depth_segment_save_path, 0)
+            elif self.chosen_visual_task == 1:
+                imgui.set_next_item_width(100)
+                save_depth_segment = self.button_with_icon('icons/save.png', 'Save Segmentation')
+                if save_depth_segment:
+                    self.depth_segment_save_path = self.select_folder()
+                    if self.depth_segment_save_path:
+                        self.save_depth_segment(self.depth_segment_save_path, 0)
             imgui.end()
 
         else:
@@ -1587,7 +1710,7 @@ class Viewer:
 
             imgui.same_line()
             if imgui.button("Depth Path"):
-                self.depth_save_path = self.select_folder()
+                self.depth_segment_save_path = self.select_folder()
 
             imgui.set_next_item_width(100)
             combo_changed, self.layout_opts = imgui.input_int("Layout Opts", self.layout_opts)
@@ -1603,14 +1726,14 @@ class Viewer:
                 imgui.end_combo()
 
             if imgui.button("Confirm"):
-                if not self.rgb_save_path or not self.depth_save_path:
+                if not self.rgb_save_path or not self.depth_segment_save_path:
                     scene_name = self.selected_scene.name
                     self.rgb_save_path = Path("./dataset/rgb") / scene_name
-                    self.depth_save_path = Path("./dataset/depth") / scene_name
+                    self.depth_segment_save_path = Path("./dataset/depth") / scene_name
 
                     # Create directories if they don't exist
                     self.rgb_save_path.mkdir(parents=True, exist_ok=True)
-                    self.depth_save_path.mkdir(parents=True, exist_ok=True)
+                    self.depth_segment_save_path.mkdir(parents=True, exist_ok=True)
 
                 self.autosave(self.layout_opts)
 

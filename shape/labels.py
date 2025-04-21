@@ -37,12 +37,12 @@ Label = namedtuple( 'Label' , [
     ] )
 
 labels = {
-    #       name                     id    trainId   category        catId   hasInstances   ignoreInEval   color
+                        #    name                 id   trainId  category     catId   hasInstances ignoreInEval color
     'unlabeled':       Label('unlabeled'       ,  0 ,     0  , 'void'      , 0     , False      , True       , (  0,   0,   0)),
-    'car':             Label('car'             ,  1 ,     1  , 'void'      , 0     , False      , True       , (  0,   0, 255)),
-    'cow':             Label('cow'             ,  2 ,     2  , 'void'      , 0     , False      , True       , (  0, 255,   0)),
-    'Floor':           Label('Floor'           ,  3 ,     3  , 'structure' , 1     , False      , False      , (128,  64, 128)),
-    'Ceiling':         Label('Ceiling'         ,  4 ,     4  , 'structure' , 1     , False      , False      , ( 70,  70,  70)),
-    'Wall':            Label('Wall'            ,  5 ,     5  , 'structure' , 1     , False      , False      , (102, 102, 156)),
-    'Bar_Ceiling':     Label('Bar_Ceiling'     ,  6 ,     6  , 'structure' , 1     , False      , False      , (190, 153, 153)),
+    'car':             Label('car'             ,  10 ,     1  , 'void'      , 0     , False      , True       , (  0,   0, 255)),
+    'cow':             Label('cow'             ,  20 ,     2  , 'void'      , 0     , False      , True       , (  0, 255,   0)),
+    'Floor':           Label('Floor'           ,  80 ,     3  , 'structure' , 1     , False      , False      , (128,  64, 128)),
+    'Ceiling':         Label('Ceiling'         ,  100 ,     4  , 'structure' , 1     , False      , False      , ( 70,  70,  70)),
+    'Wall':            Label('Wall'            ,  150 ,     5  , 'structure' , 1     , False      , False      , (102, 102, 156)),
+    'Bar_Ceiling':     Label('Bar_Ceiling'     ,  200 ,     6  , 'structure' , 1     , False      , False      , (190, 153, 153)),
 }
