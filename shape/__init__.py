@@ -10,4 +10,4 @@ from .subObj import *
 from .subScene import *
 from .texture import *
 from .vcamera import *
-from .labels import *
+from labels import *
