@@ -42,8 +42,8 @@ class VAO(object):
         self.activate()
         buffer_idx = self.vbo[location]
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, buffer_idx)
-        # GL.glBufferData(GL.GL_ARRAY_BUFFER, new_data.nbytes, new_data, GL.GL_STATIC_DRAW)
-        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, offset=0, size=new_data.nbytes, data=new_data)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, new_data.nbytes, new_data, GL.GL_STATIC_DRAW)
+        # GL.glBufferSubData(GL.GL_ARRAY_BUFFER, offset=0, size=new_data.nbytes, data=new_data)
         self.deactivate()
 
     def __del__(self):

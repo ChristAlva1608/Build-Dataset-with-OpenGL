@@ -15,10 +15,10 @@ from libs.transform import *
 
 # from .object3D import *
 # from .scene3D import *
-# from .object3D_v2 import *
+from .object3D_v2 import *
 # from .scene3D_v2 import *
 from .scene3D_v3 import *
-from .object3D_v3 import *
+# from .object3D_v3 import *
 from .vcamera import *
 from .sphere import *
 from colormap import *
@@ -1304,7 +1304,7 @@ class Viewer:
             if isinstance(drawable, Object):
                 color_list = []
                 for obj_name in drawable.obj_names_list:
-                    label = gso_labels.get(obj_name, {}).get("label", None)
+                    label = gso_labels['object_labels'].get(obj_name, {}).get("label", None)
 
                     if label is not None:
                         color = class_color_mapping[label]
