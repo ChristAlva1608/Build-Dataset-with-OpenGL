@@ -16,3 +16,195 @@ scale_range: [3, 6] # used for scaling random
 scale_unit: 370
 #over all min [-12.476286, -0.030705, -8.710097]
 #over all max [12.088182, 7.134542, 8.355046]
+
+object_labels:
+  board:
+    label: 'furniture'
+  book_1:
+    label: 'books'
+  book_2:
+    label: 'books'
+  book_3:
+    label: 'books'
+  book_4:
+    label: 'books'
+  bookshelf:
+    label: 'furniture'
+  bulletin:
+    label: 'objects'
+  chair:
+    label: 'chair'
+  chair.001:
+    label: 'chair'
+  chair.002:
+    label: 'chair'
+  chair.003:  
+    label: 'chair'
+  chair.004:    
+    label: 'chair'   
+  chair.005:
+    label: 'chair'
+  chair.006:  
+    label: 'chair'
+  chair.007:
+    label: 'chair'
+  chair.008:
+    label: 'chair'
+  chair.009:
+    label: 'chair'
+  chair.010:
+    label: 'chair'
+  chair.011:
+    label: 'chair'  
+  chair.012:
+    label: 'chair'
+  chair.013:
+    label: 'chair'
+  chair.014:
+    label: 'chair'
+  chair.015:
+    label: 'chair'
+  chair.016:
+    label: 'chair'
+  chair.017:
+    label: 'chair'
+  chair.018:
+    label: 'chair'
+  chair.019:
+    label: 'chair'
+  chair.020:
+    label: 'chair'
+  chair.021:
+    label: 'chair'
+  chair.022:
+    label: 'chair'
+  chair.023:
+    label: 'chair'
+  chair.024:
+    label: 'chair'
+  chalk:
+    label: 'objects'
+  chalk.001:
+    label: 'objects'
+  clock:
+    label: 'objects'
+  cupboard:
+    label: 'furniture'
+  desk:
+    label: 'table'
+  desk.001:
+    label: 'table'
+  desk.002:
+    label: 'table'
+  desk.003:  
+    label: 'table'
+  desk.004:    
+    label: 'table'   
+  desk.005:
+    label: 'table'
+  desk.006:  
+    label: 'table'
+  desk.007:
+    label: 'table'
+  desk.008:
+    label: 'table'
+  desk.009:
+    label: 'table'
+  desk.010:
+    label: 'table'
+  desk.011:
+    label: 'table'  
+  desk.012:
+    label: 'table'
+  desk.013:
+    label: 'table'
+  desk.014:
+    label: 'table'
+  desk.015:
+    label: 'table'
+  desk.016:
+    label: 'table'
+  desk.017:
+    label: 'table'
+  desk.018:
+    label: 'table'
+  desk.019:
+    label: 'table'
+  desk.020:
+    label: 'table'
+  desk.021:
+    label: 'table'
+  desk.022:
+    label: 'table'
+  desk.023:
+    label: 'table'
+  desk.024:
+    label: 'table'
+  door_1:
+    label: 'wall'
+  door_1.001:
+    label: 'wall'
+  door_frame:
+    label: 'wall'
+  eraser:
+    label: 'objects'
+  floor:
+    label: 'floor'
+  light_1:
+    label: 'objects'
+  light_1.001:
+    label: 'objects'
+  light_1.002:
+    label: 'objects'
+  light_1.003:  
+    label: 'objects'
+  light_1.004:    
+    label: 'objects'   
+  light_1.005:
+    label: 'objects'
+  lockers:
+    label: 'furniture'
+  paper_1:
+    label: 'objects'
+  paper_2:
+    label: 'objects'
+  paper_2.001:  
+    label: 'objects'
+  paper_2.002:
+    label: 'objects'
+  paper_2.003:
+    label: 'objects'
+  poster_1:
+    label: 'objects'
+  poster_2:
+    label: 'objects'
+  poster_3:
+    label: 'objects'
+  speaker:
+    label: 'objects'
+  tape_1:
+    label: 'objects'
+  tape_2:
+    label: 'objects'
+  teacher_desk:
+    label: 'table'
+  thumbtack_1:
+    label: 'objects'
+  thumbtack_2:
+    label: 'objects'
+  thumbtack_3:
+    label: 'objects'
+  trash_can:
+    label: 'objects'
+  wall_2:
+    label: 'wall'
+  walls:
+    label: 'wall'
+  window.001:
+    label: 'window'
+  window.002:
+    label: 'window'
+  window.003:
+    label: 'window'
+  window.004:
+    label: 'window'

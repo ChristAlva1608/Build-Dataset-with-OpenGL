@@ -16,3 +16,97 @@ scale_unit: 50000
 
 #over all min [-0.059991, -0.0075, -0.042725]
 #over all max [0.084298, 0.124208, 0.042725]
+
+object_labels:
+  pk_dumbledoreoffice_arch_0:
+    label: 'objects'
+  pk_dumbledoreoffice_atlas01_back_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_atlas01_mesh_0:
+    label: 'objects'  
+  pk_dumbledoreoffice_atlas02_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_backpropsatlas_0:
+    label: 'objects'
+  pk_dumbledoreoffice_cabinets_mesh1_0:
+    label: 'objects' # check lại
+  pk_dumbledoreoffice_cabinets_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_cabinetsinterior_mesh_0
+    label: 'wall' # check lại
+  pk_dumbledoreoffice_cabinetsprops_mesh_0:
+    label: 'wall' # check lại
+  pk_dumbledoreoffice_chandelier01_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_chandelier02_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_curtains2_0:
+    label: 'window'
+  pk_dumbledoreoffice_curtains_mesh_0
+    label: 'window'
+  pk_dumbledoreoffice_darkoffice_front_mesh_0:
+    label: 'wall' # check lại
+  pk_dumbledoreoffice_documents_mesh_0:
+    label: 'books'
+  pk_dumbledoreoffice_entranceatlas_mesh_0:
+    label: 'picture'
+  pk_dumbledoreoffice_entranceatlas_paintings1_0:
+    label: 'picture'
+  pk_dumbledoreoffice_entranceatlas_paintings2_0:
+    label: 'picture'
+  pk_dumbledoreoffice_entranceatlas_paintings3_0:
+    label: 'picture'  
+  pk_dumbledoreoffice_entranceatlas_paintings4_0:
+    label: 'picture'
+  pk_dumbledoreoffice_entranceatlas_tables_0:
+    label: 'table'
+  pk_dumbledoreoffice_fire01_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_fire02_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_glasslight01_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_glasslight02_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_grunge_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_leftatlas_0:
+    label: 'books'
+  pk_dumbledoreoffice_leftshelf_0:
+    label: 'furniture'
+  pk_dumbledoreoffice_leftsmallpillars_0:
+    label: 'objects'  
+  pk_dumbledoreoffice_mainwindow_mesh_0:
+    label: 'window'
+  pk_dumbledoreoffice_officepropsatlas_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_prophecyorb_mesh_0:
+    label: 'objects'  
+  pk_dumbledoreoffice_railing_0:
+    label: 'objects'
+  pk_dumbledoreoffice_rightsmallpillars_0:
+    label: 'objects'
+  pk_dumbledoreoffice_stonewall_back_mesh_0:
+    label: 'wall'
+  pk_dumbledoreoffice_stonewall_front_mesh_0:
+    label: 'wall'
+  pk_dumbledoreoffice_stonewall_mesh_0:
+    label: 'wall'
+  pk_dumbledoreoffice_stonewallbare_front_mesh_0:
+    label: 'wall'
+  pk_dumbledoreoffice_stonewallbare_mesh_0:
+    label: 'wall'
+  pk_dumbledoreoffice_telescope_back_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_telescope_front_mesh_0:
+    label: 'objects'
+  pk_dumbledoreoffice_upperrailing_0:
+    label: 'objects'
+  pk_dumbledoreoffice_woodfloor_mesh_0:
+    label: 'floor'
+  pk_dumbledoreoffice_woodtrim_back_mesh_0:
+    label: 'furniture'
+  pk_dumbledoreoffice_woodtrim_front_mesh_0:
+    label: 'furniture'
+  pk_dumbledoreoffice_woodtrim_frontbkg_mesh_0
+    label: 'furniture' # check lại

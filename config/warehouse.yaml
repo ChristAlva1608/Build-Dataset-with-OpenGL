@@ -18,3 +18,107 @@ scale_unit: 1000
 pitch_range: [0, 360]
 #over all min [-4.059946, -0.853369, -3.678474]
 #over all max [5.551205, 1.070903, 0.163488]
+
+object_labels:
+  BezierCurve.004_cable: 
+    label: 'objects'
+  BezierCurve.006_cable.001: 
+    label: 'objects'
+  BezierCurve.033_Material: 
+    label: 'objects'
+  Circle.001_lampe: 
+    label: 'objects'
+  Circle.001_lampe-interieure: 
+    label: 'objects'
+  Circle.002_lampe:
+    label: 'objects'
+  Circle.002_lampe-interieure: 
+    label: 'objects'
+  Circle.003_lampe:
+    label: 'objects'
+  Circle.003_lampe-interieure: 
+    label: 'objects'
+  Circle.004_lampe:
+    label: 'objects'
+  Circle.004_lampe-interieure: 
+    label: 'objects'
+  Circle.005_lampe:
+    label: 'objects'
+  Circle.005_lampe-interieure: 
+    label: 'objects'
+  Circle.006_lampe:
+    label: 'objects'
+  Circle.006_lampe-interieure:
+    label: 'objects'
+  Circle.007_lampe:
+    label: 'objects'
+  Circle.007_lampe-interieure:
+    label: 'objects'
+  Circle.008_lampe-interieure:
+    label: 'objects'
+  Cube.001_colonne-beton:
+    label: 'objects'
+  Cube.002_briques-sur-fenetre:
+    label: 'wall'
+  Cube.003_colonne-beton.001:
+    label: 'objects'
+  Cube.004_poutre-toit.001:
+    label: 'objects'
+  Cube.005_poutre-toit.002:
+    label: 'objects'
+  Cube.006_poutre-toit.003: 
+    label: 'objects'
+  Cube.008_poutre-toit.000: 
+    label: 'objects'
+  Cube.009_palette:
+    label: 'objects'
+  Cube.010_palette.001:
+    label: 'objects'
+  Cube_briques-ss-fenetre:
+    label: 'wall'
+  DM-Watch-Your-Step-DM-Watch-Your-Step:
+    label: 'wall'
+  Icosphere.1295_gravas:
+    label: 'objects'
+  pandagun_1280_pandagun_1280:
+    label: 'wall'
+  Plane.001_toiture-tole:
+    label: 'ceiling'
+  Plane.002_mur-gauche:
+    label: 'wall'
+  Plane.003_mur-fond:
+    label: 'wall'
+  Plane.004_mur-arriere:
+    label: 'wall'
+  Plane.005_mur-droite:
+    label: 'wall'
+  Plane.006_toiture-tole.001:
+    label: 'ceiling'
+  Plane.008_chaise:
+    label: 'chair'
+  Plane.009_chaise:
+    label: 'chair'
+  Plane.010_chaise: 
+    label: 'chair'
+  Plane_sol:
+    label: 'floor'
+  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_Textures:
+    label: 'objects'
+  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_Textures.001:
+    label: 'objects'
+  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_TexturesCom_:
+    label: 'objects'
+  TexturesCom_DoorsRollup0044_M_TexturesCom_DoorsRollup0044_M:
+    label: 'wall'
+  TexturesCom_DoorsWoodBarn0017_M_TexturesCom_DoorsWoodBarn0017_M:
+    label: 'wall'
+  TexturesCom_WindowsBacklit0019_12_M_fenetre.004:
+    label: 'window'
+  TexturesCom_WindowsBacklit0019_13_M.002_fenetre.006:
+    label: 'window'
+  TexturesCom_WindowsBacklit0019_13_M_fenetre.006:
+    label: 'window'
+  TexturesCom_WindowsBacklit0019_14_M_fenetre.005:
+    label: 'window'
+  TexturesCom_WindowsBacklit0019_15_M_fenetre.002:
+    label: 'window'

@@ -18,3 +18,106 @@ scale_unit: 40000
 #Min [-0.081371, -0.0, -0.151197]
 #Max [0.081371, 0.094485, 0.151197]
 
+object_labels:
+  bulb_meshes.002:
+    label: 'objects'
+  bulbglows_mesh.002:
+    label: 'objects'
+  bulletinboard_mesh.002:
+    label: 'objects'
+  bulletinboardframe_mesh.002:
+    label: 'objects'
+  burninglogs_mesh.002:
+    label: 'objects'
+  cabinets_mesh.002:
+    label: 'furniture'
+  chains_mesh.002:
+    label: 'objects'
+  chair01_mesh.002:
+    label: 'chair'
+  chair03_mesh.002:
+    label: 'chair'
+  chair04_mesh.002:
+    label: 'chair'
+  chair05_mesh.002:
+    label: 'chair'
+  chair06_mesh.002:
+    label: 'chair'
+  chair07_mesh.002: 
+    label: 'chair'
+  chair_02_mesh.002:
+    label: 'chair'
+  chandelier_mesh.002:
+    label: 'objects'
+  couch_mesh.002:
+    label: 'sofa'
+  couch_pillows_mesh.002:
+    label: 'sofa'
+  embers_mesh.002:
+    label: 'objects'
+  fireglow_mesh.002:
+    label: 'objects'
+  fireplace_mesh.002:
+    label: 'objects'
+  fireplace_mesh_mesh.002:
+    label: 'objects'
+  fireplaceguard_mesh.002:
+    label: 'objects'
+  footrest1_mesh.002:
+    label: 'furniture'
+  godrays_mesh.002:
+    label: 'objects'
+  hogwartstrunks_mesh.002:
+    label: 'objects'
+  lamps01_mesh.002:
+    label: 'objects'
+  paintings_mesh.002:
+    label: 'objects'
+  rug_mesh.002:
+    label: 'objects'
+  smallprops01_mesh.002:
+    label: 'objects'
+  smallprops02_mesh.002:
+    label: 'objects'
+  smallprops03_mesh.002:
+    label: 'objects'
+  smallprops04_mesh.002:
+    label: 'objects'
+  smallprops06_mesh.002:
+    label: 'objects'
+  smallprops07_mesh.002:
+    label: 'objects'
+  smallprops08_mesh.002:
+    label: 'objects'
+  smalltable01_mesh.002:
+    label: 'table'
+  smalltable02_mesh.002:
+    label: 'table'
+  smalltable03_mesh.002:
+    label: 'table'
+  smalltable04_mesh.002:
+    label: 'table'  
+  smalltable05_mesh.002:
+    label: 'table'
+  softspot_mesh.002:
+    label: 'objects'
+  softspot_mesh.003:
+    label: 'objects'
+  sparelogs_mesh.002:
+    label: 'objects'
+  supportbeams_mesh.002:
+    label: 'objects'
+  tableset01_mesh.002:
+    label: 'table'
+  tapestries_mesh.002:
+    label: 'objects'
+  walls_mesh.002:
+    label: 'wall'
+  windows_mesh.002:
+    label: 'window'
+  wireless01_mesh.002:
+    label: 'objects'
+  wireless02_mesh.002:
+    label: 'objects'
+  woodfloor_mesh.002:
+    label: 'floor'

@@ -17,3 +17,44 @@ scale_unit: 370
 
 #over all min [-10.849783, -0.055082, -10.584295]
 #over all max [10.537071, 5.820791, 10.624742]
+
+object_labels:
+  BigWindow_Handles:
+    label: 'window'
+  Chair:
+    label: 'chair'
+  Chairs:
+    label: 'chair'
+  Door_entry:
+    label: 'wall'
+  Floor:
+    label: 'floor'
+  MapOnTheWall:
+    label: 'objects'
+  Metal_Holders:
+    label: 'objects'
+  Neons:
+    label: 'objects'
+  Projector:
+    label: 'objects'
+  Projector_Table:
+    label: 'table'
+  Signs_switches:
+    label: 'objects'
+  Table:
+    label: 'table'
+  Tables:
+    label: 'table'
+  Teacher_Chair:
+    label: 'chair'
+  Teachers_Table:
+    label: 'table'
+  Walls:
+    label: 'wall'
+  Window_Frames:
+    label: 'window'
+  Window_Handles:
+    label: 'objects'
+  window_joints:
+    label: 'objects'
+  

@@ -16,3 +16,249 @@ scale_unit: 1600
 
 #over all min [-2.700973, -0.090563, -1.574304]
 #over all max [2.713026, 1.759939, 1.780447]
+
+object_labels:
+  BiFoldDoor001:
+    label: 'wall'
+  BiFoldDoor002:
+    label: 'wall'
+  Box001:
+    label: 'wall'
+  Box002:
+    label: 'furniture'
+  Box003:
+    label: 'furniture'
+  Box004: 
+    label: 'furniture'
+  Box005:
+    label: 'objects'
+  Box006:
+    label: 'objects'
+  Box007:
+    label: 'objects'
+  Box008:
+    label: 'picture'
+  Box009:
+    label: 'picture'
+  Box010:
+    label: 'picture'
+  ChamferBox001:
+    label: 'bed'
+  ChamferBox002:
+    label: 'bed'
+  ChamferBox003:
+    label: 'objects'
+  ChamferBox004:
+    label: 'objects'
+  ChamferBox005:
+    label: 'bed'
+  ChamferCyl001:
+    label: 'objects'
+  ChamferCyl003:
+    label: 'objects'
+  ChamferCyl004:
+    label: 'objects'
+  ChamferCyl005:
+    label: 'objects'
+  Cylinder001:
+    label: 'objects'
+  Cylinder002:
+    label: 'objects'
+  Cylinder007:
+    label: 'objects'
+  Cylinder008:
+    label: 'objects'
+  Cylinder009:
+    label: 'objects'
+  Cylinder010:
+    label: 'objects'
+  Cylinder011:
+    label: 'objects'
+  Cylinder012:
+    label: 'objects'
+  Cylinder013:
+    label: 'objects'
+  Cylinder014:
+    label: 'objects'
+  Cylinder015:
+    label: 'objects'
+  Cylinder016:
+    label: 'objects'
+  Cylinder017:
+    label: 'objects'
+  Cylinder018:
+    label: 'objects'
+  Cylinder019:
+    label: 'objects'
+  dfsdf:
+    label: 'sofa'
+  dfv:
+    label: 'objects'
+  dfv001:
+    label: 'objects'
+  dfv002:
+    label: 'objects'
+  dfv003:
+    label: 'objects'
+  Ellipse001:
+    label: 'objects'
+  Line002:
+    label: 'objects'
+  Line004:
+    label: 'objects'
+  Line005:
+    label: 'objects'
+  Line014:
+    label: 'objects'
+  Line015:
+    label: 'objects'
+  Line016:
+    label: 'window'
+  Line017:
+    label: 'window'
+  Line018:
+    label: 'window'
+  mobl:
+    label: 'sofa'
+  Object001sdfsd:
+    label: 'sofa'
+  Object001sdfsd001:
+    label: 'sofa'
+  pilloow:
+    label: 'sofa'
+  pilloow001:
+    label: 'sofa'
+  PivotDoor001:
+    label: 'wall'
+  Rectangle001:
+    label: 'window'
+  Rectangle002:
+    label: 'window'
+  Rectangle003:
+    label: 'window'
+  Rectangle004:
+    label: 'wall'
+  Rectangle005:
+    label: 'picture'
+  Rectangle006:
+    label: 'picture'
+  Rectangle007:
+    label: 'picture'
+  SlidingDoor001:
+    label: 'furniture'
+  SlidingDoor002:
+    label: 'furniture'
+  SlidingDoor003:
+    label: 'bed'
+  Sphere001:
+    label: 'objects'
+  Sphere003:
+    label: 'objects'
+  Sphere004:
+    label: 'objects'
+  Sphere005:
+    label: 'objects'
+  Sphere006:
+    label: 'objects'
+  Sphere007:
+    label: 'objects'
+  Sphere008:
+    label: 'objects'
+  Sphere009:  
+    label: 'objects'
+  Torus001:
+    label: 'objects'
+  Torus017:
+    label: 'window'
+  Torus018:
+    label: 'window'
+  Torus019:
+    label: 'window'
+  Torus020:
+    label: 'window'
+  Torus021:
+    label: 'window'
+  Torus023:
+    label: 'window'
+  Torus025:
+    label: 'window'
+  Torus026:
+    label: 'window'   
+  Torus029:
+    label: 'window'
+  Torus030:
+    label: 'window'
+  Torus031:
+    label: 'window'
+  Torus032:
+    label: 'window'
+  Torus033:
+    label: 'window'
+  Torus034:
+    label: 'window'
+  Torus035:
+    label: 'window'
+  Torus036:
+    label: 'window'
+  Torus037:
+    label: 'window'
+  Torus038:
+    label: 'window'
+  Torus039:
+    label: 'window'
+  Torus040:
+    label: 'window'
+  Torus041:
+    label: 'window'
+  Torus042:
+    label: 'window'
+  Torus043:
+    label: 'window'
+  Torus044:
+    label: 'window'
+  Torus045:
+    label: 'window'
+  Torus046:
+    label: 'window'
+  Torus047:
+    label: 'window'
+  Torus048:
+    label: 'window'
+  Torus049:
+    label: 'window'
+  Torus050:
+    label: 'window'
+  Torus051:
+    label: 'window'
+  Torus054:
+    label: 'window'
+  Torus055:
+    label: 'window'
+  Torus056:
+    label: 'window'
+  Torus058:
+    label: 'window'
+  Torus059:
+    label: 'window'
+  Torus061:
+    label: 'window'
+  Torus062:
+    label: 'objects'
+  Torus063:
+    label: 'objects'
+  Torus064:
+    label: 'objects'
+  Torus065:
+    label: 'objects'
+  Torus066:
+    label: 'objects'
+  Torus067:
+    label: 'objects'
+  Vol3_Chair0030:
+    label: 'chair'
+  Vol3_Chair0031:
+    label: 'chair'
+  Vol3_Chair0032:
+    label: 'chair'
+  Vol4_Table0022:
+    label: 'table'

@@ -17,3 +17,61 @@ scale_unit: 880
 
 #over all min [-5.87667, 0.013093, -4.007995]
 #over all max [3.961758, 3.013095, 3.958937]
+
+object_labels:
+  bowl_grey_0:
+    label: 'objects'
+  cabinet_Material.015_0:
+    label: 'furniture'
+  candle_Material.007_0:
+    label: 'objects'
+  candle_Material.008_0:
+    label: 'objects'
+  candle_Material.013_0:
+    label: 'objects'
+  carpet_Carpet__0:
+    label: 'objects'
+  chopping_board1_Material1_0:
+    label: 'objects'
+  chopping_board2_Material2_0:
+    label: 'objects'
+  faucet_Material.006_0:
+    label: 'objects'
+  floor_floor_0:
+    label: 'floor'
+  flower_leaf1_0:
+    label: 'objects'
+  flower_leaf2_0:
+    label: 'objects'
+  house_Material.009_0:
+    label: 'wall'
+  IKEA_seat_wood__0:
+    label: 'chair'
+  jar1_Material3_0:
+    label: 'objects'
+  jar2_Material4_0:
+    label: 'objects'
+  jar3_Material.002_0:
+    label: 'objects'
+  jar4_Material.017_0:
+    label: 'objects'
+  lighting_Material.001_0:
+    label: 'objects'
+  lighting_Material.003_0:
+    label: 'objects'
+  lighting_Material.014_0:
+    label: 'objects'
+  painting_Material.010_0:
+    label: 'picture'
+  picture_Material.011_0:
+    label: 'picture'
+  seat_Leather_0:
+    label: 'chair'
+  seat_Material5_0:
+    label: 'chair'
+  table_Material5.001_0:
+    label: 'table'
+  vase_grey.001_0:
+    label: 'objects'
+  window_Material.016_0:
+    label: 'window'

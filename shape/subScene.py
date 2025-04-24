@@ -28,7 +28,6 @@ class SubScene:
         # init vertex attributes
 
         self.vertices = np.array(vert, dtype=np.float32)
-        print(self.vertices.shape)
         self.textcoords = np.array(teco, dtype=np.float32)
         self.normals = np.array(normals, dtype=np.float32)
         # self.colors = np.array([1.0]*len(self.vertices), dtype=np.float32)
