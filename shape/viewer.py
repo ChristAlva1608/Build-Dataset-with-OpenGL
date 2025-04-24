@@ -15,16 +15,18 @@ from libs.transform import *
 
 # from .object3D import *
 # from .scene3D import *
-from .object3D_v2 import *
+# from .object3D_v2 import *
 # from .scene3D_v2 import *
 from .scene3D_v3 import *
+from .object3D_v3 import *
 from .vcamera import *
 from .sphere import *
 from colormap import *
 from utils import *
 from labels import *
 
-labels = load_labels() # Load labels from JSON file
+class_color_mapping = load_color_mapping('class_color_mapping.json') # Load labels from JSON file
+gso_labels = read_yaml_file('config/GSO.yaml') # Load labels from JSON file
 
 class Viewer:
     ''' Initialize attributes '''
@@ -216,6 +218,9 @@ class Viewer:
         if args.NYU_path != "": # if flag on and path defined load the path
             self.NYU_rgb_paths = get_all_NYU_rgb_images(args.NYU_path)
             print("Using NYU texture !", len(self.NYU_rgb_paths), "images from", args.NYU_path)
+
+        #Initialize object labels
+        self.object_labels = None # {'Box001': {'label': 'ceiling'}, 'Box002': {'label': 'ceiling'}}
 
         # Auto mode, no need to click confirm to load anything
         if args.auto:
@@ -958,6 +963,8 @@ class Viewer:
 
         else:
             print(f'{file_path} is not found. Use default!')
+        
+        print(self.object_labels)
 
     def reset(self):
         self.obj_location_option = True
@@ -1296,28 +1303,27 @@ class Viewer:
         for drawable in self.drawables:
             if isinstance(drawable, Object):
                 color_list = []
-                name = drawable.name
-                category = self.get_label_from_name(name, labels)
+                for obj_name in drawable.obj_names_list:
+                    label = gso_labels.get(obj_name, {}).get("label", None)
 
-                if category:
-                    color = normalize_color(labels[category].color)
-                    color_list.append(color)
-                else:
-                    color_list.append([1.0, 1.0, 1.0])
-
-                drawable.update_colors(color_list)
-
-            elif isinstance(drawable, Scene):
+                    if label is not None:
+                        color = class_color_mapping[label]
+                        color_list.append(normalize_color(color))
+                    else:
+                        color_list.append(class_color_mapping['void'])  ### todo: modify void color later
+                drawable.update_colors(color_list)  
+ 
+            else:
                 color_list = []
                 for obj_name in drawable.obj_names_list:
-                    category = self.get_label_from_name(obj_name, labels)
+                    label = self.object_labels.get(obj_name, {}).get("label", None)
 
-                    if category:
-                        color = normalize_color(labels[category].color)
-                        color_list.append(color)
+                    if label is not None:
+                        color = class_color_mapping[label]
+                        color_list.append(normalize_color(color))
                     else:
-                        color_list.append([1.0, 1.0, 1.0])
-                drawable.update_colors(color_list)   
+                        color_list.append(class_color_mapping['void'])  ### todo: modify void color later
+                drawable.update_colors(color_list) 
 
     def coloring_segmentation(self):
         # Set the color for the segmentation

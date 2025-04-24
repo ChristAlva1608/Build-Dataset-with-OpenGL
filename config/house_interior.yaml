@@ -15,3 +15,191 @@ scale_range: [100, 110] # used for scaling random
 scale_unit: 12.5 #sofa 2.2m, floor 2.5x sofa
 #over all min [-71.3373, -1.8172, -70.536]
 #over all max [367.6519, 243.2062, 344.3887]
+
+object_labels:
+  Box001:
+    label: 'ceiling'
+  Box002:
+    label: 'ceiling'
+  Box003:
+    label: 'objects'
+  Box004:
+    label: 'objects'
+  Box005:
+    label: 'objects'
+  Box006:
+    label: 'objects'
+  Box007:
+    label: 'objects'
+  Box008:
+    label: 'objects'
+  Box009:
+    label: 'objects'
+  Box010:
+    label: 'objects'
+  Box011:
+    label: 'objects'
+  Box012:
+    label: 'objects'
+  Box013:
+    label: 'objects'
+  Box017:
+    label: 'sofa'
+  Box019:
+    label: 'sofa'
+  Box020: 
+    label: 'sofa'
+  Box021:
+    label: 'sofa'
+  Box022:
+    label: 'sofa'
+  Box023:
+    label: 'sofa'
+  Box024:
+    label: 'sofa'
+  Box025:
+    label: 'sofa'
+  Box026:
+    label: 'sofa'
+  Box027:
+    label: 'sofa'
+  Box028:
+    label: 'sofa'
+  Box029:
+    label: 'sofa'
+  Box032:
+    label: 'table'
+  Box033:
+    label: 'table'
+  Box037:
+    label: 'wall'
+  Box038:
+    label: 'picture'
+  Box041:
+    label: 'objects'
+  Box042: 
+    label: 'objects'
+  Box043:
+    label: 'picture'
+  Box044:
+    label: 'picture'
+  Box045:
+    label: 'sofa'
+  Box046:
+    label: 'sofa'
+  Cylinder001:
+    label: 'objects'
+  Cylinder002:
+    label: 'objects'
+  Cylinder003:
+    label: 'objects'
+  Cylinder004:
+    label: 'objects'
+  Cylinder005:
+    label: 'objects'
+  Cylinder006:
+    label: 'objects'
+  Cylinder007:
+    label: 'objects'    
+  Cylinder008:  
+    label: 'objects'
+  Cylinder009:
+    label: 'objects'
+  Cylinder010:
+    label: 'objects'
+  Cylinder011:
+    label: 'objects'
+  Cylinder012:
+    label: 'objects'
+  Cylinder014:
+    label: 'objects'
+  Cylinder015:
+    label: 'objects'
+  Cylinder017:
+    label: 'objects'
+  Cylinder019:
+    label: 'objects'
+  Cylinder021:
+    label: 'objects'
+  Cylinder023:
+    label: 'objects'
+  Cylinder025:
+    label: 'objects'
+  Cylinder027:
+    label: 'objects'
+  Cylinder029:
+    label: 'objects'
+  Cylinder031:
+    label: 'objects'
+  Cylinder033:
+    label: 'objects'
+  Cylinder034:
+    label: 'objects'
+  Cylinder035:
+    label: 'objects'
+  Cylinder036:
+    label: 'objects'
+  Cylinder037:
+    label: 'objects'
+  Cylinder038:
+    label: 'objects'
+  Cylinder039:
+    label: 'objects'
+  Cylinder040:
+    label: 'objects'
+  Cylinder041:
+    label: 'objects'
+  Cylinder042:
+    label: 'objects'
+  Cylinder043:  
+    label: 'objects'
+  Cylinder044:
+    label: 'objects'
+  Cylinder045:
+    label: 'objects'
+  Cylinder046:
+    label: 'objects'
+  Cylinder047:
+    label: 'objects'
+  Cylinder048:
+    label: 'objects'
+  Cylinder049:
+    label: 'objects'
+  Cylinder050:
+    label: 'objects'
+  Cylinder051:
+    label: 'sofa'
+  Cylinder052:
+    label: 'sofa'
+  Cylinder053:
+    label: 'sofa'
+  Cylinder054:
+    label: 'sofa'
+  Cylinder055:
+    label: 'sofa'
+  Cylinder056:
+    label: 'sofa'
+  Cylinder057:
+    label: 'sofa'
+  Cylinder058:
+    label: 'sofa'
+  Cylinder059:
+    label: 'sofa'
+  Cylinder060:
+    label: 'sofa'
+  Cylinder061:
+    label: 'sofa'
+  Cylinder062:
+    label: 'sofa'
+  Plane001:
+    label: 'floor'
+  Plane002:
+    label: 'ceiling'
+  Plane003:
+    label: 'wall'
+  Plane004:
+    label: 'ceiling'
+  Plane005:
+    label: 'wall'
+  Teapot001:
+    label: 'objects'

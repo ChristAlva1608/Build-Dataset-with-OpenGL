@@ -5,8 +5,6 @@ import json
 from labels import Label
 import os
 
-LABELS_FILE = "instance_labels.json"
-
 def read_yaml_file(file_path):
     try:
         with open(file_path, 'r') as file:
@@ -48,15 +46,27 @@ def get_all_NYU_rgb_images(dataset_path):
     return image_paths
 
 
-def load_labels():
-    if os.path.exists(LABELS_FILE):
-        with open(LABELS_FILE, 'r') as f:
+def load_labels(path):
+    if os.path.exists(path):
+        with open(path, 'r') as f:
             raw = json.load(f)
         return {k: Label(k, v['id'], v['color']) for k, v in raw.items()}
     else:
         return {}
 
 def save_labels(labels):
+    data = {name: {'id': label.id, 'color': label.color} for name, label in labels.items()}
+    with open(LABELS_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+def load_color_mapping(path):
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return json.load(f)
+    else:
+        return {}
+
+def save_color_mapping(labels):
     data = {name: {'id': label.id, 'color': label.color} for name, label in labels.items()}
     with open(LABELS_FILE, 'w') as f:
         json.dump(data, f, indent=2)
