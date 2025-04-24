@@ -1,0 +1,93 @@
+object_labels:
+  present:
+    label: 'objects'
+  eco_planter:
+    label: 'objects'
+  power_treatment:
+    label: 'objects'
+  sandwich:
+    label: 'objects'
+  book_end:
+    label: 'furniture'
+  basket:
+    label: 'objects'
+  screwdriver:
+    label: 'objects'
+  plasma_body:
+    label: 'objects'
+  fry_pan:
+    label: 'objects'
+  stack_ring:
+    label: 'objects'
+  coffee_mug:
+    label: 'objects'
+  eco_saucer:
+    label: 'objects'
+  alarm_clock:
+    label: 'objects'
+  boat_shoe:
+    label: 'objects'
+  purple_tape:
+    label: 'objects'
+  pepsi:
+    label: 'objects'
+  hair_dryer:
+    label: 'objects'
+  shoe:
+    label: 'objects'
+  orchid_pot:
+    label: 'objects'
+  toy_ball:
+    label: 'objects'
+  ortho_forward:
+    label: 'objects'
+  cartridge:
+    label: 'objects'
+  vitaminC_serum:
+    label: 'objects'
+  adidas_boost:
+    label: 'objects'
+  bowl:
+    label: 'objects'
+  kitchen_set:
+    label: 'furniture'
+  twist_shape:
+    label: 'objects'
+  moisturizer:
+    label: 'objects'
+  gloves:
+    label: 'objects'
+  android:
+    label: 'objects'
+  dog_bow:
+    label: 'objects'
+  magnifier:
+    label: 'objects'
+  tea_set:
+    label: 'objects'
+  flashlight:
+    label: 'objects'
+  adidas_zx700:
+    label: 'objects'
+  hat:
+    label: 'objects'
+  school_bus:
+    label: 'objects'
+  cooker:
+    label: 'objects'
+  girl_deckhand:
+    label: 'objects'
+  sapphire_box:
+    label: 'objects'
+  photo_plasma:
+    label: 'objects'
+  red_pot:
+    label: 'objects'
+  chroma_headset:
+    label: 'objects'
+  pink_box:
+    label: 'objects'
+  scissor:
+    label: 'objects'
+  formula_supplement:
+    label: 'objects'

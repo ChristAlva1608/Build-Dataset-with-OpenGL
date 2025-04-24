@@ -1,5 +1,3 @@
-import random
-
 import glfw
 import numpy as np
 from OpenGL.GL import *
@@ -12,24 +10,32 @@ from libs.buffer import *
 from libs.camera import *
 import glm
 from itertools import cycle
-from shape.subScene import *
+from .subObj import *
 import os
 
-
-class Scene:
-    def __init__(self, shader, file_path, scene_net_flag, nyu_rgb_paths):
+class Object:
+    def __init__(self, shader, file_path):
+        self.name = os.path.basename(file_path)[:-4]
         self.shader = shader
-        # self.uma = UManager(self.shader)
+        self.uma = UManager(self.shader)
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)
-        self.name = os.path.basename(file_path)[:-4]
-        self.obj_names_list = []
-
-        self.sceneNet_flag = scene_net_flag
-        self.NYU_rgb_paths = nyu_rgb_paths
-
         self.parse_file_pywavefront(file_path)
+        self.obj_names_list = self.get_obj_names(file_path)
+        print("Finish parsed object", os.path.basename(file_path)[:-4])
+
+    def get_obj_names(self, obj_path):
+        obj_names = []
+        with open(obj_path, 'r') as f:
+            for line in f:
+                if line.startswith('o '):
+                    name = line.strip().split(' ', 1)[1]
+                    obj_names.append(name)
+        if not obj_names:
+            # No 'o' found in the obj file, use the file name as default object name
+            obj_names.append(self.name)
+        return obj_names
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=True, parse=True, create_materials=True)
@@ -45,7 +51,8 @@ class Scene:
         mat_dict ={}
 
         for mesh_name, mesh in scene.meshes.items():
-            self.obj_names_list.append(mesh_name)
+            # return
+            # self.obj_names_list.append(mesh_name)
             num_faces = len(mesh.faces) # auto correct for triang and quad
             mat = mesh.materials[0] # access to material
             mat_name = mat.name
@@ -55,16 +62,13 @@ class Scene:
             texcoords, normals, vertices = self.mat_data(mat, mat_dict[mat_name], mat_dict[mat_name] + num_faces*3)
             mat_dict[mat_name] = mat_dict[mat_name] + num_faces*3
 
-            NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
-            model = SubScene(
+            model = SubObj(
                 self.shader,
                 vertices,
                 texcoords,
                 normals,
                 self.materials.get(mat_name, None),
                 self.dir_path,
-                self.sceneNet_flag,
-                NYU_path
             ).setup()
 
             self.subObjs.append(model)
@@ -180,6 +184,22 @@ class Scene:
         for subobj in self.subObjs:
             subobj.uma.upload_uniform_scalar1i(num, 'mode')
 
+    def get_model_matrix(self):
+        return self.subObjs[0].get_model_matrix()
+    
+    def get_view_matrix(self):
+        return self.subObjs[0].get_view_matrix()
+    
+    def get_projection_matrix(self):
+        return self.subObjs[0].get_projection_matrix()
+    
+    def get_texture(self):
+        return self.subObjs[0].texture_path
+    
+    def update_colors(self, color_list):
+        for i, subobj in enumerate(self.subObjs):
+            subobj.update_colors(color_list[i])
+            
     def update_colormap(self, selected_colormap):
         for subobj in self.subObjs:
             subobj.uma.upload_uniform_scalar1i(selected_colormap, 'colormap_selection')
@@ -215,19 +235,3 @@ class Scene:
     def draw(self, cameraPos):
         for subobj in self.subObjs:
             subobj.draw(cameraPos)
-
-    def get_model_matrix(self):
-        return self.subObjs[0].get_model_matrix()
-
-    def change_NYU_texture(self):
-        # perform change all the scene texture to new NYU image
-        for subScene in self.subObjs:
-            NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
-            subScene.update_texture(NYU_path)
-
-    def update_colors(self, color_list):
-        # print(f"Color list length: {len(color_list)}") # 93
-        for i, subobj in enumerate(self.subObjs): # still correct
-            # print(f"Update object {self.obj_names_list[i]} with color {color_list[i]}")
-            subobj.update_colors(color_list[i])
-
