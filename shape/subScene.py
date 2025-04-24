@@ -26,10 +26,13 @@ class SubScene:
         self.use_texture = True if (len(teco) > 0 and teco[0] != -1 and material is not None) else False
 
         # init vertex attributes
+
         self.vertices = np.array(vert, dtype=np.float32)
+        print(self.vertices.shape)
         self.textcoords = np.array(teco, dtype=np.float32)
         self.normals = np.array(normals, dtype=np.float32)
-        self.colors = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+        # self.colors = np.array([1.0]*len(self.vertices), dtype=np.float32)
+        self.colors = np.ones((self.vertices.shape[0], 3), dtype=np.float32)
 
         # init materials
         self.materials = material
@@ -91,6 +94,7 @@ class SubScene:
     def update_colors(self, colors):
         self.colors = np.tile(colors, (len(self.vertices), 1)).astype(np.float32)
         self.vao.update_vbo(3, self.colors)
+        # self.uma.upload_uniform_vector3fv(np.,"color")
 
     def update_shader(self, shader):
         self.shader = shader

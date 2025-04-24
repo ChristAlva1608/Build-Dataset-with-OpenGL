@@ -14,11 +14,12 @@ import glm
 from itertools import cycle
 from shape.subScene import *
 import os
+import copy
 
 class Scene:
     def __init__(self, shader, file_path, scene_net_flag, nyu_rgb_paths):
         self.shader = shader
-        self.uma = UManager(self.shader)
+        # self.uma = UManager(self.shader)
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)
@@ -33,38 +34,46 @@ class Scene:
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
         print("Finished Parsing PyWavefront")
-        for mesh_name, mesh in scene.meshes.items():
-            self.obj_names_list.append(mesh_name)
+        # for mesh_name, mesh in scene.meshes.items():
+        #     self.obj_names_list.append(mesh_name)
             # print(f"Mesh name: {mesh_name}")
 
         # Do something with material
         if scene.mtllibs:
             print(f"Material libraries: {scene.mtllibs}")
-            mtl_path =  os.path.join(self.dir_path, scene.mtllibs[0])
+            mtl_path = os.path.join(self.dir_path, scene.mtllibs[0])
         else:
             mtl_path = obj_file.replace(".obj", ".mtl")
         self.materials = self.load_materials(mtl_path)
 
-        all_vertices = []
-
-        for mesh in scene.meshes.values():
+        print("Num meshes", len(scene.meshes))
+        # print(self.obj_names_list)
+        # for mesh in scene.meshes.values():
+        for mesh_name, mesh in scene.meshes.items():
+            self.obj_names_list.append(mesh_name)
+            # print(mesh.materials)
+            # mesh_mat_copy = copy.deepcopy(mesh.materials)
+            # print("Num mat", len(mesh.materials))
+            print(mesh.face)
             for material in mesh.materials:
+                # material_copy = copy.deepcopy(material)
                 texcoords, normals, vertices = self.process_material_data(material)
                 NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
+                # material_copy = copy.deepcopy(self.materials.get(material.name, None))
                 model = SubScene(
                     self.shader,
                     vertices,
                     texcoords,
                     normals,
-                    self.materials.get(material.name, None),
+                    # self.materials.get(material.name, None),
+                    copy.deepcopy(self.materials.get(material.name, None)),
                     self.dir_path,
                     self.sceneNet_flag,
                     NYU_path
                 ).setup()
 
                 self.subObjs.append(model)
-                all_vertices.extend(vertices)
-
+        print("Subonj length", len(self.subObjs))
         print("Finish parsing meshes")
 
     def process_material_data(self, material):
@@ -173,9 +182,81 @@ class Scene:
                             mat['map_bump'] = {'filename': parts[-1], 'multiplier': 1.0}
         return materials
 
+    # def set_mode(self, num):
+    #     for subobj in self.subObjs:
+    #         subobj.uma.upload_uniform_scalar1i(num, 'mode')
+    #
+    # def update_colormap(self, selected_colormap):
+    #     for subobj in self.subObjs:
+    #         subobj.uma.upload_uniform_scalar1i(selected_colormap, 'colormap_selection')
+    #
+    # def update_near_far(self, near, far):
+    #     for subobj in self.subObjs:
+    #         subobj.uma.upload_uniform_scalar1f(near, 'near')
+    #         subobj.uma.upload_uniform_scalar1f(far, 'far')
+    #
+    # def update_lightPos(self, lightPos):
+    #     for subobj in self.subObjs:
+    #         subobj.update_lightPos(lightPos)
+    #
+    # def update_lightColor(self, lightColor):
+    #     for subobj in self.subObjs:
+    #         subobj.update_lightColor(lightColor)
+    #
+    # def update_shininess(self, shininess):
+    #     for subobj in self.subObjs:
+    #         subobj.update_shininess(shininess)
+    #
+    # def update_attribute(self, attr, value):
+    #     update_name = 'update_' + attr
+    #     for subobj in self.subObjs:
+    #         if hasattr(subobj, update_name):
+    #             method = getattr(subobj, update_name)
+    #             method(value)
+    #
+    # def setup(self):
+    #     for subobj in self.subObjs:
+    #         subobj.setup()
+    #
+    # def draw(self, cameraPos):
+    #     for subobj in self.subObjs:
+    #         subobj.draw(cameraPos)
+    #
+    # def get_model_matrix(self):
+    #     return self.subObjs[0].get_model_matrix()
+    #
+    # def change_NYU_texture(self):
+    #     # perform change all the scene texture to new NYU image
+    #     for subScene in self.subObjs:
+    #         NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
+    #         subScene.update_texture(NYU_path)
+    #
+    # def update_colors(self, color_list):
+    #     # print(f"Color list length: {len(color_list)}") # 93
+    #     for i, subobj in enumerate(self.subObjs): # still correct
+    #         # print(f"Update object {self.obj_names_list[i]} with color {color_list[i]}")
+    #         subobj.update_colors(color_list[i])
+
+    def get_model_matrix(self):
+        return self.subObjs[0].get_model_matrix()
+
+    def get_view_matrix(self):
+        return self.subObjs[0].get_view_matrix()
+
+    def get_projection_matrix(self):
+        return self.subObjs[0].get_projection_matrix()
+
     def set_mode(self, num):
         for subobj in self.subObjs:
             subobj.uma.upload_uniform_scalar1i(num, 'mode')
+
+    def update_colors(self, color_list):
+        for i, subobj in enumerate(self.subObjs):
+            subobj.update_colors(color_list[i])
+
+    def update_shader(self, shader):
+        for subobj in self.subObjs:
+            subobj.update_shader(shader)
 
     def update_colormap(self, selected_colormap):
         for subobj in self.subObjs:
@@ -205,6 +286,12 @@ class Scene:
                 method = getattr(subobj, update_name)
                 method(value)
 
+    def get_transformed_vertices(self):
+        transform_vertices = []
+        for subobj in self.subObjs:
+            transform_vertices.extend(subobj.transform_vertices())
+        return transform_vertices
+
     def setup(self):
         for subobj in self.subObjs:
             subobj.setup()
@@ -212,12 +299,3 @@ class Scene:
     def draw(self, cameraPos):
         for subobj in self.subObjs:
             subobj.draw(cameraPos)
-
-    def get_model_matrix(self):
-        return self.subObjs[0].get_model_matrix()
-
-    def change_NYU_texture(self):
-        # perform change all the scene texture to new NYU image
-        for subScene in self.subObjs:
-            NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
-            subScene.update_texture(NYU_path)

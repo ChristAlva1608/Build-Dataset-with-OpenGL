@@ -16,7 +16,8 @@ from libs.transform import *
 # from .object3D import *
 # from .scene3D import *
 from .object3D_v2 import *
-from .scene3D_v2 import *
+# from .scene3D_v2 import *
+from .scene3D_v3 import *
 from .vcamera import *
 from .sphere import *
 from colormap import *
@@ -209,6 +210,7 @@ class Viewer:
 
         # using scenet layout
         self.sceneNet_usage = args.scene_net_layout
+        # self.sceneNet_usage = True
         # using NYU texture
         self.NYU_rgb_paths = ""
         if args.NYU_path != "": # if flag on and path defined load the path
@@ -1274,7 +1276,7 @@ class Viewer:
         for drawable in self.drawables:
             color_list = []
             for obj_name in drawable.obj_names_list: # Generalize for all objects (in case of an object with multiple meshes)
-                if obj_name not in labels:
+                if obj_name not in labels: # todo: ensure colors not get duplicate
                     random_color = [random.randint(0, 255) for _ in range(3)]
                     new_id = len(labels)
                     new_label = Label(obj_name, new_id , random_color)
@@ -1283,6 +1285,7 @@ class Viewer:
                 color = normalize_color(labels[obj_name].color)
                 color_list.append(color)
 
+            # print("Length color list", len(color_list))
             save_labels(labels) # update labels.json file
             drawable.update_colors(color_list)
 
@@ -1314,7 +1317,6 @@ class Viewer:
                         color_list.append(color)
                     else:
                         color_list.append([1.0, 1.0, 1.0])
-
                 drawable.update_colors(color_list)   
 
     def coloring_segmentation(self):

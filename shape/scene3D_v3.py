@@ -1,3 +1,5 @@
+import random
+
 import glfw
 import numpy as np
 from OpenGL.GL import *
@@ -12,56 +14,86 @@ import glm
 from itertools import cycle
 from shape.subScene import *
 import os
+import copy
+
 
 class Scene:
-    def __init__(self, shader, file_path):
+    def __init__(self, shader, file_path, scene_net_flag, nyu_rgb_paths):
         self.shader = shader
-        self.uma = UManager(self.shader)
-
+        # self.uma = UManager(self.shader)
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)
-        mtl_path = file_path.replace(".obj", ".mtl")
-        self.materials = self.load_materials(mtl_path)
+        self.name = os.path.basename(file_path)[:-4]
+        self.obj_names_list = []
 
-        overall_min, overall_max = self.parse_file_pywavefront(file_path)
-        self.min_x, self.min_y, self.min_z = overall_min
-        self.max_x, self.max_y, self.max_z = overall_max
+        self.sceneNet_flag = scene_net_flag
+        self.NYU_rgb_paths = nyu_rgb_paths
+
+        self.parse_file_pywavefront(file_path)
 
     def parse_file_pywavefront(self, obj_file):
-        scene = pywavefront.Wavefront(obj_file, collect_faces=False)
+        scene = pywavefront.Wavefront(obj_file, collect_faces=True, parse=True, create_materials=True)
         print("Finished Parsing PyWavefront")
 
-        overall_min = np.array([float('inf'), float('inf'), float('inf')])
-        overall_max = np.array([float('-inf'), float('-inf'), float('-inf')])
+        if scene.mtllibs:
+            print(f"Material libraries: {scene.mtllibs}")
+            mtl_path = os.path.join(self.dir_path, scene.mtllibs[0])
+        else:
+            mtl_path = obj_file.replace(".obj", ".mtl")
+        self.materials = self.load_materials(mtl_path)
 
-        all_vertices = []
+        mat_dict ={}
 
-        for mesh in scene.meshes.values():
-            for material in mesh.materials:
-                texcoords, normals, vertices = self.process_material_data(material)
+        for mesh_name, mesh in scene.meshes.items():
+            self.obj_names_list.append(mesh_name)
+            num_faces = len(mesh.faces) # auto correct for triang and quad
+            mat = mesh.materials[0] # access to material
+            mat_name = mat.name
+            if mat_name not in mat_dict:
+                mat_dict[mat_name] = 0
 
-                model = SubScene(
-                    self.shader,
-                    vertices,
-                    texcoords,
-                    normals,
-                    self.materials[material.name],
-                    self.dir_path
-                ).setup()
+            texcoords, normals, vertices = self.mat_data(mat, mat_dict[mat_name], mat_dict[mat_name] + num_faces*3)
+            mat_dict[mat_name] = mat_dict[mat_name] + num_faces*3
 
-                self.subObjs.append(model)
-                all_vertices.extend(vertices)
+            NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
+            model = SubScene(
+                self.shader,
+                vertices,
+                texcoords,
+                normals,
+                self.materials.get(mat_name, None),
+                self.dir_path,
+                self.sceneNet_flag,
+                NYU_path
+            ).setup()
 
+            self.subObjs.append(model)
         print("Finish parsing meshes")
 
-        if all_vertices:
-            all_vertices = np.array(all_vertices).reshape(-1, 3)
-            overall_min = np.min(all_vertices, axis=0)
-            overall_max = np.max(all_vertices, axis=0)
+    def mat_data(self, material, start, end):
+        data = material.vertices  # List of vertex data
+        num_texcoords = 2
+        num_normals = 3
+        num_vertices = 3
 
-        print("Finish min max")
-        return overall_min.tolist(), overall_max.tolist()
+        texcoords = []
+        normals = []
+        vertices = []
+
+        if material.has_uvs:
+            for i in range(start*8, end*8, num_texcoords + num_normals + num_vertices):
+                texcoords.extend(data[i:i + num_texcoords])
+                normals.extend(data[i + num_texcoords:i + num_texcoords + num_normals])
+                vertex = data[i + num_texcoords + num_normals:i + num_texcoords + num_normals + num_vertices]
+                vertices.extend(vertex)
+        else:
+            for i in range(start*6, end*6, num_normals + num_vertices):
+                normals.extend(data[i:i + num_normals])
+                vertex = data[i + num_normals:i + num_normals + num_vertices]
+                vertices.extend(vertex)
+
+        return texcoords, normals, vertices
 
     def process_material_data(self, material):
         data = material.vertices  # List of vertex data
@@ -208,3 +240,19 @@ class Scene:
     def draw(self, cameraPos):
         for subobj in self.subObjs:
             subobj.draw(cameraPos)
+
+    def get_model_matrix(self):
+        return self.subObjs[0].get_model_matrix()
+
+    def change_NYU_texture(self):
+        # perform change all the scene texture to new NYU image
+        for subScene in self.subObjs:
+            NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
+            subScene.update_texture(NYU_path)
+
+    def update_colors(self, color_list):
+        # print(f"Color list length: {len(color_list)}") # 93
+        for i, subobj in enumerate(self.subObjs): # still correct
+            # print(f"Update object {self.obj_names_list[i]} with color {color_list[i]}")
+            subobj.update_colors(color_list[i])
+

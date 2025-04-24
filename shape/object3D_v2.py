@@ -187,7 +187,7 @@ class Object:
         return self.subObjs[0].texture_path
     
     def update_colors(self, color_list):
-        for i, subobj in enumerate(self.subobjs):
+        for i, subobj in enumerate(self.subObjs):
             subobj.update_colors(color_list[i])
             
     def update_colormap(self, selected_colormap):

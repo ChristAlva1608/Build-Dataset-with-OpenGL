@@ -96,7 +96,7 @@ void main() {
         }
         fragColor = vec4(value, 1.0);
     }
-    else if (mode==2){
+    if (mode==2) {
         fragColor = vec4(colorInterp, 1.0);
     }
 }
