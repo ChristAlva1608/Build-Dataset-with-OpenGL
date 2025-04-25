@@ -19,7 +19,7 @@ scale_unit: 17.3
 #over all max [177.958298, 165.062515, 198.380035]
 
 object_labels:
-  Material2.004_cable: 
+  Material2:
     label: 'ceiling'
   Material2.001:
     label: 'wall'

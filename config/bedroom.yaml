@@ -18,12 +18,18 @@ scale_unit: 1600
 #over all max [2.713026, 1.759939, 1.780447]
 
 object_labels:
+  Ceiling:
+    label: 'ceiling'
+  Wall:
+    label: 'wall'
+  Floor:
+    label: 'floor'
   BiFoldDoor001:
-    label: 'wall'
+    label: 'furniture'
   BiFoldDoor002:
-    label: 'wall'
+    label: 'furniture'
   Box001:
-    label: 'wall'
+    label: 'ceiling'
   Box002:
     label: 'furniture'
   Box003:
@@ -89,7 +95,7 @@ object_labels:
   Cylinder018:
     label: 'objects'
   Cylinder019:
-    label: 'objects'
+    label: 'wall'
   dfsdf:
     label: 'sofa'
   dfv:
@@ -129,7 +135,7 @@ object_labels:
   pilloow001:
     label: 'sofa'
   PivotDoor001:
-    label: 'wall'
+    label: 'furniture'
   Rectangle001:
     label: 'window'
   Rectangle002:
@@ -256,9 +262,9 @@ object_labels:
     label: 'objects'
   Vol3_Chair0030:
     label: 'chair'
-  Vol3_Chair0031:
+  Vol3_Chair031:
     label: 'chair'
-  Vol3_Chair0032:
+  Vol3_Chair032:
     label: 'chair'
   Vol4_Table0022:
     label: 'table'

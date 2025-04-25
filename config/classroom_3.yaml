@@ -30,7 +30,7 @@ object_labels:
   Floor:
     label: 'floor'
   MapOnTheWall:
-    label: 'objects'
+    label: 'picture'
   Metal_Holders:
     label: 'objects'
   Neons:
@@ -38,7 +38,7 @@ object_labels:
   Projector:
     label: 'objects'
   Projector_Table:
-    label: 'table'
+    label: 'furniture'
   Signs_switches:
     label: 'objects'
   Table:
@@ -51,7 +51,7 @@ object_labels:
     label: 'table'
   Walls:
     label: 'wall'
-  Window_Frames:
+  Window_Frame:
     label: 'window'
   Window_Handles:
     label: 'objects'

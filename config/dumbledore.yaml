@@ -19,30 +19,30 @@ scale_unit: 50000
 
 object_labels:
   pk_dumbledoreoffice_arch_0:
-    label: 'objects'
+    label: 'wall'
   pk_dumbledoreoffice_atlas01_back_mesh_0:
     label: 'objects'
   pk_dumbledoreoffice_atlas01_mesh_0:
-    label: 'objects'  
+    label: 'chair'
   pk_dumbledoreoffice_atlas02_mesh_0:
     label: 'objects'
   pk_dumbledoreoffice_backpropsatlas_0:
     label: 'objects'
   pk_dumbledoreoffice_cabinets_mesh1_0:
-    label: 'objects' # check lại
+    label: 'furniture'
   pk_dumbledoreoffice_cabinets_mesh_0:
     label: 'objects'
-  pk_dumbledoreoffice_cabinetsinterior_mesh_0
-    label: 'wall' # check lại
+  pk_dumbledoreoffice_cabinetsinterior_mesh_0:
+    label: 'furniture'
   pk_dumbledoreoffice_cabinetsprops_mesh_0:
-    label: 'wall' # check lại
+    label: 'furniture'
   pk_dumbledoreoffice_chandelier01_mesh_0:
     label: 'objects'
   pk_dumbledoreoffice_chandelier02_mesh_0:
     label: 'objects'
   pk_dumbledoreoffice_curtains2_0:
     label: 'window'
-  pk_dumbledoreoffice_curtains_mesh_0
+  pk_dumbledoreoffice_curtains_mesh_0:
     label: 'window'
   pk_dumbledoreoffice_darkoffice_front_mesh_0:
     label: 'wall' # check lại
@@ -97,7 +97,7 @@ object_labels:
   pk_dumbledoreoffice_stonewallbare_mesh_0:
     label: 'wall'
   pk_dumbledoreoffice_telescope_back_mesh_0:
-    label: 'objects'
+    label: 'window'
   pk_dumbledoreoffice_telescope_front_mesh_0:
     label: 'objects'
   pk_dumbledoreoffice_upperrailing_0:
@@ -107,6 +107,6 @@ object_labels:
   pk_dumbledoreoffice_woodtrim_back_mesh_0:
     label: 'furniture'
   pk_dumbledoreoffice_woodtrim_front_mesh_0:
-    label: 'furniture'
-  pk_dumbledoreoffice_woodtrim_frontbkg_mesh_0
-    label: 'furniture' # check lại
+    label: 'table'
+  pk_dumbledoreoffice_woodtrim_frontbkg_mesh_0:
+    label: 'ceiling'

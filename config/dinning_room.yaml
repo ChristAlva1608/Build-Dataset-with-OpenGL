@@ -63,7 +63,7 @@ object_labels:
     label: 'objects'
   painting_Material.010_0:
     label: 'picture'
-  picture_Material.011_0:
+  painting_Material.011_0:
     label: 'picture'
   seat_Leather_0:
     label: 'chair'

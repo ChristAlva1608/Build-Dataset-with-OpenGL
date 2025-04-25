@@ -175,11 +175,11 @@ object_labels:
   paper_2.003:
     label: 'objects'
   poster_1:
-    label: 'objects'
+    label: 'picture'
   poster_2:
-    label: 'objects'
+    label: 'picture'
   poster_3:
-    label: 'objects'
+    label: 'picture'
   speaker:
     label: 'objects'
   tape_1:
