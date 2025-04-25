@@ -20,3 +20,86 @@ scale_unit: 14.2
 #over all min [196.001678, -11.811024, -539.933716]
 #over all max [821.904968, 169.291351, -43.989197]
 
+object_labels:
+  Bici:
+    label: 'objects'
+  Body:
+    label: 'furniture'
+  CoffeTable:
+    label: 'table'
+  CoffeTableVetro:
+    label: 'table'
+  Como:
+    label: 'furniture'
+  Condotto:
+    label: 'objects'
+  CornixPictures:
+    label: 'picture'
+  Cucinino:
+    label: 'furniture'
+  Dondolo:
+    label: 'chair'
+  Dustbin:
+    label: 'objects'
+  Finestre:
+    label: 'window'
+  Frridge:
+    label: 'furniture'
+  Gamla_Tonda_Red_A1:
+    label: 'objects'
+  Gamla_Tonda_Red_A2:
+    label: 'objects'
+  GamlaGialla_A01:
+    label: 'objects'
+  Lamp02:
+    label: 'objects'
+  Lamp03:
+    label: 'objects'
+  Lamp007:
+    label: 'objects'
+  Lamp008:
+    label: 'objects'
+  Lamp009:
+    label: 'objects'
+  Libri:
+    label: 'table'
+  Object:
+    label: 'objects'
+  Out01:
+    label: 'wall'
+  Room_Dirt_A01:
+    label: 'wall'
+  RoundTable:
+    label: 'table'
+  ScaffaleLibri:
+    label: 'furniture'
+  Sgabellotto:
+    label: 'chair'
+  Sgabellotto001:
+    label: 'chair'
+  Sofa:
+    label: 'sofa'
+  StandLamp:
+    label: 'objects'
+  Supportube01:
+    label: 'objects'
+  TablelongDirt:
+    label: 'table'
+  TelaioSgabello001:
+    label: 'chair'
+  TelaioSgabello002:
+    label: 'chair'
+  TelaioSgabello003:
+    label: 'chair'
+  TelaioSgabello005:
+    label: 'chair'
+  TelaioSgabello006:
+    label: 'chair'
+  TelaioSgabello007:
+    label: 'chair'
+  TelaioSgabello008:
+    label: 'chair'
+  TelaioSgabelloDirt:
+    label: 'chair'
+  VetriArmuori:
+    label: 'objects'

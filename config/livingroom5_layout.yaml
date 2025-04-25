@@ -13,3 +13,138 @@ scale_unit: 630
 #Min [-8.192361, -0.300001, -6.461734]
 #Max [7.567689, 2.810002, 6.715955]
 
+object_labels:
+  Bottle.02:
+    label: 'objects'
+  Bottle.113:
+    label: 'objects'
+  Bottle.781:
+    label: 'objects'
+  Bowl.100:
+    label: 'objects'
+  Bowl.200:
+    label: 'objects'
+  Bowl.300:
+    label: 'objects'
+  Box121:
+    label: 'objects'
+  Box200:
+    label: 'objects'
+  Box356:
+    label: 'objects'
+  Carpet.100:
+    label: 'objects'
+  Ceiling:
+    label: 'ceiling'
+  Ceiling.562:
+    label: 'ceiling'
+  Cupboard.561:
+    label: 'furniture'
+  decoration.145:
+    label: 'objects'
+  decoration.562:
+    label: 'objects'
+  Door.123:
+    label: 'wall'
+  Door.451:
+    label: 'wall'
+  Door.467:
+    label: 'wall'
+  Door.500:
+    label: 'wall'
+  Door.672:
+    label: 'wall'
+  Door.5001:
+    label: 'wall'
+  Faucet:
+    label: 'objects'
+  Floor.154:
+    label: 'floor'
+  Floor.890:
+    label: 'floor'
+  Furniture:
+    label: 'furniture'
+  Furniture.212:
+    label: 'furniture'
+  Hanger:
+    label: 'objects'
+  Kettle.100:
+    label: 'objects'
+  Lamp.111:
+  label: 'objects'
+  Lamp.118:
+    label: 'objects'
+  lamp.124:
+    label: 'objects'
+  Lamp.126:
+    label: 'objects'
+  Lamp.142:
+    label: 'objects'
+  Lamp.151:
+    label: 'objects'
+  Lamp.334:
+    label: 'objects'
+  Lamp.399:
+    label: 'objects'
+  Lamp.459:
+    label: 'objects'
+  Lamp.500:
+    label: 'objects'
+  Lamp.510:
+    label: 'objects'
+  Lamp.700:
+    label: 'objects'
+  Light.657:
+    label: 'objects'
+  Mirror.178:
+    label: 'objects'
+  Painting.2:
+    label: 'picture'
+  Painting.561:
+    label: 'picture'
+  Plant.671:
+    label: 'objects'
+  Seat.3:
+    label: 'objects'
+  Seat.121:
+    label: 'objects'
+  Seat.200:
+    label: 'objects'
+  Shelf.145:
+    label: 'furniture'
+  soap.200:
+    label: 'objects'
+  soap.671:
+    label: 'objects'
+  Table.334:
+    label: 'table'
+  Table.674:
+    label: 'table'
+  television.110:
+    label: 'tv'
+  Tray.141:
+    label: 'objects'
+  VCR.111:
+    label: 'objects'
+  VCR.200:
+    label: 'objects'
+  Ventilator.11:
+    label: 'furniture'
+  Wall.20:
+    label: 'wall'
+  Wall.563:
+    label: 'wall'
+  Wall.671:
+    label: 'wall'
+  Wall.890:
+    label: 'wall'
+  Walls:
+    label: 'wall'
+  WashBasin:
+    label: 'furniture'
+  Window.122:
+    label: 'window'
+  Window.147:
+    label: 'window'
+  Window.674:
+    label: 'window'

@@ -11,6 +11,68 @@ scale_unit: 850
 #Min [-4.504815, -0.01, -5.710626]
 #Max [8.495198, 2.830003, 6.964346]
 
-
-
-
+object_labels:
+  Balcony:
+    label: 'floor'
+  Blinds.1131:
+    label: 'window'
+  Boxes:
+    label: 'objects'
+  Bulb.12432:
+    label: 'objects'
+  Carpet.12341:
+    label: 'objects'
+  Ceiling.111:
+    label: 'ceiling'
+  Chair.1231:
+    label: 'chair'
+  Curtains.124341:
+    label: 'objects'
+  Decoration.1234:
+    label: 'objects'
+  Decoration.1241:
+    label: 'objects'
+  Door.224:
+    label: 'wall'
+  Door.1233:
+    label: 'wall'
+  Door.1344:
+    label: 'wall'
+  Door.1440:
+    label: 'wall'
+  Door.2344:
+    label: 'wall'
+  Door.3001:
+    label: 'wall'
+  Door.12341:
+    label: 'wall'
+  Door.13001:
+    label: 'wall'
+  Floor.12431:
+    label: 'floor'
+  Hanger.1344:
+    label: 'objects'
+  Laptop:
+    label: 'objects'
+  Light.344:
+    label: 'objects'
+  Light.1344:
+    label: 'objects'
+  lightbulb.111:
+    label: 'objects'
+  Painting.1242:
+    label: 'picture'
+  Shelf.243:
+    label: 'furniture'
+  Table.1234:
+    label: 'table'
+  Table.1344:
+    label: 'table'
+  Table.12341:
+    label: 'table'
+  television.1231:
+    label: 'tv'
+  Walls:
+    label: 'wall'
+  Windows.1231:
+    label: 'window'

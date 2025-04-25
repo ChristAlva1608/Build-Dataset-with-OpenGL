@@ -12,4 +12,68 @@ scale_unit: 800
 #Min [-3.512429, -0.008542, -4.748381]
 #Max [4.107574, 4.263751, 5.642925]
 
-
+object_labels:
+  blinds.013: 
+    label: 'window'
+  books.022: 
+    label: 'books'
+  books.023:
+    label: 'books'
+  books.024:
+    label: 'books'
+  books.027:
+    label: 'books'
+  books.028:
+    label: 'books'
+  books.029:
+    label: 'books'
+  books.030:
+    label: 'books'
+  books.031:
+    label: 'books'
+  ceiling.012:
+    label: 'ceiling'
+  ceiling.013:
+    label: 'ceiling'
+  floor.007:
+    label: 'floor'
+  frame.005:
+    label: 'picture'
+  frame.006:
+    label: 'picture'
+  frame.007:
+    label: 'picture'
+  frame.008:
+    label: 'picture'
+  frame.009:
+    label: 'picture'
+  light.061:
+    label: 'objects'
+  light.062:
+    label: 'objects'
+  light.063:
+    label: 'objects'
+  light.064:
+    label: 'objects'
+  light.065:
+    label: 'objects'
+  light.066:
+    label: 'objects'
+  light.067:
+    label: 'objects'
+  light.068:
+    label: 'objects'
+  light.069:
+    label: 'objects'
+  shelf.001:
+    label: 'furniture'
+  shelf.002:
+    label: 'furniture'
+  wall.025:
+    label: 'wall'
+  wall.026:
+    label: 'wall'
+  wall.027:
+    label: 'wall'
+  window.005:
+    label: 'window'
