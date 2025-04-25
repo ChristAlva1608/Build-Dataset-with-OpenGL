@@ -28,7 +28,7 @@ object_labels:
     label: 'ceiling'
   carafe.002:
     label: 'objects'
-  decoration.001:
+  decoration.001: # unsure
     label: 'objects'
   carafe.001:
     label: 'objects'
@@ -40,7 +40,7 @@ object_labels:
     label: 'objects'
   door.002:
     label: 'objects'
-  decoration.003:
+  decoration.003: # unsure
     label: 'objects'
   wall.002:
     label: 'wall'
@@ -72,5 +72,5 @@ object_labels:
     label: 'window'
   door.001:
     label: 'objects'
-  decoration.002:
+  decoration.002: # unsure
     label: 'objects'

@@ -12,4 +12,26 @@ scale_unit: 1000
 #Min [-2.075001, -0.003409, -2.414142]
 #Max [2.325001, 2.990992, 1.860002]
 
-
+object_labels:
+  ceiling:
+    label: 'ceiling'
+  light.007:
+    label: 'objects'
+  ventilation: # unsure
+    label: 'objects'
+  air_conditioner: # unsure
+    label: 'objects'
+  air_conditioner.001: # unsure
+    label: 'objects'
+  wall:
+    label: 'wall'
+  window:
+    label: 'window'
+  curtain:
+    label: 'window'
+  ventilation.001: # unsure
+    label: 'objects'
+  floor:
+    label: 'floor'
+  painting:
+    label: 'picture'
