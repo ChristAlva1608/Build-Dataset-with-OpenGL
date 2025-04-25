@@ -647,6 +647,13 @@ class Viewer:
         return True
 
     def autosave(self, lay_opts, train_set_flag):
+        '''
+            Function to save RGB, depth and segmentation images.
+            RGB and depth images are saved in left viewport, segmentation images are saved in right viewport.
+            Args:
+                lay_opts: number of images to save
+                train_set_flag: True if training set, False if test set
+        '''
         # scene_name = os.path.basename(os.path.dirname(self.selected_scene_path))
         scene_name = os.path.basename(self.selected_scene_path)[:-4]
 
@@ -789,7 +796,7 @@ class Viewer:
                     print(".... Changing NYU texture for scene....")
                     drawable.change_NYU_texture()
 
-                drawable.set_mode(1) # mode for rgb image
+                drawable.set_mode(0) # mode for rgb image
 
                 # update light configuration
                 if self.lightPos_changed:
@@ -829,6 +836,93 @@ class Viewer:
             #     if self.selected_colormap == 1:
             #         self.pass_magma_data(self.depth_texture_shader)
 
+            for drawable in self.drawables:
+                # random object location
+                if self.obj_location_option and isinstance(drawable, Object):
+                    # Instead of creating a translation matrix and multiply with current model, 
+                    # I add the translation vector directly to the last column of current model 
+                    # (avoid effect of scaling factor and rotation to the translation vector)
+                    x_obj = random.uniform(self.x_range[0], self.x_range[1])
+                    y_obj = random.uniform(self.y_range[0], self.y_range[1])
+                    z_obj = random.uniform(self.z_range[0], self.z_range[1])
+                    
+                    self.reverse_translation = self.obj_management[drawable.name]['reverse_translation']
+                    self.translation = glm.vec3(x_obj,y_obj,z_obj)
+                    
+                    current_model = drawable.get_model_matrix()
+                    current_model[3] = current_model[3] + glm.vec4(self.reverse_translation, 0.0) + glm.vec4(self.translation, 0.0)
+                    
+                    self.obj_management[drawable.name]['reverse_translation'] = - self.translation
+                    
+                    drawable.update_attribute('model_matrix', current_model)
+
+                # random object rotation
+                if self.obj_rotation_option and isinstance(drawable, Object):
+                    yaw = random.choice(np.linspace(0,360, 360))
+                    pitch = random.choice(np.linspace(0,360, 360))
+                    
+                    x_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-pitch), glm.vec3(1.0, 0.0, 0.0)) # add - angle because object rotation not camera
+                    y_rotation_matrix = glm.rotate(glm.mat4(1.0), glm.radians(-yaw), glm.vec3(0.0, 1.0, 0.0))
+                    
+                    current_model = drawable.get_model_matrix()
+                    model = current_model * x_rotation_matrix * y_rotation_matrix
+
+                    drawable.update_attribute('model_matrix', model)
+
+                # random object scale
+                if self.obj_scale_option and isinstance(drawable, Object):
+                    self.scale_factor = random.uniform(self.scale_range[0], self.scale_range[1])
+                    self.prev_scale_factor = self.obj_management[drawable.name]['scale_factor']
+                    self.obj_management[drawable.name]['scale_factor'] = self.scale_factor
+                    # print(f'name: {drawable.name}')
+                    # print(f'scale factor: {self.obj_management[drawable.name]["scale_factor"]}')
+
+                    current_model = drawable.get_model_matrix()
+                    prev_scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(1/self.prev_scale_factor))
+                    scale_matrix = glm.scale(glm.mat4(1.0), glm.vec3(self.scale_factor))
+                    model = current_model * prev_scale_matrix * scale_matrix # to scale back before applying new scale
+
+                    drawable.update_attribute('model_matrix', model)
+
+                # switch object texture every 500 images
+                if (self.obj_texture_option
+                        and isinstance(drawable, Object)
+                        and (i % 500 == 0)
+                        and not invalid_flag):
+                        # and (i != 0)):  # turn this line off only for NYU
+                    # Only update map_Kd, supposed an object only have 1 simple texture
+                    if self.NYU_rgb_paths:
+                        path = random.choice(self.NYU_rgb_paths)
+                    else:
+                        texture_list = os.listdir('textures')
+                        for j, texture in enumerate(texture_list):
+                            texture_list[j] = os.path.join('textures', texture)
+                        # Store the initial texture of the object
+                        texture_list.append(drawable.get_texture())
+                        path = random.choice(texture_list)
+                    drawable.update_attribute('texture', path)
+
+                # switch scene texture every 300 images
+                if self.NYU_rgb_paths and isinstance(drawable, Scene) and (i % 100 == 0) and (i != 0) and not invalid_flag:
+                    print(".... Changing NYU texture for scene....")
+                    drawable.change_NYU_texture()
+
+                drawable.set_mode(2) # mode for segmentation image
+
+                # update light configuration
+                if self.lightPos_changed:
+                    drawable.update_lightPos(self.lightPos)
+
+                if self.lightColor_changed:
+                    drawable.update_lightColor(self.lightColor)
+
+                drawable.update_shininess(self.shininess)
+
+                drawable.update_attribute('view_matrix', view)
+                drawable.update_attribute('projection_matrix', projection_mat)
+
+                # Normal rendering
+                drawable.draw(self.cameraPos)
             GL.glDisable(GL.GL_SCISSOR_TEST)
 
             status = self.save_depth_segment(self.depth_segment_save_path, i)
