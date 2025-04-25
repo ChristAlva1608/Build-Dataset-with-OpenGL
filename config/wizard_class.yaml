@@ -14,3 +14,23 @@ scale_range: [1, 2] # used for scaling random
 scale_unit: 660
 #over all min [-5.73923, -0.2, -7.767766]
 #over all max [5.772667, 4.916986, 7.79462]
+
+object_labels:
+  Bench:
+    label: 'furniture'
+  BookOpen1:
+    label: 'furniture'
+  CurtainLeft:
+    label: 'window'
+  CurtainRight:
+    label: 'window'
+  Fireplace:
+    label: 'objects'
+  GoldenDeerBanner:
+    label: 'objects'
+  GoldenDeerBanner001:
+    label: 'objects'
+  WallSide:
+    label: 'wall'
+  WindowLarge:
+    label: 'window'

@@ -16,3 +16,27 @@ scale_range: [100, 150] # used for scaling random
 scale_unit: 15
 #over all min [-318.6875, -5.5e-05, -410.875153]
 #over all max [476.0625, 281.5, 150.812515]
+
+object_labels:
+  Material2:
+    label: 'objects'
+  Material2.001:
+    label: 'ceiling'
+  Material2.002:
+    label: 'window'
+  Material2.003:
+    label: 'window'
+  Material2.004:
+    label: 'wall'
+  Material2.005:    
+    label: 'wall'
+  Material2.006:
+    label: 'wall'
+  Material2.007:  
+    label: 'floor'
+  Material2.008:
+    label: 'objects'
+  Material3:
+    label: 'objects' # check lại
+  Material3.001:  
+    label: 'objects' # check lại

@@ -17,3 +17,19 @@ scale_unit: 17.3
 
 #over all min [-252.354202, -2.8e-05, -210.182541]
 #over all max [177.958298, 165.062515, 198.380035]
+
+object_labels:
+  Material2.004_cable: 
+    label: 'ceiling'
+  Material2.001:
+    label: 'wall'
+  Material2.002:
+    label: 'window'
+  Material2.003:
+    label: 'floor'
+  Material2.005:
+    label: 'window'
+  Material3:
+    label: 'objects'
+  Material3.001:
+    label: 'wall'

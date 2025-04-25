@@ -17,3 +17,98 @@ scale_unit: 500
 #Min [-7.323953, -0.02368, -9.553816]
 #Max [3.43398, 6.305682, 5.758204]
 
+object_labels:
+  Circle:
+    label: 'objects'
+  Circle.000:
+    label: 'objects'
+  Circle.001:
+    label: 'objects'  
+  Circle.002:
+    label: 'objects'
+  Circle.003:
+    label: 'objects'
+  Circle.004:
+    label: 'sofa'
+  Circle.005:
+    label: 'objects'
+  Circle.006:
+    label: 'objects'
+  Circle.007:
+    label: 'objects'
+  Circle.008:
+    label: 'objects'
+  Circle.016:
+    label: 'objects'
+  Circle.290:
+    label: 'objects'
+  Circle.344:
+    label: 'objects'
+  Circle.430:
+    label: 'objects'
+  Cube:
+    label: 'objects'
+  Plane:
+    label: 'floor'
+  Plane.001:
+    label: 'wall'
+  Plane.002:
+    label: 'objects'
+  Plane.005:
+    label: 'books' # check lại
+  Plane.008:
+    label: 'window'
+  Plane.009:
+    label: 'window'  
+  Plane.010:
+    label: 'wall'
+  Plane.012:
+    label: 'wall'
+  Plane.015:
+    label: 'wall'
+  Plane.016:
+    label: 'picture' # check lại
+  Plane.017:
+    label: 'objects'
+  Plane.018:
+    label: 'objects'
+  Plane.019:
+    label: 'objects'
+  Plane.020:
+    label: 'wall'
+  Plane.021:
+    label: 'wall'
+  Plane.022:
+    label: 'wall'
+  Plane.023:
+    label: 'wall'
+  Plane.024:
+    label: 'window'
+  Plane.025:
+    label: 'window'
+  Plane.026:
+    label: 'objects'
+  Plane.027:
+    label: 'objects'
+  Plane.028:
+    label: 'objects'
+  Plane.029:
+    label: 'wall'
+  Plane.030:
+    label: 'wall'
+  Plane.031:
+    label: 'wall'
+  Plane.032:
+    label: 'furniture'
+  Plane.036:
+    label: 'objects'
+  Plane.037:
+    label: 'wall'
+  Plane.038:
+    label: 'objects'
+  Plane.039:
+    label: 'objects' # check lại
+  Plane.041:
+    label: 'objects' # check lại
+  Plane.043:
+    label: 'objects'
