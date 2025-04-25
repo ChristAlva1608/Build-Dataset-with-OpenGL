@@ -16,4 +16,53 @@ scale_unit: 1000
 #Min [-5.952998, -0.147003, -2.981498]
 #Max [3.845632, 2.564892, 4.566802]
 
-
+object_labels:
+  Carpet.1000:
+    label: 'objects'
+  Ceiling.1120:
+    label: 'ceiling'
+  Curtain.0149:
+    label: 'window'
+  decoration.020:
+    label: 'objects'
+  decoration.03_50:
+    label: 'objects'
+  decoration.0451:
+    label: 'objects'
+  decoration.04251:
+    label: 'objects'
+  Door.100:
+    label: 'wall'
+  Door.00520:
+    label: 'wall'
+  doorframe.100:
+    label: 'wall'
+  floor.1000:
+    label: 'floor'
+  Fridge.11443:
+    label: 'furniture'
+  Furniture.10217:
+    label: 'furniture'
+  Furniture.30321:
+    label: 'furniture'
+  Lamp.1000:
+    label: 'objects'
+  String.300:
+    label: 'objects'
+  String.2194113:
+    label: 'objects'
+  Wall.1140:
+    label: 'wall'
+  Wall.111: 
+    label: 'wall'
+  Wall.1000:
+    label: 'wall'
+  Window.111:
+    label: 'window'
+  Window.545:
+    label: 'window'
+  window.1000:
+    label: 'window'
+  Window.20654:
+    label: 'window'
+  

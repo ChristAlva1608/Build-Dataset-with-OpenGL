@@ -12,3 +12,114 @@ scale_unit: 680
 #Min [-6.607386, -0.008232, -5.66283]
 #Max [6.303257, 3.411776, 7.24781]
 
+object_labels:
+  ceiling.009:
+    label: 'ceiling'
+  ceiling.102:
+    label: 'ceiling'
+  ceiling.103:
+    label: 'ceiling'
+  curtain.101:
+    label: 'objects' #check
+  door.001:
+    label: 'wall'
+  door.009:
+    label: 'wall'
+  door.106:
+    label: 'wall'
+  door.107:
+    label: 'wall'
+  floor.004:
+    label: 'floor'
+  floor.005:
+    label: 'floor'
+  frame.101:
+    label: 'objects'
+  furniture.003:
+    label: 'furniture'
+  handle.005:
+    label: 'objects'
+  handle.008:
+    label: 'objects'
+  light.017:
+    label: 'objects'
+  light.030:
+    label: 'objects'
+  light.031:
+    label: 'objects'
+  light.032:
+    label: 'objects'
+  light.033:
+    label: 'objects'
+  light.034:
+    label: 'objects'
+  light.035:
+    label: 'objects'
+  light.112:
+    label: 'objects'
+  light.113:
+    label: 'objects'
+  light.114:
+    label: 'objects'
+  light.115:
+    label: 'objects'
+  light.116:
+    label: 'objects'
+  light.118:
+    label: 'objects'
+  light.119:
+    label: 'objects'
+  light.120:
+    label: 'objects'
+  light.121:
+    label: 'objects'
+  light.122:
+    label: 'objects'
+  light.123:
+    label: 'objects'
+  light.129:  
+    label: 'objects'
+  light.136:
+    label: 'objects'  
+  light.137:
+    label: 'objects'
+  mirror.001:
+    label: 'objects'
+  plant.008:
+    label: 'objects'
+  plant.106:
+    label: 'objects'
+  pot.005:
+    label: 'objects'
+  screen.102:
+    label: 'tv' # check
+  shelf.003:
+    label: 'furniture'
+  shelf.004:
+    label: 'furniture'
+  shelf.005:
+    label: 'furniture'  
+  stud.002:
+    label: 'wall'
+  stud.003:
+    label: 'wall'
+  television.103:
+    label: 'tv'
+  vase.005:
+    label: 'objects'
+  wall.019:
+    label: 'wall'
+  wall.020:
+    label: 'wall'
+  wall.021:
+    label: 'wall'
+  wall.101:
+    label: 'wall'
+  wall.102:
+    label: 'wall'
+  wall.103: 
+    label: 'wall'
+  wall.113:
+    label: 'wall'
+  window_frame.101:
+    label: 'window'

@@ -12,7 +12,6 @@ scale_unit: 900
 #Min [-6.593203, -0.200007, 5.823574]
 #Max [2.68277, 2.830035, 14.025031]
 
-
 object_labels:
   ceiling.022:
     label: 'ceiling'
@@ -82,8 +81,3 @@ object_labels:
     label: 'window'
   windows.13131:
     label: 'window'
-
-
-
-
-

@@ -12,3 +12,93 @@ scale_unit: 900
 
 #Min [-4.715546, -0.001144, -3.186525]
 #Max [5.01329, 3.266924, 4.749554]
+
+object_labels:
+  ceiling.016:
+    label: 'ceiling'
+  ceiling.017:
+    label: 'ceiling'
+  ceiling.018:
+    label: 'ceiling'
+  curtains.004:
+    label: 'window'
+  decoration.000:
+    label: 'objects'
+  decoration.001:
+    label: 'objects'
+  decoration.002:
+    label: 'objects'
+  door.015:
+    label: 'wall'
+  door.016:
+    label: 'wall'
+  door.017:
+    label: 'wall'
+  door.018:
+    label: 'wall'
+  door.019:
+    label: 'wall'
+  door.020:
+    label: 'wall'
+  drawer.003:
+    label: 'furniture'
+  drawers.002:
+    label: 'furniture'
+  floor.003:
+    label: 'floor'
+  lamp.003:
+    label: 'objects'
+  lamp.004:
+    label: 'objects'
+  light.001:
+    label: 'objects'
+  painting.006:
+    label: 'picture'
+  painting.007:
+    label: 'picture'
+  pendant.003:
+    label: 'objects'
+  pendant.004:
+    label: 'objects'
+  shelf.004:
+    label: 'furniture'
+  shelf.005:
+    label: 'furniture'
+  television.003:
+    label: 'tv'
+  wall.023:
+    label: 'wall'
+  wall.025:
+    label: 'wall'
+  wall.026:
+    label: 'wall'
+  wall.027:
+    label: 'wall'
+  wall.028:
+    label: 'wall'
+  wall.029:
+    label: 'wall'
+  wall.030:
+    label: 'wall'
+  wall.031:
+    label: 'wall'
+  wall.032:
+    label: 'wall'
+  wall.033:
+    label: 'wall'
+  walls.005:
+    label: 'wall'
+  walls.006:
+    label: 'wall'
+  walls.007:
+    label: 'wall'
+  walls.008:
+    label: 'wall'
+  wind_chimes.001:
+    label: 'objects'
+  window.002:
+    label: 'window'
+  windows.007:
+    label: 'window'
+  windows.008:
+    label: 'window'

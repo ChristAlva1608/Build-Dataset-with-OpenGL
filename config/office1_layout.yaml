@@ -11,3 +11,73 @@ scale_range: [1, 2] # used for scaling random
 scale_unit: 660
 #Min [-9.080973, 0.065528, -6.196531]
 #Max [4.051394, 3.865524, 1.567968]
+
+object_labels:
+  bin.001:
+    label: 'objects' 
+  blinds.006:
+    label: 'objects'
+  blinds.007:
+    label: 'objects'
+  blinds.008:
+    label: 'objects' #check
+  blinds.009:
+    label: 'objects'
+  blinds.010:
+    label: 'objects' #check
+  blinds.011:
+    label: 'objects #check
+  books.006:
+    label: 'books'
+  books.007:
+    label: 'books'
+  books.008:
+    label: 'books'
+  books.009:
+    label: 'books'
+  books.010:
+    label: 'books'
+  books.011:
+    label: 'books'
+  ceiling.002:
+    label: 'ceiling'
+  ceiling.003:
+    label: 'ceiling'
+  decoration.002:
+    label: 'wall'
+  decoration.003:
+    label: 'wall'
+  floor.100:
+    label: 'floor'
+  furniture.001:
+    label: 'furniture'
+  light.010:
+    label: 'objects'
+  light.011:
+    label: 'objects'
+  light.012:
+    label: 'objects'
+  light.013:
+    label: 'objects'
+  light.014:
+    label: 'objects'
+  light.015:
+    label: 'objects'
+  light.016:
+    label: 'objects'
+  light.017:
+    label: 'objects'
+  light.018:
+    label: 'objects'
+  light.019:
+    label: 'objects'
+  vase.002:
+    label: 'objects'
+  vase.003:
+    label: 'objects'
+  wall.001:
+    label: 'wall'
+  window.002:
+    label: 'window'
+  window.003:
+    label: 'window'

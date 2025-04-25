@@ -11,3 +11,101 @@ scale_range: [1, 2] # used for scaling random
 scale_unit: 650
 #Min [-7.153677, -0.200002, -6.465255]
 #Max [6.459466, 4.200006, 4.819804]
+
+object_labels:
+  air_conditioner.002:
+    label: 'objects'
+  air_conditioner.003:
+    label: 'objects'
+  ceiling.005:
+    label: 'ceiling'
+  ceiling.007:
+    label: 'ceiling'
+  curtain.002:
+    label: 'window'
+  curtain.003:
+    label: 'window'
+  decoration.001:
+    label: 'objects'
+  floor.001:
+    label: 'floor'
+  light.026:
+    label: 'objects'
+  light.027:
+    label: 'objects'
+  light.028:
+    label: 'objects'
+  light.029:
+    label: 'objects'
+  light.030:
+    label: 'objects'
+  light.031:
+    label: 'objects'
+  light.032:
+    label: 'objects'
+  light.033:
+    label: 'objects'
+  light.034:
+    label: 'objects'
+  light.035:
+    label: 'objects'
+  light.036:
+    label: 'objects'
+  light.037:
+    label: 'objects'
+  light.038:
+    label: 'objects'
+  light.039:
+    label: 'objects'
+  light.040:
+    label: 'objects'
+  light.041:
+    label: 'objects'
+  light.042:
+    label: 'objects'
+  light.043:
+    label: 'objects'
+  light.044:
+    label: 'objects'
+  light.045:
+    label: 'objects'
+  light.046:
+    label: 'objects'
+  light.047:
+    label: 'objects'
+  light.048:
+    label: 'objects'
+  light.049:
+    label: 'objects'
+  light.050:
+    label: 'objects'
+  light.051:
+    label: 'objects'
+  plant.003:
+    label: 'objects'
+  plant.004:
+    label: 'objects'
+  plant.005:
+    label: 'objects'
+  projection_screen.001:
+    label: 'tv' # check
+  projector.000:
+    label: 'objects'
+  wall.009:
+    label: 'wall'
+  wall.010:
+    label: 'wall'
+  wall.011:
+    label: 'wall'
+  wall.012:
+    label: 'wall'
+  wall.013:
+    label: 'wall'
+  wall.014:
+    label: 'wall'
+  wall.015:
+    label: 'wall'
+  window_frame.002:
+    label: 'window'
+  window_frame.003:
+    label: 'window'
