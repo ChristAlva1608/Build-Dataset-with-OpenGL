@@ -18,5 +18,139 @@ object_labels:
     label: 'objects'
   window.00203:
     label: 'window'
-
-
+  sink.00104:
+    label: 'objects'
+  walls.001:
+    label: 'wall'
+  floor.10125:
+    label: 'floor'
+  toothbrush.00101:
+    label: 'objects'
+  lamp.1137:
+    label: 'objects'
+  shampoo.45603:
+    label: 'objects'
+  box.00105: # unsure
+    label: 'objects'
+  ceiling.003:
+    label: 'ceiling'
+  decoration.12301: # unsure
+    label: 'objects'
+  toothbrush.13404:
+    label: 'objects'
+  towel.00103:
+    label: 'objects'
+  towel.1101:
+    label: 'objects'
+  handle.1123:
+    label: 'objects'
+  sink.4402:
+    label: 'objects'
+  light.134305:
+    label: 'objects'
+  tap.4502:
+    label: 'objects'
+  light.00208:
+    label: 'objects'
+  towel.00401:
+    label: 'objects'
+  wall.13175:
+    label: 'wall'
+  cologne.001201: # unsure
+    label: 'objects'
+  window.00113:
+    label: 'window'
+  holder.1003: # unsure
+    label: 'objects'
+  light.00321:
+    label: 'objects'
+  lamp.344557:
+    label: 'objects'
+  soap_box.12301:
+    label: 'objects'
+  mirror.003:
+    label: 'objects'
+  toothbrush.03243:
+    label: 'objects'
+  shower_bath.001:
+    label: 'objects'
+  mirror.4502:
+    label: 'objects'
+  tap.001:
+    label: 'objects'
+  decoration.007405: # unsure
+    label: 'objects'
+  light.00244:
+    label: 'objects'
+  light.00115:
+    label: 'objects'
+  towel.12343:
+    label: 'objects'
+  decoration.005302: # unsure
+    label: 'objects'
+  decoration.00604: # unsure
+    label: 'objects'
+  shelf.00102: # unsure
+    label: 'objects'
+  light.12312:
+    label: 'objects'
+  toilet_bowl:
+    label: 'objects'
+  cream.12302: # unsure
+    label: 'objects'
+  mirror.00104:
+    label: 'objects'
+  decoration.009207: # unsure
+    label: 'objects'
+  decoration.0109: # unsure
+    label: 'objects'
+  light.004354:
+    label: 'objects'
+  towel_ring.00102:
+    label: 'objects'
+  decoration.01008: # unsure
+    label: 'objects'
+  box.00115:
+    label: 'objects'
+  toilet_paper.0003:
+    label: 'objects'
+  decoration.008306: # unsure
+    label: 'objects'
+  cologne.12102: # unsure
+    label: 'objects'
+  board: # unsure
+    label: 'objects'
+  shelf.00201: # unsure
+    label: 'objects'
+  light.00572:
+    label: 'objects'
+  lamp.003315:
+    label: 'objects'
+  door.42403: # unsure
+    label: 'objects'
+  toothbrush.00202:
+    label: 'objects'
+  lamp.00226:
+    label: 'objects'
+  light.00303:
+    label: 'objects'
+  bench.1204: # unsure
+    label: 'objects'
+  soap_dish.204:
+    label: 'objects'
+  wall.24403:
+    label: 'wall'
+  window.123307:
+    label: 'window'
+  decoration.123203: # unsure
+    label: 'objects'
+  perfume.34501:
+    label: 'objects'
+  towel.003302:
+    label: 'objects'
+  light.0011:
+    label: 'objects'
+  bathtub.12301:
+    label: 'objects'
+  shaving_cream:
+    label: 'objects'
