@@ -18,9 +18,9 @@ object_labels:
   ceiling.021:
     label: 'ceiling'
   floor.001:
-    label: 'floor'
+    label: 'objects'
   floor.002:
-    label: 'floor'
+    label: 'objects'
   floor.003:
     label: 'floor'
   wall.045:

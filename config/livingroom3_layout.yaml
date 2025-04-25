@@ -53,9 +53,9 @@ object_labels:
   glasses.002:
     label: 'objects'
   light.100:
-    label: 'light'
+    label: 'objects'
   light.111:
-    label: 'light'
+    label: 'objects'
   painting.001:
     label: 'picture'
   painting.002:
@@ -104,15 +104,15 @@ object_labels:
     label: 'wall'
   window: 
     label: 'window'
-  window.002:
+  windows.002:
     label: 'window'
-  window.003:
+  windows.003:
     label: 'window'
-  window.004:
+  windows.004:
     label: 'window'
   wine_bottle.001:
     label: 'objects'
   wine_bottle.002:
     label: 'objects'
-  wine_bottles.0032:
+  wine_bottles.002:
     label: 'objects'

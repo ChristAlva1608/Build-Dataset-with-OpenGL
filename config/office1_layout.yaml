@@ -20,13 +20,13 @@ object_labels:
   blinds.007:
     label: 'objects'
   blinds.008:
-    label: 'objects' #check
+    label: 'window'
   blinds.009:
     label: 'objects'
   blinds.010:
-    label: 'objects' #check
+    label: 'window'
   blinds.011:
-    label: 'objects #check
+    label: 'window'
   books.006:
     label: 'books'
   books.007:

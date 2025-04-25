@@ -19,11 +19,11 @@ scale_unit: 1000
 object_labels:
   Carpet.1000:
     label: 'objects'
-  Ceiling.1120:
+  Ceiling.112:
     label: 'ceiling'
   Curtain.0149:
     label: 'window'
-  decoration.020:
+  decoration.02:
     label: 'objects'
   decoration.03_50:
     label: 'objects'
@@ -51,11 +51,11 @@ object_labels:
     label: 'objects'
   String.2194113:
     label: 'objects'
-  Wall.1140:
+  Wall.114:
     label: 'wall'
-  Wall.111: 
+  Walls.111:
     label: 'wall'
-  Wall.1000:
+  Walls.1000:
     label: 'wall'
   Window.111:
     label: 'window'

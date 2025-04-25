@@ -20,15 +20,15 @@ object_labels:
   ceiling.103:
     label: 'ceiling'
   curtain.101:
-    label: 'objects' #check
+    label: 'objects'
   door.001:
     label: 'wall'
   door.009:
     label: 'wall'
   door.106:
-    label: 'wall'
+    label: 'objects'
   door.107:
-    label: 'wall'
+    label: 'objects'
   floor.004:
     label: 'floor'
   floor.005:
@@ -92,7 +92,7 @@ object_labels:
   pot.005:
     label: 'objects'
   screen.102:
-    label: 'tv' # check
+    label: 'furniture'
   shelf.003:
     label: 'furniture'
   shelf.004:

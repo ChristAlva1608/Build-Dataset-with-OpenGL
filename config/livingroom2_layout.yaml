@@ -60,7 +60,7 @@ object_labels:
     label: 'wall'
   door.006: 
     label: 'wall'
-  drawer.100:
+  drawer:
     label: 'furniture'
   drawer.001:
     label: 'furniture'
@@ -81,9 +81,9 @@ object_labels:
   lightbulb.100:
     label: 'objects'
   painting:
-    label: 'painting'
+    label: 'picture'
   painting.100:
-    label: 'painting'
+    label: 'picture'
   shelf:
     label: 'furniture'
   speakers:

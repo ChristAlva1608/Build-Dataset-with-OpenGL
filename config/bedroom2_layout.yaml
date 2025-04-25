@@ -15,19 +15,19 @@ scale_unit: 885
 
 object_labels:
   blinds:
-      label: 'window'
+    label: 'window'
   book:
-    label: 'book'
+    label: 'books'
   book.001:
-    label: 'book'
+    label: 'books'
   book.002:
-    label: 'book'
+    label: 'books'
   book.003:
-    label: 'book'
+    label: 'books'
   book.004:
-    label: 'book'
+    label: 'books'
   book.005:
-    label: 'book'
+    label: 'books'
   carafe:
     label: 'objects'
   ceiling.001:

@@ -39,7 +39,7 @@ object_labels:
   soap:
     label: 'objects'
   door.002:
-    label: 'objects'
+    label: 'window'
   decoration.003:
     label: 'objects'
   wall.002:

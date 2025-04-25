@@ -26,11 +26,11 @@ object_labels:
     label: 'objects'
   Bowl.300:
     label: 'objects'
-  Box121:
+  Box.121:
     label: 'objects'
-  Box200:
+  Box.200:
     label: 'objects'
-  Box356:
+  Box.356:
     label: 'objects'
   Carpet.100:
     label: 'objects'
@@ -71,7 +71,7 @@ object_labels:
   Kettle.100:
     label: 'objects'
   Lamp.111:
-  label: 'objects'
+    label: 'objects'
   Lamp.118:
     label: 'objects'
   lamp.124:

@@ -14,9 +14,9 @@ scale_unit: 650
 
 object_labels:
   air_conditioner.002:
-    label: 'objects'
+    label: 'furniture'
   air_conditioner.003:
-    label: 'objects'
+    label: 'furniture'
   ceiling.005:
     label: 'ceiling'
   ceiling.007:
