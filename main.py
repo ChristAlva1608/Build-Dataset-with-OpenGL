@@ -10,6 +10,7 @@ def main():
     parser.add_argument("--obj_folder_path", type=str, default='No file selected', help="Path to object storage")
     parser.add_argument("--rgb_save_path", type=str, default='', help="RGB save path")
     parser.add_argument("--depth_segment_save_path", type=str, default='', help="Depth save path")
+    parser.add_argument("--save_path", type=str, default='', help="Dataset save path")
 
     parser.add_argument("--num_objects", type=int, default=20, help="Number of objects to load")
     parser.add_argument("--num_images_train", type=int, default=100, help="Number of images to save for train set")
