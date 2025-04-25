@@ -13,5 +13,45 @@ scale_unit: 885
 #Min [-3.8633, -0.102001, -5.403452]
 #Max [2.481103, 3.325202, 4.867952]
 
-
-
+object_labels:
+  blinds:
+      label: 'window'
+  book:
+    label: 'book'
+  book.001:
+    label: 'book'
+  book.002:
+    label: 'book'
+  book.003:
+    label: 'book'
+  book.004:
+    label: 'book'
+  book.005:
+    label: 'book'
+  carafe:
+    label: 'objects'
+  ceiling.001:
+    label: 'ceiling'
+  curtain.001:
+    label: 'window'
+  floor.001:
+    label: 'floor'
+  lamp.005:
+    label: 'objects'
+  light.001:
+    label: 'objects'
+  mirror:
+    label: 'objects'
+  painting.001:
+    label: 'picture'
+  television:
+    label: 'tv'
+  shelf:
+    label: 'furniture'
+  vase:
+    label: 'objects'
+  wall.001:
+    label: 'wall'
+  window.001:
+    label: 'window'
+  

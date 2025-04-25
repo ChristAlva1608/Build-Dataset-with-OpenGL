@@ -28,19 +28,19 @@ object_labels:
     label: 'ceiling'
   carafe.002:
     label: 'objects'
-  decoration.001: # unsure
+  decoration.001:
     label: 'objects'
   carafe.001:
     label: 'objects'
   carafe:
     label: 'objects'
-  decoration: # unsure
+  decoration:
     label: 'objects'
   soap:
     label: 'objects'
   door.002:
     label: 'objects'
-  decoration.003: # unsure
+  decoration.003:
     label: 'objects'
   wall.002:
     label: 'wall'
@@ -58,11 +58,11 @@ object_labels:
     label: 'window'
   floor.003:
     label: 'floor'
-  balcony: # unsure
-    label: 'objects'
-  water: # unsure
-    label: 'objects'
-  railing: # unsure
+  balcony:
+    label: 'floor'
+  water:
+    label: 'floor'
+  railing:
     label: 'objects'
   bathtub:
     label: 'objects'
@@ -72,5 +72,5 @@ object_labels:
     label: 'window'
   door.001:
     label: 'objects'
-  decoration.002: # unsure
+  decoration.002:
     label: 'objects'

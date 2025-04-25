@@ -13,6 +13,75 @@ scale_unit: 900
 #Max [2.68277, 2.830035, 14.025031]
 
 
+object_labels:
+  ceiling.022:
+    label: 'ceiling'
+  curtains:
+    label: 'window'
+  door:
+    label: 'wall'
+  door.016:
+    label: 'wall'
+  floor.014:
+    label: 'floor'
+  light.148:
+    label: 'objects'
+  light.149:
+    label: 'objects'
+  light.150:
+    label: 'objects'
+  light.151:
+    label: 'objects'
+  light.152:
+    label: 'objects'
+  light.153:
+    label: 'objects'
+  light.154:
+    label: 'objects'
+  light.155:
+    label: 'objects'
+  light.156:
+    label: 'objects'
+  light.157:
+    label: 'objects'
+  light.158:
+    label: 'objects'
+  light.159:
+    label: 'objects'
+  light.160:
+    label: 'objects'
+  light.161:
+    label: 'objects'
+  light.162:
+    label: 'objects'
+  light.163:
+    label: 'objects'
+  light.164:
+    label: 'objects'
+  light.165:
+    label: 'objects'
+  light.166:
+    label: 'objects'
+  light.167:
+    label: 'objects'
+  light.168:
+    label: 'objects'
+  light.169:
+    label: 'objects'
+  light.170:
+    label: 'objects'
+  light.171:
+    label: 'objects'
+  wall.050:
+    label: 'wall'
+  window.033:
+    label: 'window'
+  window.034:
+    label: 'window'
+  window.035:
+    label: 'window'
+  windows.13131:
+    label: 'window'
 
 
 

@@ -17,19 +17,19 @@ object_labels:
     label: 'ceiling'
   light.007:
     label: 'objects'
-  ventilation: # unsure
+  ventilation:
     label: 'objects'
-  air_conditioner: # unsure
-    label: 'objects'
-  air_conditioner.001: # unsure
-    label: 'objects'
+  air_conditioner:
+    label: 'furniture'
+  air_conditioner.001:
+    label: 'furniture'
   wall:
     label: 'wall'
   window:
     label: 'window'
   curtain:
     label: 'window'
-  ventilation.001: # unsure
+  ventilation.001:
     label: 'objects'
   floor:
     label: 'floor'

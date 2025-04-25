@@ -14,8 +14,18 @@ scale_unit: 500
 #Min [-7.693171, -0.001976, -5.648079]
 #Max [8.293078, 4.833046, 6.718785]
 
-
-
-
-
-
+object_labels:
+  ceiling.021:
+    label: 'ceiling'
+  floor.001:
+    label: 'floor'
+  floor.002:
+    label: 'floor'
+  floor.003:
+    label: 'floor'
+  wall.045:
+    label: 'wall'
+  wall.047:
+    label: 'wall'
+  window.001:
+    label: 'window'

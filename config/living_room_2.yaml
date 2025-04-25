@@ -19,29 +19,29 @@ scale_unit: 500
 
 object_labels:
   Circle:
-    label: 'objects'
+    label: 'furniture'
   Circle.000:
-    label: 'objects'
+    label: 'objects' # wood
   Circle.001:
-    label: 'objects'  
+    label: 'furniture'
   Circle.002:
     label: 'objects'
   Circle.003:
-    label: 'objects'
+    label: 'objects' # wood
   Circle.004:
     label: 'sofa'
   Circle.005:
     label: 'objects'
   Circle.006:
-    label: 'objects'
+    label: 'objects' # wood
   Circle.007:
-    label: 'objects'
+    label: 'objects' # wood
   Circle.008:
-    label: 'objects'
+    label: 'objects' # wood
   Circle.016:
     label: 'objects'
   Circle.290:
-    label: 'objects'
+    label: 'furniture'
   Circle.344:
     label: 'objects'
   Circle.430:
@@ -55,7 +55,7 @@ object_labels:
   Plane.002:
     label: 'objects'
   Plane.005:
-    label: 'books' # check lại
+    label: 'books'
   Plane.008:
     label: 'window'
   Plane.009:
@@ -67,7 +67,7 @@ object_labels:
   Plane.015:
     label: 'wall'
   Plane.016:
-    label: 'picture' # check lại
+    label: 'picture'
   Plane.017:
     label: 'objects'
   Plane.018:
@@ -107,8 +107,8 @@ object_labels:
   Plane.038:
     label: 'objects'
   Plane.039:
-    label: 'objects' # check lại
+    label: 'window'
   Plane.041:
-    label: 'objects' # check lại
+    label: 'window'
   Plane.043:
     label: 'objects'

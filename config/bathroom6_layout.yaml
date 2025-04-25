@@ -27,8 +27,8 @@ object_labels:
     label: 'wall'
   window.011:
     label: 'window'
-  bench: # unsure
-    label: 'objects'
+  bench:
+    label: 'furniture'
   light.041:
     label: 'objects'
   light.045:

@@ -12,7 +12,18 @@ scale_unit: 1000
 #Min [-2.15514, -0.300001, 0.80606]
 #Max [5.433269, 3.340001, 6.253724]
 
-
-
-
-
+object_labels:
+  carpet.005:
+    label: 'objects'
+  ceiling.020:
+    label: 'ceiling'
+  floor.013:
+    label: 'floor'
+  light:
+    label: 'objects'
+  light.001:
+    label: 'objects'
+  wall.044:
+    label: 'wall'
+  window.032:
+    label: 'window'

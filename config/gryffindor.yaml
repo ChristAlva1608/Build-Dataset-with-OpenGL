@@ -72,7 +72,7 @@ object_labels:
   lamps01_mesh.002:
     label: 'objects'
   paintings_mesh.002:
-    label: 'objects'
+    label: 'picture'
   rug_mesh.002:
     label: 'objects'
   smallprops01_mesh.002:

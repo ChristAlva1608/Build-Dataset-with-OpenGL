@@ -12,7 +12,54 @@ scale_unit: 1000
 #Min [-3.364396, -0.038755, -2.494939]
 #Max [3.395598, 2.781243, 2.36506]
 
-
-
-
-
+object_labels:
+  ceiling.003:
+    label: 'ceiling'
+  curtain:
+    label: 'window'
+  curtain.003:
+    label: 'window'
+  curtain.004:
+    label: 'window'
+  chandelier:
+    label: 'objects'  
+  door.003:
+    label: 'wall'
+  door.004:
+    label: 'wall'
+  doorframe:
+    label: 'wall'
+  doorframe.001:
+    label: 'wall'
+  floor.003:
+    label: 'floor'
+  light:
+    label: 'objects'
+  light.001:
+    label: 'objects'
+  mat:
+    label: 'objects'
+  mirror.001:
+    label: 'objects'
+  mirror.002:
+    label: 'objects'
+  wall.004:
+    label: 'wall'
+  wall.005:
+    label: 'wall'
+  wall.006:
+    label: 'wall'
+  wall.007:
+    label: 'wall'
+  wardrobe:
+    label: 'furniture'
+  window:
+    label: 'window'
+  windows:
+    label: 'window'
+  window.001:
+    label: 'window'
+  window.004:
+    label: 'window'
+  windowsill:
+    label: 'furniture'
