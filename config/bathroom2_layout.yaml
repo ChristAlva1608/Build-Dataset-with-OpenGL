@@ -17,4 +17,60 @@ scale_unit: 650
 #Min [-4.867206, -0.247106, -5.559955]
 #Max [4.837682, 2.781088, 9.34254]
 
-
+object_labels:
+  liquid_soap.001:
+    label: 'objects'
+  dish.001:
+    label: 'objects'
+  curtain.007:
+    label: 'window'
+  ceiling.002:
+    label: 'ceiling'
+  carafe.002:
+    label: 'objects'
+  decoration.001:
+    label: 'objects'
+  carafe.001:
+    label: 'objects'
+  carafe:
+    label: 'objects'
+  decoration: # unsure
+    label: 'objects'
+  soap:
+    label: 'objects'
+  door.002:
+    label: 'objects'
+  decoration.003:
+    label: 'objects'
+  wall.002:
+    label: 'wall'
+  door.003:
+    label: 'objects'
+  mirror.002:
+    label: 'objects'
+  towels:
+    label: 'objects'
+  soap.001:
+    label: 'objects'
+  wall.004:
+    label: 'wall'
+  curtain.004:
+    label: 'window'
+  floor.003:
+    label: 'floor'
+  balcony: # unsure
+    label: 'objects'
+  water: # unsure
+    label: 'objects'
+  railing: # unsure
+    label: 'objects'
+  bathtub:
+    label: 'objects'
+  wall.005:
+    label: 'wall'
+  curtain.003:
+    label: 'window'
+  door.001:
+    label: 'objects'
+  decoration.002:
+    label: 'objects'

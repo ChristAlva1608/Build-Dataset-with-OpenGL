@@ -12,5 +12,33 @@ scale_unit: 1000
 #Min [-3.069814, 0.0, -0.952551]
 #Max [1.764898, 2.799998, 1.330898]
 
-
+object_labels:
+  shower.12001:
+    label: 'objects'
+  light.011:
+    label: 'objects'
+  mirror.004:
+    label: 'objects'
+  wall.005:
+    label: 'wall'
+  floor.002:
+    label: 'floor'
+  mirror.003:
+    label: 'objects'
+  ceiling.002:
+    label: 'ceiling'
+  light.010:
+    label: 'objects'
+  light.009:
+    label: 'objects'
+  blinds.001:
+    label: 'window'
+  window.002:
+    label: 'window'
+  light.008:
+    label: 'objects'
+  decoration.005:
+    label: 'objects'
+  decoration.008:
+    label: 'objects'
 

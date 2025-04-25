@@ -13,7 +13,10 @@ scale_unit: 760
 #Min [-4.13386, 0.11417, -5.135042]
 #Max [4.135045, 4.661418, 7.503941]
 
-
-
+object_labels:
+  shelf.12303: # unsure
+    label: 'objects'
+  window.00203:
+    label: 'window'
 
 
