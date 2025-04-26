@@ -13,5 +13,28 @@ scale_unit: 1000
 #Max [3.969727, 2.700776, 0.283762]
 
 
-
-
+object_labels:
+  Ceiling:
+    label: 'ceiling'
+  painting.006:
+    label: 'picture'
+  television.001:
+    label: 'tv'
+  light:
+    label: 'objects'
+  Wall:
+    label: 'wall'
+  wall.003:
+    label: 'wall'
+  Floor:
+    label: 'floor'
+  Door:
+    label: 'wall'
+  Door.001:
+    label: 'wall'
+  cupboard:
+    label: 'furniture'
+  Carpet:
+    label: 'objects'
+  air_conditioner.002:
+    label: 'furniture'

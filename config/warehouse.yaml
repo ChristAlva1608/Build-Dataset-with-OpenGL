@@ -102,11 +102,11 @@ object_labels:
     label: 'chair'
   Plane_sol:
     label: 'floor'
-  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_Textures:
+  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_TexturesCom_CardboardPlain0019_2_alphamasked_S:
     label: 'objects'
-  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_Textures.001:
+  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_TexturesCom_CardboardPlain0022_2_alphamasked_S:
     label: 'objects'
-  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_TexturesCom_:
+  TexturesCom_CardboardPlain0019_2_alphamasked_S.049_TexturesCom_CardboardPlain0026_2_alphamasked_S:
     label: 'objects'
   TexturesCom_DoorsRollup0044_M_TexturesCom_DoorsRollup0044_M:
     label: 'wall'

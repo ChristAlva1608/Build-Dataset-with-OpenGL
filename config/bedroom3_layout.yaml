@@ -12,5 +12,35 @@ scale_unit: 1000
 #Min [-3.810996, -0.0103, -3.707996]
 #Max [4.439295, 2.791297, 3.089997]
 
-
-
+object_labels:
+  ceiling.002:
+    label: 'ceiling'
+  curtain.002:
+    label: 'window'
+  door:
+    label: 'wall'
+  door.001:
+    label: 'wall'
+  door.002:
+    label: 'wall'
+  floor.002:
+    label: 'floor'
+  painting:
+    label: 'picture'
+  painting.002:
+    label: 'picture'
+  painting.003:
+    label: 'picture'
+  painting.004:
+    label: 'picture'
+  painting.005:
+    label: 'picture'
+  plate:
+    label: 'objects'
+  wall.002:
+    label: 'wall'
+  window.002:
+    label: 'window'
+  window.003:
+    label: 'window'
+  

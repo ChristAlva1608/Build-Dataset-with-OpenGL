@@ -11,7 +11,15 @@ scale_range: [1, 2] # used for scaling random
 scale_unit: 1000
 #Min [-2.604978, -0.121956, -0.720811]
 #Max [1.25335, 2.999998, 4.359737]
-
-
-
-
+# not good scene
+object_labels:
+  door:
+    label: 'objects'
+  wall.041:
+    label: 'wall'
+  wall.042:
+    label: 'wall'
+  wall.043:
+    label: 'wall'
+  window.031:
+    label: 'window'

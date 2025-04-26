@@ -45,29 +45,36 @@ class Scene:
         mat_dict ={}
 
         for mesh_name, mesh in scene.meshes.items():
-            self.obj_names_list.append(mesh_name)
+            # self.obj_names_list.append(mesh_name)
             num_faces = len(mesh.faces) # auto correct for triang and quad
-            mat = mesh.materials[0] # access to material
-            mat_name = mat.name
-            if mat_name not in mat_dict:
-                mat_dict[mat_name] = 0
+            # print("Length materials",len(mesh.materials))
+            # if(len(mesh.materials)>1):
+            #     print("Mesh name", mesh_name)
+            #     for temp in mesh.materials:
+            #         print("mat name", temp.name)
+            for mat in mesh.materials:
+                self.obj_names_list.append(mesh_name)
+                # mat = mesh.materials[0] # access to material
+                mat_name = mat.name
+                if mat_name not in mat_dict:
+                    mat_dict[mat_name] = 0
 
-            texcoords, normals, vertices = self.mat_data(mat, mat_dict[mat_name], mat_dict[mat_name] + num_faces*3)
-            mat_dict[mat_name] = mat_dict[mat_name] + num_faces*3
+                texcoords, normals, vertices = self.mat_data(mat, mat_dict[mat_name], mat_dict[mat_name] + num_faces*3)
+                mat_dict[mat_name] = mat_dict[mat_name] + num_faces*3
 
-            NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
-            model = SubScene(
-                self.shader,
-                vertices,
-                texcoords,
-                normals,
-                self.materials.get(mat_name, None),
-                self.dir_path,
-                self.sceneNet_flag,
-                NYU_path
-            ).setup()
+                NYU_path = random.choice(self.NYU_rgb_paths) if self.NYU_rgb_paths else None
+                model = SubScene(
+                    self.shader,
+                    vertices,
+                    texcoords,
+                    normals,
+                    self.materials.get(mat_name, None),
+                    self.dir_path,
+                    self.sceneNet_flag,
+                    NYU_path
+                ).setup()
 
-            self.subObjs.append(model)
+                self.subObjs.append(model)
         print("Finish parsing meshes")
 
     def mat_data(self, material, start, end):

@@ -1398,6 +1398,7 @@ class Viewer:
  
             else:
                 color_list = []
+                print("Length obj list", len(drawable.obj_names_list))
                 for obj_name in drawable.obj_names_list:
                     label = self.object_labels.get(obj_name, {}).get("label", None)
 
