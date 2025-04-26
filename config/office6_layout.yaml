@@ -1,0 +1,97 @@
+scene_name: 'office4_layout'
+near: 0.1
+far: 14
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-3.3, 3.9]
+y_range : [0.1, 4.0]
+z_range : [-4.5, 5.4]
+scale_range: [1, 2] # used for scaling random
+#scale_unit: 1000
+scale_unit: 800
+#Min [-3.512429, -0.008542, -4.748381]
+#Max [4.107574, 4.263751, 5.642925]
+
+object_labels:
+  blinds.000: 
+    label: 'window'
+  blinds.001: 
+    label: 'window'
+  carpet.001:
+    label: 'objects'
+  ceiling.004:
+    label: 'ceiling'
+  cupboard.000:
+    label: 'objects'
+  door.006:
+    label: 'wall'
+  floor.000:
+    label: 'floor'
+  glass.009:
+    label: 'objects'
+  light.000:
+    label: 'objects'
+  light.001:
+    label: 'objects'
+  light.002:
+    label: 'objects'
+  light.003:
+    label: 'objects'
+  light.004:
+    label: 'objects'
+  light.005:
+    label: 'objects'
+  light.006:
+    label: 'objects'
+  light.007:
+    label: 'objects'
+  light.008:
+    label: 'objects'
+  light.009:
+    label: 'objects'
+  light.020:
+    label: 'objects'
+  light.101:
+    label: 'objects'
+  notebook.001:
+    label: 'books'
+  painting.011:
+    label: 'picture'
+  painting.012:
+    label: 'picture'
+  painting.013:
+    label: 'picture'
+  painting.014:
+    label: 'picture'
+  painting.015:
+    label: 'picture'
+  painting.016:
+    label: 'picture'
+  painting.017:
+    label: 'picture'
+  painting.018:
+    label: 'picture'
+  painting.019:
+    label: 'picture'
+  paper.002:
+    label: 'objects'
+  pen.001: 
+    label: 'objects'
+  plant.100:
+    label: 'objects'
+  pot.002:
+    label: 'objects'
+  wall.007:
+    label: 'wall'
+  wall.016:
+    label: 'wall'
+  wall.027:
+    label: 'wall'
+  window.014:
+    label: 'window'
+  window.015:
+    label: 'window'
+  window.016:
+    label: 'window'
+  window.017:
+    label: 'window'

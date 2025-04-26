@@ -1,0 +1,107 @@
+scene_name: 'office4_layout'
+near: 0.1
+far: 14
+cameraPos: [0.0, 0.0, 0]
+center_translation_vec: [ 0, 0, 0]
+x_range : [-3.3, 3.9]
+y_range : [0.1, 4.0]
+z_range : [-4.5, 5.4]
+scale_range: [1, 2] # used for scaling random
+#scale_unit: 1000
+scale_unit: 800
+#Min [-3.512429, -0.008542, -4.748381]
+#Max [4.107574, 4.263751, 5.642925]
+
+object_labels:
+  books.050:
+    label: 'books'
+  books.051:
+    label: 'books'
+  books.052:
+    label: 'books'
+  books.053:
+    label: 'books'
+  books.054:
+    label: 'books'
+  books.055:
+    label: 'books'
+  books.056:
+    label: 'books'
+  books.057:
+    label: 'books'
+  books.058:
+    label: 'books'
+  books.059:
+    label: 'books'
+  books.060:
+    label: 'books'
+  books.061:
+    label: 'books'
+  books.062:
+    label: 'books'
+  books.063:
+    label: 'books'
+  books.064:
+    label: 'books'
+  box.001:
+    label: 'objects'
+  box.002:
+    label: 'objects'
+  box.003:
+    label: 'objects'
+  box.004:
+    label: 'objects'
+  ceiling.014:
+    label: 'ceiling'
+  decoration.001:
+    label: 'objects'
+  decoration.001:
+    label: 'objects'
+  door.000:
+    label: 'wall'
+  door.002:
+    label: 'wall'
+  door.003:
+    label: 'wall'
+  floor.008:
+    label: 'floor'
+  light.106:
+    label: 'objects'
+  light.107:
+    label: 'objects'
+  light.108:
+    label: 'objects'
+  light.110:
+    label: 'objects'
+  light.119:
+    label: 'objects'
+  mirror.002:
+    label: 'objects'
+  plant.010:
+    label: 'objects'
+  plate.001:
+    label: 'objects'
+  plate.002:
+    label: 'objects'
+  pot.145:
+    label: 'objects'
+  shelf.000:
+    label: 'furniture'
+  statue.001:
+    label: 'objects'
+  urn:
+    label: 'objects'
+  urn.001:
+    label: 'objects'
+  urn.002:
+    label: 'objects'
+  urn.003:
+    label: 'objects'
+  urn.004:
+    label: 'objects'
+  urn.006:
+    label: 'objects'
+  wall.028:
+    label: 'wall'
+  window.006:
+    label: 'window'
