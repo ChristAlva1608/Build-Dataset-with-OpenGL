@@ -1,7 +1,6 @@
 from libs.shader import *
 from libs.buffer import *
 from libs import transform as T
-from shape.texture import *
 from enum import Enum
 import os
 

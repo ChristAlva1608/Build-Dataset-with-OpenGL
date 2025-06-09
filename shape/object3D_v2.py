@@ -1,3 +1,4 @@
+import os
 import glfw
 import numpy as np
 from OpenGL.GL import *
@@ -11,16 +12,17 @@ from libs.camera import *
 import glm
 from itertools import cycle
 from .subObj import *
-import os
 
 class Object:
+    """Represents a 3D object that can be rendered."""
+    
     def __init__(self, shader, file_path):
         self.name = os.path.basename(file_path)[:-4]
         self.shader = shader
         self.uma = UManager(self.shader)
         self.subObjs = []
-
         self.dir_path = os.path.dirname(file_path)
+        self.materials = {}
         self.parse_file_pywavefront(file_path)
         self.obj_names_list = self.get_obj_names(file_path)
         print("Finish parsed object", os.path.basename(file_path)[:-4])
@@ -33,19 +35,16 @@ class Object:
                     name = line.strip().split(' ', 1)[1]
                     obj_names.append(name)
         if not obj_names:
-            # No 'o' found in the obj file, use the file name as default object name
             obj_names.append(self.name)
         return obj_names
 
     def parse_file_pywavefront(self, obj_file):
         scene = pywavefront.Wavefront(obj_file, collect_faces=False)
-
         if scene.mtllibs:
-            mtl_path =  os.path.join(self.dir_path, scene.mtllibs[0])
+            mtl_path = os.path.join(self.dir_path, scene.mtllibs[0])
         else:
             mtl_path = obj_file.replace(".obj", ".mtl")
         self.materials = self.load_materials(mtl_path)
-
         all_vertices = []
 
         for mesh in scene.meshes.values():
@@ -65,15 +64,14 @@ class Object:
                 all_vertices.extend(vertices)
 
     def process_material_data(self, material):
-        data = material.vertices  # List of vertex data
+        data = material.vertices
         num_texcoords = 2
         num_normals = 3
         num_vertices = 3
-
         texcoords = []
         normals = []
         vertices = []
-
+        
         if material.has_uvs:
             for i in range(0, len(data), num_texcoords + num_normals + num_vertices):
                 texcoords.extend(data[i:i + num_texcoords])
@@ -85,7 +83,6 @@ class Object:
                 normals.extend(data[i:i + num_normals])
                 vertex = data[i + num_normals:i + num_normals + num_vertices]
                 vertices.extend(vertex)
-
         return texcoords, normals, vertices
 
     def load_materials(self, file_path):
@@ -107,7 +104,6 @@ class Object:
                     continue
 
                 keyword, value = parts
-
                 if keyword == 'newmtl':
                     current_material = value
                     materials[current_material] = {
@@ -128,7 +124,6 @@ class Object:
 
                 elif current_material is not None:
                     mat = materials[current_material]
-
                     if keyword == 'Ns':
                         mat['Ns'] = float(value)
                     elif keyword == 'Ni':

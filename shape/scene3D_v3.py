@@ -1,4 +1,6 @@
+import os
 import random
+from typing import List, Optional
 
 import glfw
 import numpy as np
@@ -13,13 +15,21 @@ from libs.camera import *
 import glm
 from itertools import cycle
 from shape.subScene import *
-import os
 
 
 class Scene:
-    def __init__(self, shader, file_path, scene_net_flag, nyu_rgb_paths):
+    """Represents a 3D scene containing multiple sub-objects."""
+    
+    def __init__(self, shader: Shader, file_path: str, scene_net_flag: bool, nyu_rgb_paths: Optional[List[str]] = None):
+        """Initialize the scene.
+        
+        Args:
+            shader: The shader program to use for rendering
+            file_path: Path to the scene file
+            scene_net_flag: Flag indicating if this is a SceneNet scene
+            nyu_rgb_paths: Optional list of paths to NYU RGB images
+        """
         self.shader = shader
-        # self.uma = UManager(self.shader)
         self.subObjs = []
 
         self.dir_path = os.path.dirname(file_path)
@@ -45,16 +55,10 @@ class Scene:
         mat_dict ={}
 
         for mesh_name, mesh in scene.meshes.items():
-            # self.obj_names_list.append(mesh_name)
-            num_faces = len(mesh.faces) # auto correct for triang and quad
-            # print("Length materials",len(mesh.materials))
-            # if(len(mesh.materials)>1):
-            #     print("Mesh name", mesh_name)
-            #     for temp in mesh.materials:
-            #         print("mat name", temp.name)
+            num_faces = len(mesh.faces) # auto correct for triangle and quad
+
             for mat in mesh.materials:
                 self.obj_names_list.append(mesh_name)
-                # mat = mesh.materials[0] # access to material
                 mat_name = mat.name
                 if mat_name not in mat_dict:
                     mat_dict[mat_name] = 0
